@@ -1,9 +1,10 @@
 import './RuntimeScreen.css';
 
-import { useEffect, useRef, useState } from '@lynx-js/react';
+import { runOnBackground, runOnMainThread, useEffect, useRef, useState } from '@lynx-js/react';
 
 import { formatClockDisplay, formatDuration } from '../domain/timeline';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { useIsWide } from '../platform/viewport';
 import {
   getRole,
   getRuntime,
@@ -31,6 +32,39 @@ export interface RuntimeScreenProps {
 const MINUS = '\u2212';
 const HOLD_DONE_MS = 3000;
 const DONE_GUARD_MS = 300;
+const NARROW_ACTIONS_WIDTH = 700;
+
+let viewportWidthListener: ((width: number) => void) | null = null;
+
+function notifyViewportWidth(width: number): void {
+  const listener = viewportWidthListener;
+  if (listener) {
+    listener(width);
+  }
+}
+
+// 浏览器预览里 React 跑在 Worker 中，拿不到 window；从主线程读取并回传视口宽度。
+function watchViewportWidthMainThread(): number {
+  'main thread';
+  try {
+    const win: any = (globalThis as any).window;
+    if (!win) {
+      return 0;
+    }
+    const host: any = win.parent && win.parent !== win ? win.parent : win;
+    const global: any = globalThis as any;
+    if (!global.__shunchangViewportWatch && typeof host.addEventListener === 'function') {
+      global.__shunchangViewportWatch = true;
+      host.addEventListener('resize', () => {
+        void runOnBackground(notifyViewportWidth)(host.innerWidth);
+      });
+    }
+    return typeof host.innerWidth === 'number' ? host.innerWidth : 0;
+  } catch {
+    // 主线程视口读取仅作为 Web 预览的降级手段。
+    return 0;
+  }
+}
 
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
@@ -109,6 +143,33 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [shiftOpen, setShiftOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
+  const isWideActions = useIsWide(NARROW_ACTIONS_WIDTH);
+  const [mainWidth, setMainWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    viewportWidthListener = (width: number) => {
+      if (width > 0) {
+        setMainWidth(width);
+      }
+    };
+    try {
+      void runOnMainThread(watchViewportWidthMainThread)()
+        .then((width) => {
+          if (typeof width === 'number' && width > 0) {
+            setMainWidth(width);
+          }
+        })
+        .catch(() => {});
+    } catch {
+      // 没有主线程桥时保持 useIsWide 的结果。
+    }
+    return () => {
+      viewportWidthListener = null;
+    };
+  }, []);
+
+  const wideActions =
+    mainWidth !== null ? mainWidth >= NARROW_ACTIONS_WIDTH : isWideActions;
 
   const holdTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastDoneAt = useRef(0);
@@ -364,9 +425,13 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             ) : (
               <view className="RuntimeActionsInner">
                 <view className="RuntimeActionRow">
-                  <Button label="DONE · 完成" className="RuntimeDone" onTap={doDone} />
                   <Button
-                    label="SHIFT · 顺延"
+                    label={wideActions ? 'DONE · 完成' : '完成'}
+                    className="RuntimeDone"
+                    onTap={doDone}
+                  />
+                  <Button
+                    label={wideActions ? 'SHIFT · 顺延' : '顺延'}
                     kind="secondary"
                     className="RuntimeShift"
                     disabled={nextItem === null}
