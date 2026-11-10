@@ -1,7 +1,7 @@
 import './ui/tokens.css';
 import './App.css';
 
-import { useState } from '@lynx-js/react';
+import { useEffect, useState } from '@lynx-js/react';
 
 import { EditorScreen } from './app/EditorScreen';
 import { FollowScreen } from './app/FollowScreen';
@@ -10,6 +10,9 @@ import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
 import { PrintScreen } from './app/PrintScreen';
 import { RuntimeScreen } from './app/RuntimeScreen';
+import { isWeb } from './app/share';
+import { webSyncLocation, installMainThreadBridge } from './app/webBridge';
+import type { WebLocationSnapshot } from './app/webBridge';
 import {
   consumeStorageError,
   getLastView,
@@ -84,6 +87,42 @@ export function App() {
     boot && !boot.ok ? importErrorMessage(boot.error) : consumeStorageError(),
   );
 
+  useEffect(() => {
+    if (!isWeb() || typeof document !== 'undefined') {
+      return undefined;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const wait = (ms: number) =>
+        new Promise<void>((resolve) => {
+          setTimeout(resolve, ms);
+        });
+
+      let location: WebLocationSnapshot | null = null;
+      for (let attempt = 0; attempt < 10 && !location; attempt += 1) {
+        location = await Promise.race([
+          webSyncLocation(),
+          wait(150).then(() => null),
+        ]);
+        if (!location) {
+          await wait(50);
+        }
+      }
+      if (cancelled) {
+        return;
+      }
+      const pending = applyLaunchHash();
+      if (pending && pending.ok) {
+        setRoute({ view: 'runtime', sheetId: pending.sheetId });
+        setLastView({ view: 'runtime', sheetId: pending.sheetId });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const navigate = (view: AppView, sheetId?: string) => {
     if (sheetId) {
       setRoute({ view, sheetId });
@@ -106,8 +145,10 @@ export function App() {
     navigate(sheet.status === 'running' ? 'runtime' : 'editor', id);
   };
 
+  let content: any;
+
   if (route.view === 'list') {
-    return (
+    content = (
       <ListScreen
         notice={notice ?? undefined}
         onOpenSheet={openSheet}
@@ -121,65 +162,84 @@ export function App() {
         onCreate={openSheet}
       />
     );
+  } else {
+    const sheet = route.sheetId ? getSheet(route.sheetId) : null;
+    const subtitle = sheet ? sheet.name || '未命名手册' : '未选择手册';
+    const back = () => {
+      navigate('list');
+    };
+
+    switch (route.view) {
+      case 'editor':
+        content = route.sheetId ? (
+          <EditorScreen
+            sheetId={route.sheetId}
+            onBack={back}
+            onStartRuntime={(id) => {
+              navigate('runtime', id);
+            }}
+            onPrint={(id) => {
+              navigate('print', id);
+            }}
+          />
+        ) : (
+          <PlaceholderScreen title="编排台" subtitle={subtitle} onBack={back} />
+        );
+        break;
+      case 'runtime':
+        content = route.sheetId ? (
+          <RuntimeScreen
+            sheetId={route.sheetId}
+            onBack={() => {
+              navigate('list');
+            }}
+            onPrint={(id) => {
+              navigate('print', id);
+            }}
+          />
+        ) : (
+          <PlaceholderScreen
+            title="执行台"
+            subtitle={subtitle}
+            dark
+            onBack={back}
+          />
+        );
+        break;
+      case 'follow':
+        content = (
+          <FollowScreen
+            sheetId={route.sheetId}
+            onBack={() => {
+              navigate('list');
+            }}
+          />
+        );
+        break;
+      case 'print':
+        content = route.sheetId ? (
+          <PrintScreen
+            sheetId={route.sheetId}
+            onBack={() => {
+              navigate('list');
+            }}
+          />
+        ) : (
+          <PlaceholderScreen title="打印" subtitle={subtitle} onBack={back} />
+        );
+        break;
+      default:
+        content = null;
+    }
   }
 
-  const sheet = route.sheetId ? getSheet(route.sheetId) : null;
-  const subtitle = sheet ? sheet.name || '未命名手册' : '未选择手册';
-  const back = () => {
-    navigate('list');
-  };
-
-  switch (route.view) {
-    case 'editor':
-      return route.sheetId ? (
-        <EditorScreen
-          sheetId={route.sheetId}
-          onBack={back}
-          onStartRuntime={(id) => {
-            navigate('runtime', id);
-          }}
-          onPrint={(id) => {
-            navigate('print', id);
-          }}
-        />
-      ) : (
-        <PlaceholderScreen title="编排台" subtitle={subtitle} onBack={back} />
-      );
-    case 'runtime':
-      return route.sheetId ? (
-        <RuntimeScreen
-          sheetId={route.sheetId}
-          onBack={() => {
-            navigate('list');
-          }}
-          onPrint={(id) => {
-            navigate('print', id);
-          }}
-        />
-      ) : (
-        <PlaceholderScreen title="执行台" subtitle={subtitle} dark onBack={back} />
-      );
-    case 'follow':
-      return (
-        <FollowScreen
-          sheetId={route.sheetId}
-          onBack={() => {
-            navigate('list');
-          }}
-        />
-      );
-    case 'print':
-      return route.sheetId ? (
-        <PrintScreen
-          sheetId={route.sheetId}
-          onBack={() => {
-            navigate('list');
-          }}
-        />
-      ) : (
-        <PlaceholderScreen title="打印" subtitle={subtitle} onBack={back} />
-      );
-    default:
-      return null;
-  }
+  return (
+    <>
+      <view
+        style={{ display: 'none' }}
+        main-thread:ref={installMainThreadBridge}
+      />
+      {content}
+    </>
+  );
 }

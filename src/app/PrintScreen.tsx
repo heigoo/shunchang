@@ -1,6 +1,6 @@
 import './PrintScreen.css';
 
-import { useEffect, useState } from '@lynx-js/react';
+import { useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
 import { getRuntime, getSheet } from '../store/repository';
@@ -13,6 +13,7 @@ import {
   printSummary,
 } from './printOps';
 import type { PrintPage } from './printOps';
+import { webPrint } from './webBridge';
 
 export interface PrintScreenProps {
   sheetId: string;
@@ -21,8 +22,6 @@ export interface PrintScreenProps {
 
 const MAX_QR_ITEMS = 40;
 const MAX_QR_URL = 2000;
-
-const PRINT_STYLE_ID = 'shunchang-print-style';
 
 const PRINT_STYLE_TEXT = `@page { size: A4 landscape; margin: 8mm; }
 @media print {
@@ -53,32 +52,6 @@ export function PrintScreen(props: PrintScreenProps) {
   const [runtime] = useState(() => getRuntime(sheetId));
   const [printedAt] = useState(() => Date.now());
 
-  useEffect(() => {
-    if (!isWeb() || typeof document === 'undefined' || !document.head) {
-      return undefined;
-    }
-
-    if (document.getElementById(PRINT_STYLE_ID)) {
-      return undefined;
-    }
-
-    let style: HTMLStyleElement | null = null;
-    try {
-      style = document.createElement('style');
-      style.id = PRINT_STYLE_ID;
-      style.textContent = PRINT_STYLE_TEXT;
-      document.head.appendChild(style);
-    } catch {
-      style = null;
-    }
-
-    return () => {
-      if (style && style.parentNode) {
-        style.parentNode.removeChild(style);
-      }
-    };
-  }, []);
-
   if (!sheet) {
     return (
       <view className="PrintScreen">
@@ -100,8 +73,8 @@ export function PrintScreen(props: PrintScreenProps) {
   const stamp = stampText(printedAt);
 
   const handlePrint = () => {
-    if (isWeb() && typeof window !== 'undefined') {
-      window.print();
+    if (isWeb()) {
+      void webPrint(PRINT_STYLE_TEXT);
     }
   };
 

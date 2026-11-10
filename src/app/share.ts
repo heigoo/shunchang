@@ -1,5 +1,6 @@
 import { encodeFile } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { webDownload, webLocationSnapshot, webPickJsonFile } from './webBridge';
 
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
@@ -17,19 +18,49 @@ function safeFileName(name: string): string {
 }
 
 export function isWeb(): boolean {
-  return typeof window !== 'undefined' && typeof document !== 'undefined';
+  try {
+    return typeof window !== 'undefined'
+      || typeof (globalThis as any).WorkerGlobalScope !== 'undefined'
+      || typeof (globalThis as any).importScripts === 'function';
+  } catch {
+    return false;
+  }
+}
+
+export function webLocation(): {
+  origin: string;
+  pathname: string;
+  search: string;
+  hash: string;
+} | null {
+  const snapshot = webLocationSnapshot();
+  if (snapshot) {
+    return snapshot;
+  }
+
+  try {
+    const location = (globalThis as any).location
+      ?? (typeof window !== 'undefined' ? window.location : null);
+    if (!location) {
+      return null;
+    }
+    return {
+      origin: typeof location.origin === 'string' ? location.origin : '',
+      pathname: typeof location.pathname === 'string' ? location.pathname : '',
+      search: typeof location.search === 'string' ? location.search : '',
+      hash: typeof location.hash === 'string' ? location.hash : '',
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function shareBaseUrl(): string {
-  if (!isWeb()) {
+  const location = webLocation();
+  if (!location) {
     return '';
   }
-  try {
-    const location = window.location;
-    return `${location.origin}${location.pathname}${location.search}`;
-  } catch {
-    return '';
-  }
+  return `${location.origin}${location.pathname}${location.search}`;
 }
 
 export function buildShareUrl(payload: string): string {
@@ -42,36 +73,21 @@ export function buildShortUrl(code: string): string {
   return base.length > 0 ? `${base}#s=${code}` : code;
 }
 
-export function downloadTextFile(
+export async function downloadTextFile(
   filename: string,
   text: string,
   mime: string = 'application/json',
-): boolean {
+): Promise<boolean> {
   if (!isWeb()) {
     return false;
   }
-  if (typeof Blob === 'undefined' || typeof URL === 'undefined') {
-    return false;
-  }
-
-  try {
-    const blob = new Blob([text], { type: `${mime};charset=utf-8` });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.style.display = 'none';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-    return true;
-  } catch {
-    return false;
-  }
+  return webDownload(filename, text, mime);
 }
 
-export function exportSheetFile(sheet: Sheet, runtime?: RuntimeState): boolean {
+export async function exportSheetFile(
+  sheet: Sheet,
+  runtime?: RuntimeState,
+): Promise<boolean> {
   const filename = `${safeFileName(sheet.name)}_流程表_${dateStamp(Date.now())}.json`;
   return downloadTextFile(filename, encodeFile(sheet, runtime));
 }
@@ -80,37 +96,5 @@ export function pickJsonFile(onText: (text: string) => void): void {
   if (!isWeb()) {
     return;
   }
-  if (typeof FileReader === 'undefined') {
-    return;
-  }
-
-  try {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
-    input.style.display = 'none';
-
-    input.addEventListener('change', () => {
-      const files = input.files;
-      const file = files && files.length > 0 ? files[0] : null;
-      if (!file) {
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = typeof reader.result === 'string' ? reader.result : '';
-        if (text.length > 0) {
-          onText(text);
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    document.body.appendChild(input);
-    input.click();
-    document.body.removeChild(input);
-  } catch {
-    // Reading files is a web-only enhancement; stay silent elsewhere.
-  }
+  webPickJsonFile(onText);
 }

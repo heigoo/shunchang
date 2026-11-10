@@ -8,5 +8,14 @@ declare module '@lynx-js/types' {
   }
 }
 
+declare module '@lynx-js/react' {
+  export function runOnMainThread<R, Fn extends (...args: any[]) => R>(
+    fn: Fn,
+  ): (...args: Parameters<Fn>) => Promise<R>;
+  export function runOnBackground<R, Fn extends (...args: any[]) => R>(
+    fn: Fn,
+  ): (...args: Parameters<Fn>) => Promise<R>;
+}
+
 // This export makes the file a module
 export {};

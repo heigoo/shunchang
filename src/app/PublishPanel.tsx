@@ -63,7 +63,7 @@ export function PublishPanel(props: PublishPanelProps) {
                 kind="secondary"
                 block
                 onTap={() => {
-                  exportSheetFile(sheet);
+                  void exportSheetFile(sheet);
                 }}
               />
               <text className="PublishExportHint">

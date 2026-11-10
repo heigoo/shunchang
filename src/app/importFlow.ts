@@ -14,6 +14,8 @@ import {
   saveSheet,
   setRole,
 } from '../store/repository';
+import { webLocation } from './share';
+import { webClearHash } from './webBridge';
 
 export type ImportError =
   | 'bad-format'
@@ -159,27 +161,13 @@ export function importShortCodeText(
   return applyShort(decoded.payload, now);
 }
 
-function clearHash(): void {
-  try {
-    const path = `${window.location.pathname}${window.location.search}`;
-    window.history.replaceState(null, '', path);
-  } catch {
-    // Clearing the hash is best-effort; the import already happened.
-  }
-}
-
 export function applyLaunchHash(now: number = Date.now()): ImportResult | null {
-  if (typeof window === 'undefined') {
+  const location = webLocation();
+  if (!location) {
     return null;
   }
 
-  let hash = '';
-  try {
-    hash = window.location.hash ?? '';
-  } catch {
-    return null;
-  }
-
+  const hash = location.hash ?? '';
   if (hash.length === 0) {
     return null;
   }
@@ -195,7 +183,7 @@ export function applyLaunchHash(now: number = Date.now()): ImportResult | null {
     return null;
   }
 
-  clearHash();
+  void webClearHash();
   if (result.ok) {
     setRole('follower');
   }
