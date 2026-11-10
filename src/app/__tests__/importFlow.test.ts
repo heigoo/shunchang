@@ -1,15 +1,18 @@
-import { beforeEach, describe, expect, it } from '@rstest/core';
+import { afterEach, beforeEach, describe, expect, it } from '@rstest/core';
 
 import type { RuntimeState, Sheet } from '../../domain/types';
 import { encodePayload, encodeShortCode } from '../../domain/codec';
 import {
   clearAllForTest,
+  getRole,
   getRuntime,
   getSheet,
   saveRuntime,
   saveSheet,
+  setRole,
 } from '../../store/repository';
 import {
+  applyLaunchHash,
   importErrorMessage,
   importPayloadText,
   importShortCodeText,
@@ -65,6 +68,21 @@ function makeRuntime(
 
 beforeEach(() => {
   clearAllForTest();
+});
+
+const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location');
+
+function stubLocation(hash: string): void {
+  Object.defineProperty(globalThis, 'location', {
+    value: { origin: 'https://example.com', pathname: '/app', search: '', hash },
+    configurable: true,
+  });
+}
+
+afterEach(() => {
+  if (originalLocation) {
+    Object.defineProperty(globalThis, 'location', originalLocation);
+  }
 });
 
 describe('import full payload', () => {
@@ -213,5 +231,48 @@ describe('import error messages', () => {
     expect(importErrorMessage('older-sheet')).toBe('该手册已有更新版本');
     expect(importErrorMessage('stale-state')).toBe('已是最新状态');
     expect(importErrorMessage('no-sheet')).toBe('本机没有这份手册，请先扫码或导入文件');
+  });
+});
+
+describe('apply launch hash', () => {
+  it('imports a full payload from #d= and switches to the follower role', () => {
+    const sheet = makeSheet();
+    setRole('owner');
+    stubLocation(`#d=${encodePayload(sheet)}`);
+
+    const result = applyLaunchHash(NOW);
+
+    expect(result?.ok).toBe(true);
+    expect(getSheet(sheet.id)?.name).toBe('秋季婚礼流程');
+    expect(getRole()).toBe('follower');
+    expect(getRuntime(sheet.id)?.lastSyncAt).toBe(NOW);
+  });
+
+  it('applies a short code from #s= to a known sheet', () => {
+    const sheet = saveSheet(makeSheet({ status: 'published', version: 1 }));
+    saveRuntime(
+      makeRuntime(sheet, { execVersion: 1, currentIndex: 0, offsetMin: 0 }),
+    );
+    const code = encodeShortCode(
+      sheet.id,
+      makeRuntime(sheet, { execVersion: 2, currentIndex: 1, offsetMin: 6 }),
+    );
+    stubLocation(`#s=${code}`);
+
+    const result = applyLaunchHash(NOW);
+
+    expect(result?.ok).toBe(true);
+    const stored = getRuntime(sheet.id);
+    expect(stored?.execVersion).toBe(2);
+    expect(stored?.currentIndex).toBe(1);
+    expect(stored?.offsetMin).toBe(6);
+    expect(stored?.lastSyncAt).toBe(NOW);
+    expect(getRole()).toBe('follower');
+  });
+
+  it('returns null when the launch hash carries no payload', () => {
+    stubLocation('#anchor');
+
+    expect(applyLaunchHash(NOW)).toBeNull();
   });
 });
