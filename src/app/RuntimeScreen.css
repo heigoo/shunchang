@@ -158,6 +158,35 @@
   color: var(--bright);
 }
 
+/* ---------- 同步条 ---------- */
+
+.RuntimeSyncBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+  background-color: var(--screen);
+}
+
+.RuntimeSyncBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 34px;
+  padding-left: 12px;
+}
+
+.RuntimeSyncBtnText {
+  font-size: 12px;
+  color: var(--bright);
+}
+
 /* ---------- 底部操作条 ---------- */
 
 .RuntimeActions {

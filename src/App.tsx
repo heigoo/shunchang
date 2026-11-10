@@ -4,6 +4,7 @@ import './App.css';
 import { useState } from '@lynx-js/react';
 
 import { EditorScreen } from './app/EditorScreen';
+import { applyLaunchHash, importErrorMessage } from './app/importFlow';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
 import { RuntimeScreen } from './app/RuntimeScreen';
@@ -71,8 +72,13 @@ function PlaceholderScreen(props: PlaceholderProps) {
 }
 
 export function App() {
-  const [route, setRoute] = useState<Route>(readInitialRoute);
-  const [notice] = useState<string | null>(() => consumeStorageError());
+  const [boot] = useState(() => applyLaunchHash());
+  const [route, setRoute] = useState<Route>(() =>
+    boot && boot.ok ? { view: 'runtime', sheetId: boot.sheetId } : readInitialRoute(),
+  );
+  const [notice] = useState<string | null>(() =>
+    boot && !boot.ok ? importErrorMessage(boot.error) : consumeStorageError(),
+  );
 
   const navigate = (view: AppView, sheetId?: string) => {
     if (sheetId) {
@@ -99,6 +105,9 @@ export function App() {
         onOpenSheet={openSheet}
         onOpenFollow={() => {
           navigate('follow');
+        }}
+        onImported={(id) => {
+          navigate('runtime', id);
         }}
         onCreate={openSheet}
       />

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from '@lynx-js/react';
 
 import { filterSheets } from './listFilter';
 import type { StatusFilter } from './listFilter';
+import { ImportPanel } from './ImportPanel';
 import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
@@ -20,6 +21,7 @@ import { Badge, Button } from '../ui';
 export interface ListScreenProps {
   onOpenSheet(id: string): void;
   onOpenFollow(): void;
+  onImported(sheetId: string): void;
   onCreate?(id: string): void;
   notice?: string;
 }
@@ -71,12 +73,13 @@ function createOptionMeta(count: number, minutes: number): string {
 }
 
 export function ListScreen(props: ListScreenProps) {
-  const { onOpenSheet, onOpenFollow, onCreate, notice } = props;
+  const { onOpenSheet, onOpenFollow, onImported, onCreate, notice } = props;
 
   const [sheets, setSheets] = useState<Sheet[]>(() => listSheets());
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -318,6 +321,14 @@ export function ListScreen(props: ListScreenProps) {
         <text className="ListBrand">顺场</text>
         <view className="ListHeaderRight">
           <text className="ListMeta">SCHEDULE SHEET / 现场调度</text>
+          <view
+            className="ListLoad"
+            bindtap={() => {
+              setImportOpen(true);
+            }}
+          >
+            <text className="ListLoadText">载入</text>
+          </view>
           <view className="ListFollow" bindtap={onOpenFollow}>
             <text className="ListFollowText">跟随</text>
           </view>
@@ -373,6 +384,18 @@ export function ListScreen(props: ListScreenProps) {
       <view className="ListFooter">
         <text className="ListFooterText">PAGE 1 / 1 · 数据保存在本设备</text>
       </view>
+
+      {importOpen ? (
+        <ImportPanel
+          onClose={() => {
+            setImportOpen(false);
+          }}
+          onImported={(sheetId) => {
+            reload();
+            onImported(sheetId);
+          }}
+        />
+      ) : null}
 
       {createOpen ? (
         <view className="Overlay" bindtap={closeCreate}>

@@ -41,7 +41,11 @@ test('renders saved sheet names', async () => {
   saveSheet(makeSheet('sheet-b', '年会流程', 'published'));
 
   const { findByText } = render(
-    <ListScreen onOpenSheet={() => {}} onOpenFollow={() => {}} />,
+    <ListScreen
+      onOpenSheet={() => {}}
+      onOpenFollow={() => {}}
+      onImported={() => {}}
+    />,
   );
 
   expect(await findByText('中式婚礼流程')).toBeInTheDocument();
@@ -50,7 +54,11 @@ test('renders saved sheet names', async () => {
 
 test('shows the empty state when no sheets exist', async () => {
   const { findByText } = render(
-    <ListScreen onOpenSheet={() => {}} onOpenFollow={() => {}} />,
+    <ListScreen
+      onOpenSheet={() => {}}
+      onOpenFollow={() => {}}
+      onImported={() => {}}
+    />,
   );
 
   expect(await findByText('还没有手册')).toBeInTheDocument();

@@ -20,6 +20,7 @@ import {
   skipCurrent,
 } from './runtimeOps';
 import { ShiftPanel } from './ShiftPanel';
+import { SyncPanel } from './SyncPanel';
 
 export interface RuntimeScreenProps {
   sheetId: string;
@@ -106,6 +107,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [role] = useState<'owner' | 'follower'>(() => getRole());
   const [shiftOpen, setShiftOpen] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
 
   const holdTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -334,6 +336,18 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
         </view>
       </view>
 
+      <view className="RuntimeSyncBar">
+        <Badge kind="outline" label={`V${runtime.execVersion}`} />
+        <view
+          className="RuntimeSyncBtn"
+          bindtap={() => {
+            setSyncOpen(true);
+          }}
+        >
+          <text className="RuntimeSyncBtnText">同步码</text>
+        </view>
+      </view>
+
       <view className="RuntimeActions">
         {role === 'follower' ? (
           <text className="RuntimeReadonly">本设备为跟随角色，不能推进环节</text>
@@ -386,6 +400,16 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             saveRuntime(next);
             setRuntime(next);
             setShiftOpen(false);
+          }}
+        />
+      ) : null}
+
+      {syncOpen ? (
+        <SyncPanel
+          sheet={sheet}
+          runtime={runtime}
+          onClose={() => {
+            setSyncOpen(false);
           }}
         />
       ) : null}

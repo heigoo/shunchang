@@ -1,0 +1,131 @@
+/* 载入手册面板：纸色，遮罩覆盖列表页 */
+
+.ImportOverlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: rgba(21, 20, 15, 0.38);
+}
+
+.ImportPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--paper);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--ink);
+  border-top-width: 3px;
+}
+
+.ImportHead {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 14px 20px;
+}
+
+.ImportHeadText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-right: 12px;
+}
+
+.ImportTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ImportSubtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--ink-3);
+}
+
+.ImportClose {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 22px;
+  padding-left: 12px;
+}
+
+.ImportCloseText {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.ImportError {
+  padding: 9px 20px;
+  background-color: var(--amber-wash);
+}
+
+.ImportErrorText {
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.ImportSection {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 20px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+}
+
+.ImportLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+}
+
+.ImportTextarea {
+  width: 100%;
+  height: 78px;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background-color: var(--paper-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--paper-3);
+  border-radius: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.ImportInput {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 0 10px;
+  background-color: var(--paper-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--paper-3);
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+
+.ImportAction {
+  margin-top: 10px;
+}

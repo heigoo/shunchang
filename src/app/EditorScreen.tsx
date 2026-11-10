@@ -9,6 +9,7 @@ import { findPlanConflicts } from '../domain/validate';
 import { useIsWide } from '../platform/viewport';
 import { getSheet, saveSheet } from '../store/repository';
 import { Badge, Button } from '../ui';
+import { PublishPanel } from './PublishPanel';
 import {
   MAX_ITEMS,
   addItem,
@@ -759,34 +760,13 @@ export function EditorScreen(props: EditorScreenProps) {
       ) : null}
 
       {published ? (
-        <view className="EditorOverlay">
-          <view className="EditorPanel" catchtap={() => {}}>
-            <view className="EditorPanelRule" />
-            <text className="EditorPanelTitle">{`已发布 V${published.version}`}</text>
-            <text className="EditorPanelBody">
-              分发能力（二维码 / 文件 / 短码）即将接入
-            </text>
-            <view className="EditorPanelActions">
-              <view className="EditorPanelAction">
-                <Button
-                  label="继续编辑"
-                  kind="tertiary"
-                  onTap={() => {
-                    setPublished(null);
-                  }}
-                />
-              </view>
-              <view className="EditorPanelAction">
-                <Button
-                  label="开始执行"
-                  onTap={() => {
-                    onStartRuntime(sheet.id);
-                  }}
-                />
-              </view>
-            </view>
-          </view>
-        </view>
+        <PublishPanel
+          sheet={sheet}
+          onClose={() => {
+            setPublished(null);
+          }}
+          onStart={onStartRuntime}
+        />
       ) : null}
     </view>
   );
