@@ -1,6 +1,6 @@
 import './PrintScreen.css';
 
-import { useState } from '@lynx-js/react';
+import { useEffect, useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
 import { getRuntime, getSheet } from '../store/repository';
@@ -22,6 +22,19 @@ export interface PrintScreenProps {
 const MAX_QR_ITEMS = 40;
 const MAX_QR_URL = 2000;
 
+const PRINT_STYLE_ID = 'shunchang-print-style';
+
+const PRINT_STYLE_TEXT = `@page { size: A4 landscape; margin: 8mm; }
+@media print {
+  html, body { background: #fff !important; }
+  .PrintActions { display: none !important; }
+  .PrintActionsHint { display: none !important; }
+  .PrintScreen { background: #fff !important; padding: 0 !important; min-height: 0 !important; }
+  .PrintPages { display: block !important; padding: 0 !important; gap: 0 !important; }
+  .PrintPage { width: auto !important; min-height: 0 !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; page-break-after: always; break-after: page; }
+  .PrintPage--last { page-break-after: auto !important; break-after: auto !important; }
+}`;
+
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
 }
@@ -39,6 +52,32 @@ export function PrintScreen(props: PrintScreenProps) {
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
   const [printedAt] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!isWeb() || typeof document === 'undefined' || !document.head) {
+      return undefined;
+    }
+
+    if (document.getElementById(PRINT_STYLE_ID)) {
+      return undefined;
+    }
+
+    let style: HTMLStyleElement | null = null;
+    try {
+      style = document.createElement('style');
+      style.id = PRINT_STYLE_ID;
+      style.textContent = PRINT_STYLE_TEXT;
+      document.head.appendChild(style);
+    } catch {
+      style = null;
+    }
+
+    return () => {
+      if (style && style.parentNode) {
+        style.parentNode.removeChild(style);
+      }
+    };
+  }, []);
 
   if (!sheet) {
     return (

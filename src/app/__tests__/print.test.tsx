@@ -55,3 +55,19 @@ test('falls back to the file hint when the sheet is too large for a QR code', as
   expect((await findAllByText('环节较多')).length).toBe(2);
   expect((await findAllByText('请用文件分发')).length).toBe(2);
 });
+
+test('injects the print stylesheet into document.head on web', async () => {
+  saveSheet(makeSheet());
+
+  const { findAllByText } = render(
+    <PrintScreen sheetId={SHEET_ID} onBack={() => {}} />,
+  );
+
+  // Wait for effects to flush before inspecting document.head.
+  await findAllByText('秋季婚礼流程');
+
+  const style = document.getElementById('shunchang-print-style');
+  expect(style).not.toBeNull();
+  expect(style?.textContent).toContain('@page');
+  expect(style?.textContent).toContain('A4 landscape');
+});
