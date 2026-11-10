@@ -6,6 +6,7 @@ import { useState } from '@lynx-js/react';
 import { EditorScreen } from './app/EditorScreen';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
+import { RuntimeScreen } from './app/RuntimeScreen';
 import {
   consumeStorageError,
   getLastView,
@@ -124,13 +125,18 @@ export function App() {
         <PlaceholderScreen title="编排台" subtitle={subtitle} onBack={back} />
       );
     case 'runtime':
-      return (
-        <PlaceholderScreen
-          title="执行台"
-          subtitle={subtitle}
-          dark
-          onBack={back}
+      return route.sheetId ? (
+        <RuntimeScreen
+          sheetId={route.sheetId}
+          onBack={() => {
+            navigate('list');
+          }}
+          onPrint={(id) => {
+            navigate('print', id);
+          }}
         />
+      ) : (
+        <PlaceholderScreen title="执行台" subtitle={subtitle} dark onBack={back} />
       );
     case 'follow':
       return <PlaceholderScreen title="跟单" subtitle={subtitle} onBack={back} />;

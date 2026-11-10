@@ -1,0 +1,369 @@
+/* 执行台：暗场信息屏，操作区常驻底部 */
+
+.Runtime {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--screen);
+}
+
+/* ---------- 顶栏 ---------- */
+
+.RuntimeTop {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-h);
+  padding-left: 18px;
+  padding-right: 18px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--screen-line);
+}
+
+.RuntimeTopName {
+  max-width: 58%;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.RuntimeTopBadges {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.RuntimeTopBadge {
+  margin-right: 8px;
+}
+
+/* ---------- 信息区 ---------- */
+
+.RuntimeBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 18px;
+}
+
+.RuntimeSeg {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+}
+
+.RuntimeTitle {
+  margin-top: 10px;
+  font-size: 32px;
+  font-weight: 750;
+  line-height: 42px;
+  color: var(--bright);
+}
+
+.RuntimeMeta {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.RuntimeLockRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.RuntimeCountBlock {
+  display: flex;
+  flex-direction: column;
+  margin-top: 24px;
+}
+
+.RuntimeCountRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.RuntimeCount {
+  font-family: var(--mono);
+  font-size: 76px;
+  font-weight: 500;
+  line-height: 80px;
+  color: var(--amber);
+}
+
+.RuntimeUnit {
+  margin-left: 10px;
+  margin-bottom: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+}
+
+.RuntimeCaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.RuntimeDelay {
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+}
+
+.RuntimeNext {
+  display: flex;
+  flex-direction: column;
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+}
+
+.RuntimeNextRows {
+  display: flex;
+  flex-direction: column;
+}
+
+.RuntimeNextRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: 26px;
+}
+
+.RuntimeNextLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+}
+
+.RuntimeNextValue {
+  max-width: 70%;
+  font-size: 15px;
+  color: var(--bright);
+}
+
+.RuntimeNextTime {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--bright);
+}
+
+/* ---------- 底部操作条 ---------- */
+
+.RuntimeActions {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+  background-color: var(--screen);
+}
+
+.RuntimeActionsInner {
+  display: flex;
+  flex-direction: column;
+}
+
+.RuntimeActionRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.RuntimeDone {
+  flex: 2;
+  margin-right: 8px;
+}
+
+.RuntimeShift {
+  flex: 1;
+}
+
+/* 置灰但不使用透明度，保持信息层不透明 */
+.RuntimeShift.Btn--disabled {
+  opacity: 1;
+  background-color: var(--screen);
+  border-color: var(--screen-line);
+}
+
+.RuntimeShift.Btn--disabled .BtnLabel {
+  color: var(--dim);
+}
+
+.RuntimeHold {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 44px;
+  margin-top: 12px;
+}
+
+.RuntimeHoldText {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--dim);
+}
+
+.RuntimeHoldTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+}
+
+.RuntimeHoldFill {
+  height: 2px;
+  background-color: var(--bright);
+}
+
+.RuntimeReadonly {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* ---------- 顺延浮层 ---------- */
+
+.RuntimeOverlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: rgba(11, 11, 9, 0.55);
+}
+
+.RuntimePanel {
+  max-height: 45vh;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 16px;
+}
+
+.ShiftTitle {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+}
+
+.ShiftBody {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.ShiftActions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+/* ---------- 完成页 ---------- */
+
+.DoneBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 32px 24px;
+}
+
+.DoneLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+}
+
+.DoneTitle {
+  margin-top: 10px;
+  font-size: 34px;
+  font-weight: 750;
+  color: var(--bright);
+}
+
+.DoneName {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--dim);
+}
+
+.DoneRule {
+  height: 1px;
+  margin-top: 26px;
+  margin-bottom: 6px;
+  background-color: var(--screen-line);
+}
+
+.DoneStat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.DoneStatLabel {
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.DoneStatValue {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--bright);
+}
+
+.DoneActions {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 24px 24px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+}
+
+.DonePrint {
+  margin-top: 8px;
+}
+
+/* ---------- 手册不存在 ---------- */
+
+.RuntimeMissing {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+}
+
+.RuntimeMissingTitle {
+  font-size: 17px;
+  color: var(--bright);
+}
+
+.RuntimeMissingAction {
+  margin-top: 18px;
+}
