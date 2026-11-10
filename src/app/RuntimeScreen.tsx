@@ -11,13 +11,15 @@ import {
   saveRuntime,
   saveSheet,
 } from '../store/repository';
-import { Badge, Button, GlassPanel } from '../ui';
+import { Badge, Button } from '../ui';
 import {
+  applyShift,
   buildRuntimeView,
   completeCurrent,
   createRuntime,
   skipCurrent,
 } from './runtimeOps';
+import { ShiftPanel } from './ShiftPanel';
 
 export interface RuntimeScreenProps {
   sheetId: string;
@@ -369,28 +371,23 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       </view>
 
       {shiftOpen ? (
-        <view
-          className="RuntimeOverlay"
-          bindtap={() => {
+        <ShiftPanel
+          sheet={sheet}
+          runtime={runtime}
+          nowMin={minuteOfDay(nowMs)}
+          onCancel={() => {
             setShiftOpen(false);
           }}
-        >
-          <view className="RuntimePanel" catchtap={() => {}}>
-            <GlassPanel>
-              <text className="ShiftTitle">SHIFT · 顺延</text>
-              <text className="ShiftBody">顺延面板将在下一步接入</text>
-              <view className="ShiftActions">
-                <Button
-                  label="关闭"
-                  kind="tertiary"
-                  onTap={() => {
-                    setShiftOpen(false);
-                  }}
-                />
-              </view>
-            </GlassPanel>
-          </view>
-        </view>
+          onConfirm={(startMin) => {
+            const next = applyShift(sheet, runtime, startMin);
+            if (next === runtime) {
+              return;
+            }
+            saveRuntime(next);
+            setRuntime(next);
+            setShiftOpen(false);
+          }}
+        />
       ) : null}
     </view>
   );
