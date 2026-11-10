@@ -126,6 +126,33 @@ describe('import full payload', () => {
   });
 });
 
+describe('import sheet without runtime', () => {
+  it('creates a sync baseline when nothing is local', () => {
+    const sheet = makeSheet();
+    const result = importPayloadText(encodePayload(sheet), NOW);
+
+    expect(result.ok).toBe(true);
+    const runtime = getRuntime(sheet.id);
+    expect(runtime).not.toBeNull();
+    expect(runtime?.currentIndex).toBe(-1);
+    expect(runtime?.execVersion).toBe(0);
+    expect(runtime?.lastSyncAt).toBe(NOW);
+  });
+
+  it('refreshes lastSyncAt of an existing runtime', () => {
+    const local = saveSheet(makeSheet());
+    saveRuntime(makeRuntime(local, { lastSyncAt: NOW - 60 * 60 * 1000 }));
+
+    const result = importPayloadText(encodePayload(local), NOW);
+
+    expect(result.ok).toBe(true);
+    const runtime = getRuntime(local.id);
+    expect(runtime?.currentIndex).toBe(1);
+    expect(runtime?.execVersion).toBe(2);
+    expect(runtime?.lastSyncAt).toBeGreaterThanOrEqual(NOW);
+  });
+});
+
 describe('import short code', () => {
   it('applies a short code to a known sheet', () => {
     const sheet = saveSheet(makeSheet({ status: 'published', version: 1 }));

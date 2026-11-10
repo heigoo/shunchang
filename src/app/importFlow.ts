@@ -61,6 +61,22 @@ function storeRuntime(
   saveRuntime({ ...incoming, sheetId, lastSyncAt: now });
 }
 
+function ensureBaseline(sheetId: string, now: number): void {
+  const existing = getRuntime(sheetId);
+  if (existing) {
+    saveRuntime({ ...existing, lastSyncAt: now });
+    return;
+  }
+  saveRuntime({
+    sheetId,
+    currentIndex: -1,
+    actuals: {},
+    offsetMin: 0,
+    execVersion: 0,
+    lastSyncAt: now,
+  });
+}
+
 function applyPayload(payload: SheetPayload, now: number): ImportResult {
   const incoming = payload.sheet;
   const local = getSheet(incoming.id);
@@ -69,6 +85,8 @@ function applyPayload(payload: SheetPayload, now: number): ImportResult {
     const saved = saveSheet(incoming);
     if (payload.runtime) {
       storeRuntime(payload.runtime, incoming.id, now);
+    } else {
+      ensureBaseline(incoming.id, now);
     }
     return { ok: true, sheetId: saved.id, sheet: saved };
   }
@@ -86,6 +104,8 @@ function applyPayload(payload: SheetPayload, now: number): ImportResult {
         }
       }
       storeRuntime(payload.runtime, local.id, now);
+    } else {
+      ensureBaseline(local.id, now);
     }
     return { ok: true, sheetId: local.id, sheet: local };
   }
@@ -93,6 +113,8 @@ function applyPayload(payload: SheetPayload, now: number): ImportResult {
   const saved = saveSheet(incoming);
   if (payload.runtime) {
     storeRuntime(payload.runtime, incoming.id, now);
+  } else {
+    ensureBaseline(incoming.id, now);
   }
   return { ok: true, sheetId: saved.id, sheet: saved };
 }
