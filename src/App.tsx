@@ -1,8 +1,9 @@
+import './ui/tokens.css';
 import './App.css';
 
 export function App() {
   return (
-    <view className="Screen">
+    <view className="Screen theme-light">
       <view className="Header">
         <text className="Brand">顺场</text>
         <text className="SheetCode">SHEET 00 / 00</text>

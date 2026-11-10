@@ -1,0 +1,62 @@
+.Badge {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 3px;
+  background-color: transparent;
+}
+
+.BadgeText {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+/* 琥珀底深色字：仅用于延误/冲突 */
+.Badge--reverse {
+  padding: 5px 10px;
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.Badge--reverse .BadgeText {
+  color: var(--screen);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* 透明 + 1px 描边 + 弱化文字：版本号/偏移/同步状态 */
+.Badge--outline {
+  border-color: var(--rule);
+}
+
+.Badge--outline .BadgeText {
+  color: var(--fg-3);
+  font-weight: 500;
+}
+
+/* 印章：文本自动加方括号 */
+.Badge--stamp {
+  padding: 3px 7px;
+  border-color: var(--vermilion);
+}
+
+.Badge--stamp .BadgeText {
+  color: var(--vermilion);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.theme-dark .Badge--stamp {
+  border-color: var(--bright);
+}
+
+.theme-dark .Badge--stamp .BadgeText {
+  color: var(--bright);
+}

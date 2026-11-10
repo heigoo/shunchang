@@ -1,0 +1,73 @@
+/* 顺场设计令牌：光场（纸面调度单）与暗场（发车信息屏） */
+
+:root {
+  /* 光场原始色 */
+  --paper: #F1EEE6;
+  --paper-2: #E7E2D5;
+  --paper-3: #DCD6C6;
+  --ink: #15140F;
+  --ink-2: #4B4941;
+  --ink-3: #8B887A;
+  --amber-deep: #A66A12;
+  --amber-wash: #F6E2B6;
+  --vermilion: #A8321E;
+
+  /* 暗场原始色 */
+  --screen: #0B0B09;
+  --screen-2: #16160F;
+  --screen-3: #22221A;
+  --screen-line: #2A2A22;
+  --dim: #8A8778;
+  --bright: #F5F2E8;
+  --amber: #FFB020;
+  --amber-light: #FFD98A;
+
+  /* 尺寸 */
+  --btn-h: 52px;
+  --row-h: 40px;
+  --topbar-h: 34px;
+
+  /* 字体 */
+  --sans: -apple-system, 'PingFang SC', 'HarmonyOS Sans', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
+  --mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
+}
+
+.theme-light {
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --fg-3: var(--ink-3);
+  --rule: var(--paper-3);
+  --accent: var(--amber-deep);
+}
+
+.theme-dark {
+  --bg: var(--screen);
+  --fg: var(--bright);
+  --fg-2: var(--dim);
+  --fg-3: #6F6C60;
+  --rule: var(--screen-line);
+  --accent: var(--amber);
+}
+
+/* 工具类 */
+.mono {
+  font-family: var(--mono);
+}
+
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.u-9px {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+}
