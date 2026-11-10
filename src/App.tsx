@@ -4,6 +4,7 @@ import './App.css';
 import { useState } from '@lynx-js/react';
 
 import { EditorScreen } from './app/EditorScreen';
+import { FollowScreen } from './app/FollowScreen';
 import { applyLaunchHash, importErrorMessage } from './app/importFlow';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
@@ -11,8 +12,10 @@ import { RuntimeScreen } from './app/RuntimeScreen';
 import {
   consumeStorageError,
   getLastView,
+  getRole,
   getSheet,
   setLastView,
+  setRole,
 } from './store/repository';
 import { Button } from './ui';
 
@@ -95,6 +98,10 @@ export function App() {
     if (!sheet) {
       return;
     }
+    if (getRole() === 'follower') {
+      navigate('follow', id);
+      return;
+    }
     navigate(sheet.status === 'running' ? 'runtime' : 'editor', id);
   };
 
@@ -104,10 +111,11 @@ export function App() {
         notice={notice ?? undefined}
         onOpenSheet={openSheet}
         onOpenFollow={() => {
+          setRole('follower');
           navigate('follow');
         }}
         onImported={(id) => {
-          navigate('runtime', id);
+          navigate('follow', id);
         }}
         onCreate={openSheet}
       />
@@ -148,7 +156,14 @@ export function App() {
         <PlaceholderScreen title="执行台" subtitle={subtitle} dark onBack={back} />
       );
     case 'follow':
-      return <PlaceholderScreen title="跟单" subtitle={subtitle} onBack={back} />;
+      return (
+        <FollowScreen
+          sheetId={route.sheetId}
+          onBack={() => {
+            navigate('list');
+          }}
+        />
+      );
     case 'print':
       return <PlaceholderScreen title="打印" subtitle={subtitle} onBack={back} />;
     default:
