@@ -120,18 +120,20 @@ export function ShiftPanel(props: ShiftPanelProps) {
               {`整体偏移 ${signedText(preview.baseOffsetMin)} → ${signedText(preview.nextOffsetMin)}`}
             </text>
 
-            {preview.rows.length > 0 ? (
-              <view className="ShiftRows">
-                {preview.rows.map((row) => (
-                  <view className="ShiftRow" key={`row-${row.index}`}>
-                    <text className="ShiftRowName">{`NEXT ${row.name}`}</text>
-                    <text className="ShiftRowTime">{row.time}</text>
-                  </view>
-                ))}
-              </view>
-            ) : null}
+            <scroll-view className="ShiftBody" scroll-orientation="vertical">
+              {preview.rows.length > 0 ? (
+                <view className="ShiftRows">
+                  {preview.rows.map((row) => (
+                    <view className="ShiftRow" key={`row-${row.index}`}>
+                      <text className="ShiftRowName">{`NEXT ${row.name}`}</text>
+                      <text className="ShiftRowTime">{row.time}</text>
+                    </view>
+                  ))}
+                </view>
+              ) : null}
 
-            <LockBlock preview={preview} />
+              <LockBlock preview={preview} />
+            </scroll-view>
 
             {preview.earlierThanNow ? (
               <text className="ShiftNote">该时间早于当前时刻</text>

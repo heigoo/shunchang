@@ -200,42 +200,46 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
   if (finished) {
     return (
-      <view className="Runtime theme-dark">
-        <view className="DoneBody">
-          <text className="DoneLabel">COMPLETE</text>
-          <text className="DoneTitle">已完成</text>
-          <text className="DoneName">{sheet.name.length > 0 ? sheet.name : '未命名手册'}</text>
+      <view className="RuntimeViewport">
+        <view className="Runtime theme-dark">
+          <view className="DoneBody">
+            <text className="DoneLabel">COMPLETE</text>
+            <text className="DoneTitle">已完成</text>
+            <text className="DoneName">
+              {sheet.name.length > 0 ? sheet.name : '未命名手册'}
+            </text>
 
-          <view className="DoneRule" />
+            <view className="DoneRule" />
 
-          <view className="DoneStat">
-            <text className="DoneStatLabel">计划总时长</text>
-            <text className="DoneStatValue">{formatDuration(view.planTotalMin)}</text>
-          </view>
-          <view className="DoneStat">
-            <text className="DoneStatLabel">实际总时长</text>
-            <text className="DoneStatValue">{formatDuration(view.actualTotalMin)}</text>
-          </view>
-          <view className="DoneStat">
-            <text className="DoneStatLabel">差值</text>
-            <text className="DoneStatValue">{diffText(view.diffMin)}</text>
-          </view>
-        </view>
-
-        <view className="DoneActions">
-          <Button label="返回手册列表" block onTap={onBack} />
-          {onPrint ? (
-            <view className="DonePrint">
-              <Button
-                label="导出打印"
-                kind="secondary"
-                block
-                onTap={() => {
-                  onPrint(sheet.id);
-                }}
-              />
+            <view className="DoneStat">
+              <text className="DoneStatLabel">计划总时长</text>
+              <text className="DoneStatValue">{formatDuration(view.planTotalMin)}</text>
             </view>
-          ) : null}
+            <view className="DoneStat">
+              <text className="DoneStatLabel">实际总时长</text>
+              <text className="DoneStatValue">{formatDuration(view.actualTotalMin)}</text>
+            </view>
+            <view className="DoneStat">
+              <text className="DoneStatLabel">差值</text>
+              <text className="DoneStatValue">{diffText(view.diffMin)}</text>
+            </view>
+          </view>
+
+          <view className="DoneActions">
+            <Button label="返回手册列表" block onTap={onBack} />
+            {onPrint ? (
+              <view className="DonePrint">
+                <Button
+                  label="导出打印"
+                  kind="secondary"
+                  block
+                  onTap={() => {
+                    onPrint(sheet.id);
+                  }}
+                />
+              </view>
+            ) : null}
+          </view>
         </view>
       </view>
     );
@@ -254,165 +258,173 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const overMin = secondsLeft !== null && secondsLeft < 0 ? Math.ceil(-secondsLeft / 60) : 0;
 
   let caption = '剩余';
-  if (view.countdownIsLock) {
-    caption = overMin > 0 ? `已超出 · 需压缩 ${overMin} 分钟` : '距锁定时刻';
+  if (overMin > 0) {
+    caption = view.countdownIsLock ? `已超出 · 需压缩 ${overMin} 分钟` : '已超出';
+  } else if (view.countdownIsLock) {
+    caption = '距锁定时刻';
   }
 
   const owner = currentItem && currentItem.owner.length > 0 ? currentItem.owner : '';
   const metaText = owner.length > 0 ? `${view.planRangeText} · ${owner}` : view.planRangeText;
 
   return (
-    <view className="Runtime theme-dark">
-      <view className="RuntimeTop">
-        <text className="RuntimeTopName">
-          {sheet.name.length > 0 ? sheet.name : '未命名手册'}
-        </text>
-        <view className="RuntimeTopBadges">
-          {view.hasConflict ? (
-            <view className="RuntimeTopBadge">
-              <Badge kind="reverse" label="无法吸收" />
-            </view>
-          ) : null}
-          <Badge kind="outline" label={offsetText(runtime.offsetMin)} />
-        </view>
-      </view>
-
-      <view className="RuntimeBody">
-        <text className="RuntimeSeg">
-          {`SEG ${pad3(view.segmentNo)} / ${pad3(view.segmentTotal)}`}
-        </text>
-        <text className="RuntimeTitle">
-          {currentItem && currentItem.name.length > 0 ? currentItem.name : '未命名环节'}
-        </text>
-        <text className="RuntimeMeta">{metaText}</text>
-
-        {currentRow && currentRow.lockAt !== null ? (
-          <view className="RuntimeLockRow">
-            <Badge kind="stamp" label={`LOCK ${formatClockDisplay(currentRow.lockAt)}`} />
-          </view>
-        ) : null}
-
-        {countdown ? (
-          <view className="RuntimeCountBlock">
-            <view className="RuntimeCountRow">
-              <text className="RuntimeCount">
-                {`${countdown.sign === 'over' ? MINUS : ''}${countdown.text}`}
-              </text>
-              <text className="RuntimeUnit">
-                {countdown.sign === 'over' ? 'OVER' : 'LEFT'}
-              </text>
-            </view>
-            <text className="RuntimeCaption">{caption}</text>
-            {overMin > 0 ? (
-              <view className="RuntimeDelay">
-                <Badge kind="reverse" label={`DELAYED ${overMin}`} />
+    <view className="RuntimeViewport">
+      <view className="Runtime theme-dark">
+        <view className="RuntimeTop">
+          <text className="RuntimeTopName">
+            {sheet.name.length > 0 ? sheet.name : '未命名手册'}
+          </text>
+          <view className="RuntimeTopBadges">
+            {view.hasConflict ? (
+              <view className="RuntimeTopBadge">
+                <Badge kind="reverse" label="无法吸收" />
               </view>
             ) : null}
+            <Badge kind="outline" label={offsetText(runtime.offsetMin)} />
           </view>
-        ) : null}
+        </view>
 
-        <view className="RuntimeNext">
-          {nextItem && nextRow ? (
-            <view className="RuntimeNextRows">
-              <view className="RuntimeNextRow">
-                <text className="RuntimeNextLabel">NEXT</text>
-                <text className="RuntimeNextValue">
-                  {nextItem.name.length > 0 ? nextItem.name : '未命名环节'}
+        <view className="RuntimeBody">
+          <text className="RuntimeSeg">
+            {`SEG ${pad3(view.segmentNo)} / ${pad3(view.segmentTotal)}`}
+          </text>
+          <text className="RuntimeTitle">
+            {currentItem && currentItem.name.length > 0 ? currentItem.name : '未命名环节'}
+          </text>
+          <text className="RuntimeMeta">{metaText}</text>
+
+          {currentRow && currentRow.lockAt !== null ? (
+            <view className="RuntimeLockRow">
+              <Badge kind="stamp" label={`LOCK ${formatClockDisplay(currentRow.lockAt)}`} />
+            </view>
+          ) : null}
+
+          {countdown ? (
+            <view className="RuntimeCountBlock">
+              <view className="RuntimeCountRow">
+                <text className="RuntimeCount">
+                  {`${countdown.sign === 'over' ? MINUS : ''}${countdown.text}`}
+                </text>
+                <text className="RuntimeUnit">
+                  {countdown.sign === 'over' ? 'OVER' : 'LEFT'}
                 </text>
               </view>
-              <view className="RuntimeNextRow">
-                <text className="RuntimeNextLabel">AT</text>
-                <text className="RuntimeNextTime">
-                  {formatClockDisplay(nextRow.displayStart)}
-                </text>
+              <text className="RuntimeCaption">{caption}</text>
+              {overMin > 0 ? (
+                <view className="RuntimeDelay">
+                  <Badge kind="reverse" label={`DELAYED ${overMin}`} />
+                </view>
+              ) : null}
+            </view>
+          ) : null}
+
+          <view className="RuntimeNext">
+            {nextItem && nextRow ? (
+              <view className="RuntimeNextRows">
+                <view className="RuntimeNextRow">
+                  <text className="RuntimeNextLabel">NEXT</text>
+                  <text className="RuntimeNextValue">
+                    {nextItem.name.length > 0 ? nextItem.name : '未命名环节'}
+                  </text>
+                </view>
+                <view className="RuntimeNextRow">
+                  <text className="RuntimeNextLabel">AT</text>
+                  <text className="RuntimeNextTime">
+                    {formatClockDisplay(nextRow.displayStart)}
+                  </text>
+                </view>
               </view>
-            </view>
-          ) : (
-            <view className="RuntimeNextRow">
-              <text className="RuntimeNextLabel">END</text>
-              <text className="RuntimeNextValue">最后一段</text>
-            </view>
-          )}
+            ) : (
+              <view className="RuntimeNextRow">
+                <text className="RuntimeNextLabel">END</text>
+                <text className="RuntimeNextValue">最后一段</text>
+              </view>
+            )}
+          </view>
         </view>
-      </view>
 
-      <view className="RuntimeSyncBar">
-        <Badge kind="outline" label={`V${runtime.execVersion}`} />
-        <view
-          className="RuntimeSyncBtn"
-          bindtap={() => {
-            setSyncOpen(true);
-          }}
-        >
-          <text className="RuntimeSyncBtnText">同步码</text>
-        </view>
-      </view>
-
-      <view className="RuntimeActions">
-        {role === 'follower' ? (
-          <text className="RuntimeReadonly">本设备为跟随角色，不能推进环节</text>
-        ) : (
-          <view className="RuntimeActionsInner">
-            <view className="RuntimeActionRow">
-              <Button label="DONE · 完成" className="RuntimeDone" onTap={doDone} />
-              <Button
-                label="SHIFT · 顺延"
-                kind="secondary"
-                className="RuntimeShift"
-                disabled={nextItem === null}
-                onTap={() => {
-                  setShiftOpen(true);
-                }}
-              />
-            </view>
-
+        {shiftOpen ? null : (
+          <view className="RuntimeSyncBar">
+            <Badge kind="outline" label={`V${runtime.execVersion}`} />
             <view
-              className="RuntimeHold"
-              bindtouchstart={startHold}
-              bindtouchend={stopHold}
-              bindtouchcancel={stopHold}
+              className="RuntimeSyncBtn"
+              bindtap={() => {
+                setSyncOpen(true);
+              }}
             >
-              <text className="RuntimeHoldText">HOLD 3S · 跳过</text>
-              <view className="RuntimeHoldTrack">
-                <view
-                  className="RuntimeHoldFill"
-                  style={{ width: `${Math.round(holdProgress * 100)}%` }}
-                />
-              </view>
+              <text className="RuntimeSyncBtnText">同步码</text>
             </view>
           </view>
         )}
+
+        {shiftOpen ? null : (
+          <view className="RuntimeActions">
+            {role === 'follower' ? (
+              <text className="RuntimeReadonly">本设备为跟随角色，不能推进环节</text>
+            ) : (
+              <view className="RuntimeActionsInner">
+                <view className="RuntimeActionRow">
+                  <Button label="DONE · 完成" className="RuntimeDone" onTap={doDone} />
+                  <Button
+                    label="SHIFT · 顺延"
+                    kind="secondary"
+                    className="RuntimeShift"
+                    disabled={nextItem === null}
+                    onTap={() => {
+                      setShiftOpen(true);
+                    }}
+                  />
+                </view>
+
+                <view
+                  className="RuntimeHold"
+                  bindtouchstart={startHold}
+                  bindtouchend={stopHold}
+                  bindtouchcancel={stopHold}
+                >
+                  <text className="RuntimeHoldText">HOLD 3S · 跳过</text>
+                  <view className="RuntimeHoldTrack">
+                    <view
+                      className="RuntimeHoldFill"
+                      style={{ width: `${Math.round(holdProgress * 100)}%` }}
+                    />
+                  </view>
+                </view>
+              </view>
+            )}
+          </view>
+        )}
+
+        {shiftOpen ? (
+          <ShiftPanel
+            sheet={sheet}
+            runtime={runtime}
+            nowMin={minuteOfDay(nowMs)}
+            onCancel={() => {
+              setShiftOpen(false);
+            }}
+            onConfirm={(startMin) => {
+              const next = applyShift(sheet, runtime, startMin);
+              if (next === runtime) {
+                return;
+              }
+              saveRuntime(next);
+              setRuntime(next);
+              setShiftOpen(false);
+            }}
+          />
+        ) : null}
+
+        {syncOpen ? (
+          <SyncPanel
+            sheet={sheet}
+            runtime={runtime}
+            onClose={() => {
+              setSyncOpen(false);
+            }}
+          />
+        ) : null}
       </view>
-
-      {shiftOpen ? (
-        <ShiftPanel
-          sheet={sheet}
-          runtime={runtime}
-          nowMin={minuteOfDay(nowMs)}
-          onCancel={() => {
-            setShiftOpen(false);
-          }}
-          onConfirm={(startMin) => {
-            const next = applyShift(sheet, runtime, startMin);
-            if (next === runtime) {
-              return;
-            }
-            saveRuntime(next);
-            setRuntime(next);
-            setShiftOpen(false);
-          }}
-        />
-      ) : null}
-
-      {syncOpen ? (
-        <SyncPanel
-          sheet={sheet}
-          runtime={runtime}
-          onClose={() => {
-            setSyncOpen(false);
-          }}
-        />
-      ) : null}
     </view>
   );
 }
