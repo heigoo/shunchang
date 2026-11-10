@@ -8,6 +8,18 @@ import { EditorScreen } from '../EditorScreen';
 
 const SHEET_ID = 'sheet-editor';
 
+function inputValue(element: Element | null): string | null {
+  if (!element) {
+    return null;
+  }
+  const attribute = element.getAttribute('value');
+  if (attribute !== null) {
+    return attribute;
+  }
+  const property = (element as HTMLInputElement).value;
+  return typeof property === 'string' ? property : null;
+}
+
 function makeSheet(): Sheet {
   return {
     id: SHEET_ID,
@@ -63,7 +75,12 @@ test('renders the sheet name, numbering and computed plan times', async () => {
   );
 
   const nameInput = container.querySelector('.EditorName');
-  expect(nameInput?.getAttribute('default-value')).toBe('秋季婚礼流程');
+  expect(inputValue(nameInput)).toBe('秋季婚礼流程');
+
+  const cells = Array.from(container.querySelectorAll('.CellInput'));
+  expect(inputValue(cells[0] ?? null)).toBe('迎宾签到');
+  expect(inputValue(cells[1] ?? null)).toBe('60');
+
   expect(await findByText('001')).toBeInTheDocument();
   expect(await findByText(/08:00/)).toBeInTheDocument();
   expect(await findByText(/09:00/)).toBeInTheDocument();

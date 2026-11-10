@@ -49,9 +49,54 @@ function pad3(value: number): string {
   return String(value);
 }
 
-function inputValue(event: any): string {
-  const detail = event && event.detail ? event.detail : null;
-  return detail && typeof detail.value === 'string' ? detail.value : '';
+interface DraftInputProps {
+  value: string;
+  placeholder?: string;
+  maxlength?: number;
+  type?: 'number' | 'text';
+  className?: string;
+  onInput?: (text: string) => void;
+  onCommit?: (text: string) => boolean;
+}
+
+function DraftInput(props: DraftInputProps) {
+  const { value, onInput, onCommit } = props;
+  const [text, setText] = useState(value);
+
+  useEffect(() => {
+    setText(value);
+  }, [value]);
+
+  const read = (event: any): string => {
+    const detail = event && event.detail ? event.detail : null;
+    return detail && typeof detail.value === 'string' ? detail.value : '';
+  };
+
+  // `value` is the controlled-input attribute ReactLynx renders, but the
+  // installed @lynx-js/types does not declare it, so it is spread in.
+  const controlled: { value: string } = { value: text };
+
+  return (
+    <input
+      {...controlled}
+      className={props.className}
+      placeholder={props.placeholder}
+      maxlength={props.maxlength}
+      type={props.type}
+      bindinput={(event) => {
+        const next = read(event);
+        setText(next);
+        onInput?.(next);
+      }}
+      bindblur={(event) => {
+        const next = read(event);
+        const accepted = onCommit ? onCommit(next) : true;
+        if (!accepted) {
+          setText(value);
+        }
+      }}
+    />
+  );
 }
 
 function currentMinuteOfDay(): number {
@@ -88,7 +133,6 @@ export function EditorScreen(props: EditorScreenProps) {
     null,
   );
   const [startError, setStartError] = useState(false);
-  const [inputRev, setInputRev] = useState<Record<string, number>>({});
   const [expanded, setExpanded] = useState<number | null>(null);
   const [lockEdit, setLockEdit] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{
@@ -107,11 +151,6 @@ export function EditorScreen(props: EditorScreenProps) {
       clearInterval(timer);
     };
   }, []);
-
-  const revOf = (key: string): number => inputRev[key] ?? 0;
-  const bump = (key: string) => {
-    setInputRev((previous) => ({ ...previous, [key]: (previous[key] ?? 0) + 1 }));
-  };
 
   const apply = (next: Sheet | null) => {
     if (!next) {
@@ -149,52 +188,51 @@ export function EditorScreen(props: EditorScreenProps) {
     });
   }
 
-  const handleName = (event: any) => {
-    apply(setSheetName(sheet, inputValue(event)));
+  const handleName = (text: string) => {
+    apply(setSheetName(sheet, text));
   };
 
-  const handleStartBlur = (event: any) => {
-    const next = setStartTime(sheet, inputValue(event));
-    bump('start');
+  const handleStartCommit = (text: string): boolean => {
+    const next = setStartTime(sheet, text);
     if (!next) {
       setStartError(true);
-      return;
+      return false;
     }
     setStartError(false);
     apply(next);
+    return true;
   };
 
   const handleField = (
     index: number,
     field: 'name' | 'owner' | 'note',
-    event: any,
+    value: string,
   ) => {
-    const value = inputValue(event);
     const patch: Partial<Item> =
       field === 'name' ? { name: value } : field === 'owner' ? { owner: value } : { note: value };
     apply(updateItemField(sheet, index, patch));
   };
 
-  const commitDuration = (index: number, item: Item, event: any) => {
-    const next = setItemDuration(sheet, index, inputValue(event));
-    bump(`dur-${item.id}`);
+  const commitDuration = (index: number, item: Item, text: string): boolean => {
+    const next = setItemDuration(sheet, index, text);
     if (!next) {
       setRowError({ id: item.id, message: '时长需为 1–600 的整数' });
-      return;
+      return false;
     }
     setRowError(null);
     apply(next);
+    return true;
   };
 
-  const commitLock = (index: number, item: Item, event: any) => {
-    const next = setItemLockAt(sheet, index, inputValue(event));
-    bump(`lock-${item.id}`);
+  const commitLock = (index: number, item: Item, text: string): boolean => {
+    const next = setItemLockAt(sheet, index, text);
     if (!next) {
       setRowError({ id: item.id, message: '时间格式应为 HH:MM' });
-      return;
+      return false;
     }
     setRowError(null);
     apply(next);
+    return true;
   };
 
   const handleToggleLock = (index: number) => {
@@ -273,7 +311,6 @@ export function EditorScreen(props: EditorScreenProps) {
     }
 
     const editing = lockEdit === index;
-    const key = `lock-${item.id}`;
     return (
       <view className="LockCell">
         <view
@@ -286,15 +323,12 @@ export function EditorScreen(props: EditorScreenProps) {
         </view>
         {editing ? (
           <view className="LockEditRow">
-            <input
-              key={`${key}-${revOf(key)}`}
+            <DraftInput
               className="LockInput"
               placeholder="HH:MM"
               maxlength={5}
-              default-value={item.lockAt === null ? '' : formatClock(item.lockAt)}
-              bindblur={(event) => {
-                commitLock(index, item, event);
-              }}
+              value={item.lockAt === null ? '' : formatClock(item.lockAt)}
+              onCommit={(text) => commitLock(index, item, text)}
             />
             <view
               className="LockOff"
@@ -318,7 +352,6 @@ export function EditorScreen(props: EditorScreenProps) {
     const classes = ['RowWrap'];
     if (index % 2 === 1) classes.push('RowWrap--alt');
     if (index === nowIndex) classes.push('RowWrap--now');
-    const durKey = `dur-${item.id}`;
     const error = rowError && rowError.id === item.id ? rowError.message : null;
 
     return (
@@ -331,47 +364,44 @@ export function EditorScreen(props: EditorScreenProps) {
             <text className="CellTime">{formatClock(row.planStart)}</text>
           </view>
           <view className="ColSegName">
-            <input
+            <DraftInput
               className="CellInput"
               maxlength={20}
               placeholder="环节名称"
-              default-value={item.name}
-              bindinput={(event) => {
-                handleField(index, 'name', event);
+              value={item.name}
+              onInput={(text) => {
+                handleField(index, 'name', text);
               }}
             />
           </view>
           <view className="ColDur">
-            <input
-              key={`${durKey}-${revOf(durKey)}`}
+            <DraftInput
               className="CellInput CellInput--mono CellInput--right"
               type="number"
               maxlength={3}
-              default-value={durationText(item)}
-              bindblur={(event) => {
-                commitDuration(index, item, event);
-              }}
+              value={durationText(item)}
+              onCommit={(text) => commitDuration(index, item, text)}
             />
           </view>
           <view className="ColOwner">
-            <input
+            <DraftInput
               className="CellInput"
               maxlength={20}
               placeholder="负责人"
-              default-value={item.owner}
-              bindinput={(event) => {
-                handleField(index, 'owner', event);
+              value={item.owner}
+              onInput={(text) => {
+                handleField(index, 'owner', text);
               }}
             />
           </view>
           <view className="ColNote">
-            <input
+            <DraftInput
               className="CellInput"
               maxlength={200}
               placeholder="备注"
-              default-value={item.note}
-              bindinput={(event) => {
-                handleField(index, 'note', event);
+              value={item.note}
+              onInput={(text) => {
+                handleField(index, 'note', text);
               }}
             />
           </view>
@@ -413,8 +443,6 @@ export function EditorScreen(props: EditorScreenProps) {
   const renderCard = (item: Item, index: number) => {
     const row = timeline.rows[index];
     const open = expanded === index;
-    const durKey = `dur-${item.id}`;
-    const lockKey = `lock-${item.id}`;
     const error = rowError && rowError.id === item.id ? rowError.message : null;
 
     return (
@@ -439,51 +467,48 @@ export function EditorScreen(props: EditorScreenProps) {
           <view className="CardBody">
             <view className="Field">
               <text className="FieldLabel">名称</text>
-              <input
+              <DraftInput
                 className="FieldInput"
                 maxlength={20}
                 placeholder="环节名称"
-                default-value={item.name}
-                bindinput={(event) => {
-                  handleField(index, 'name', event);
+                value={item.name}
+                onInput={(text) => {
+                  handleField(index, 'name', text);
                 }}
               />
             </view>
             <view className="Field">
               <text className="FieldLabel">时长</text>
-              <input
-                key={`${durKey}-${revOf(durKey)}`}
+              <DraftInput
                 className="FieldInput FieldInput--mono"
                 type="number"
                 maxlength={3}
-                default-value={durationText(item)}
-                bindblur={(event) => {
-                  commitDuration(index, item, event);
-                }}
+                value={durationText(item)}
+                onCommit={(text) => commitDuration(index, item, text)}
               />
               <text className="FieldUnit">分钟</text>
             </view>
             <view className="Field">
               <text className="FieldLabel">负责人</text>
-              <input
+              <DraftInput
                 className="FieldInput"
                 maxlength={20}
                 placeholder="负责人"
-                default-value={item.owner}
-                bindinput={(event) => {
-                  handleField(index, 'owner', event);
+                value={item.owner}
+                onInput={(text) => {
+                  handleField(index, 'owner', text);
                 }}
               />
             </view>
             <view className="Field">
               <text className="FieldLabel">备注</text>
-              <input
+              <DraftInput
                 className="FieldInput"
                 maxlength={200}
                 placeholder="备注"
-                default-value={item.note}
-                bindinput={(event) => {
-                  handleField(index, 'note', event);
+                value={item.note}
+                onInput={(text) => {
+                  handleField(index, 'note', text);
                 }}
               />
             </view>
@@ -492,15 +517,12 @@ export function EditorScreen(props: EditorScreenProps) {
               {item.locked === true ? (
                 <view className="CardLockGroup">
                   <Badge kind="stamp" label={lockText(item)} />
-                  <input
-                    key={`${lockKey}-${revOf(lockKey)}`}
+                  <DraftInput
                     className="FieldInput FieldInput--lock"
                     placeholder="HH:MM"
                     maxlength={5}
-                    default-value={item.lockAt === null ? '' : formatClock(item.lockAt)}
-                    bindblur={(event) => {
-                      commitLock(index, item, event);
-                    }}
+                    value={item.lockAt === null ? '' : formatClock(item.lockAt)}
+                    onCommit={(text) => commitLock(index, item, text)}
                   />
                   <view
                     className="LockOff"
@@ -569,12 +591,14 @@ export function EditorScreen(props: EditorScreenProps) {
             <view className="EditorBack" bindtap={onBack}>
               <text className="EditorBackText">← 手册</text>
             </view>
-            <input
+            <DraftInput
               className="EditorName"
               maxlength={40}
               placeholder="未命名手册"
-              default-value={sheet.name}
-              bindinput={handleName}
+              value={sheet.name || ''}
+              onInput={(text) => {
+                handleName(text);
+              }}
             />
             <view
               className="EditorExport"
@@ -600,13 +624,12 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
             <view className="MetaItem">
               <text className="MetaLabel">START</text>
-              <input
-                key={`start-${revOf('start')}`}
+              <DraftInput
                 className="StartInput"
                 maxlength={5}
                 placeholder="HH:MM"
-                default-value={formatClock(sheet.startMin)}
-                bindblur={handleStartBlur}
+                value={formatClock(sheet.startMin)}
+                onCommit={(text) => handleStartCommit(text)}
               />
             </view>
             <view className="MetaItem">
