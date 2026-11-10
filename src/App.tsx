@@ -3,6 +3,7 @@ import './App.css';
 
 import { useState } from '@lynx-js/react';
 
+import { EditorScreen } from './app/EditorScreen';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
 import {
@@ -111,7 +112,15 @@ export function App() {
 
   switch (route.view) {
     case 'editor':
-      return (
+      return route.sheetId ? (
+        <EditorScreen
+          sheetId={route.sheetId}
+          onBack={back}
+          onStartRuntime={(id) => {
+            navigate('runtime', id);
+          }}
+        />
+      ) : (
         <PlaceholderScreen title="编排台" subtitle={subtitle} onBack={back} />
       );
     case 'runtime':

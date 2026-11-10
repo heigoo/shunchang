@@ -23,6 +23,10 @@ export interface Sheet {
   status: SheetStatus;
   version: number;
   updatedAt: number;
+  /**
+   * 已发布手册存在未发布的修改。草稿不置该标记。
+   */
+  dirty?: boolean;
 }
 
 export interface RuntimeState {

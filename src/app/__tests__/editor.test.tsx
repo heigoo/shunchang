@@ -1,0 +1,66 @@
+import '@testing-library/jest-dom';
+import { render } from '@lynx-js/react/testing-library';
+import { beforeEach, expect, test } from '@rstest/core';
+
+import type { Sheet } from '../../domain/types';
+import { clearAllForTest, saveSheet } from '../../store/repository';
+import { EditorScreen } from '../EditorScreen';
+
+const SHEET_ID = 'sheet-editor';
+
+function makeSheet(): Sheet {
+  return {
+    id: SHEET_ID,
+    name: '秋季婚礼流程',
+    date: '2026-11-10',
+    startMin: 480,
+    items: [
+      {
+        id: 'item-a',
+        name: '迎宾签到',
+        durationMin: 60,
+        owner: '督导',
+        note: '',
+        lockAt: null,
+      },
+      {
+        id: 'item-b',
+        name: '仪式开始',
+        durationMin: 30,
+        owner: '主持',
+        note: '',
+        lockAt: null,
+      },
+      {
+        id: 'item-c',
+        name: '合影',
+        durationMin: 45,
+        owner: '摄影',
+        note: '',
+        lockAt: null,
+      },
+    ],
+    status: 'draft',
+    version: 1,
+    updatedAt: Date.now(),
+  };
+}
+
+beforeEach(() => {
+  clearAllForTest();
+});
+
+test('renders the sheet name, numbering and computed plan times', async () => {
+  saveSheet(makeSheet());
+
+  const { container, findByText } = render(
+    <EditorScreen sheetId={SHEET_ID} onBack={() => {}} onStartRuntime={() => {}} />,
+  );
+
+  const nameInput = container.querySelector('.EditorName');
+  expect(nameInput?.getAttribute('default-value')).toBe('秋季婚礼流程');
+  expect(await findByText('001')).toBeInTheDocument();
+  expect(await findByText(/08:00/)).toBeInTheDocument();
+  expect(await findByText(/09:00/)).toBeInTheDocument();
+  expect(await findByText(/09:30/)).toBeInTheDocument();
+});
