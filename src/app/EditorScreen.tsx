@@ -387,7 +387,7 @@ export function EditorScreen(props: EditorScreenProps) {
             <DraftInput
               className="CellInput"
               maxlength={20}
-              placeholder="负责人"
+              placeholder=""
               value={item.owner}
               onInput={(text) => {
                 handleField(index, 'owner', text);
@@ -398,7 +398,7 @@ export function EditorScreen(props: EditorScreenProps) {
             <DraftInput
               className="CellInput"
               maxlength={200}
-              placeholder="备注"
+              placeholder=""
               value={item.note}
               onInput={(text) => {
                 handleField(index, 'note', text);
@@ -493,7 +493,7 @@ export function EditorScreen(props: EditorScreenProps) {
               <DraftInput
                 className="FieldInput"
                 maxlength={20}
-                placeholder="负责人"
+                placeholder=""
                 value={item.owner}
                 onInput={(text) => {
                   handleField(index, 'owner', text);
@@ -505,7 +505,7 @@ export function EditorScreen(props: EditorScreenProps) {
               <DraftInput
                 className="FieldInput"
                 maxlength={200}
-                placeholder="备注"
+                placeholder=""
                 value={item.note}
                 onInput={(text) => {
                   handleField(index, 'note', text);
