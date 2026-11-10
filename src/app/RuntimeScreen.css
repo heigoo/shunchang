@@ -97,10 +97,13 @@
 .RuntimeCountRow {
   display: flex;
   flex-direction: row;
-  align-items: flex-end;
+  flex-wrap: nowrap;
+  align-items: baseline;
 }
 
 .RuntimeCount {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: 76px;
   font-weight: 500;
@@ -108,7 +111,15 @@
   color: var(--amber);
 }
 
+/* 窄屏长倒计时（含小时）压缩字号，保证与单位同行不折断 */
+.RuntimeCount--compact {
+  font-size: 52px;
+  line-height: 60px;
+  letter-spacing: -0.03em;
+}
+
 .RuntimeUnit {
+  flex-shrink: 0;
   margin-left: 10px;
   margin-bottom: 14px;
   font-family: var(--mono);

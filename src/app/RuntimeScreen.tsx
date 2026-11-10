@@ -316,6 +316,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       ? null
       : secondsUntil(view.countdownTargetMin, nowMs);
   const countdown = secondsLeft === null ? null : formatCountdown(secondsLeft);
+  const compactCountdown = !wideActions && countdown !== null && countdown.text.length > 5;
   const overMin = secondsLeft !== null && secondsLeft < 0 ? Math.ceil(-secondsLeft / 60) : 0;
 
   let caption = '剩余';
@@ -363,7 +364,9 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           {countdown ? (
             <view className="RuntimeCountBlock">
               <view className="RuntimeCountRow">
-                <text className="RuntimeCount">
+                <text
+                  className={compactCountdown ? 'RuntimeCount RuntimeCount--compact' : 'RuntimeCount'}
+                >
                   {`${countdown.sign === 'over' ? MINUS : ''}${countdown.text}`}
                 </text>
                 <text className="RuntimeUnit">
