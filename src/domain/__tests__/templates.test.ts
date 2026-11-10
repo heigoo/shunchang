@@ -1,0 +1,70 @@
+import { describe, expect, it } from '@rstest/core';
+
+import { TEMPLATES, createSheetFromTemplate } from '../templates';
+import type { WeddingTemplate } from '../templates';
+
+const NOW = 1762732800000;
+
+const LOCKED_NAME: Record<WeddingTemplate['id'], string> = {
+  chinese: '敬酒开席',
+  western: '晚宴开席',
+  annual: '晚宴',
+};
+
+describe('templates', () => {
+  it('offers three templates with ten segments each', () => {
+    expect(TEMPLATES).toHaveLength(3);
+    TEMPLATES.forEach((template) => {
+      expect(template.items).toHaveLength(10);
+    });
+  });
+
+  it('keeps the banquet segment locked until a lock time is filled', () => {
+    TEMPLATES.forEach((template) => {
+      const lockedTemplateItem = template.items.find(
+        (entry) => entry.locked === true,
+      );
+      expect(lockedTemplateItem).toBeDefined();
+      expect(lockedTemplateItem?.name).toBe(LOCKED_NAME[template.id]);
+
+      const sheet = createSheetFromTemplate(template.id, NOW);
+      expect(sheet).not.toBeNull();
+
+      const lockedItem = sheet!.items.find(
+        (entry) => entry.name === LOCKED_NAME[template.id],
+      );
+      expect(lockedItem).toBeDefined();
+      expect(lockedItem!.locked).toBe(true);
+      expect(lockedItem!.lockAt).toBeNull();
+    });
+  });
+
+  it('creates an independent draft sheet with fresh ids', () => {
+    const sheet = createSheetFromTemplate('chinese', NOW);
+    expect(sheet).not.toBeNull();
+
+    const created = sheet!;
+    expect(created.name).toBe('中式婚礼流程');
+    expect(created.status).toBe('draft');
+    expect(created.version).toBe(1);
+    expect(created.startMin).toBe(480);
+    expect(created.updatedAt).toBe(NOW);
+    expect(created.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(created.items).toHaveLength(10);
+
+    const ids = new Set(created.items.map((entry) => entry.id));
+    expect(ids.size).toBe(10);
+
+    const again = createSheetFromTemplate('chinese', NOW);
+    expect(again).not.toBeNull();
+    expect(again!.id).not.toBe(created.id);
+    expect(again!.items[0].id).not.toBe(created.items[0].id);
+
+    expect(created.items).not.toBe(TEMPLATES[0].items);
+    expect(created.items[0]).not.toBe(TEMPLATES[0].items[0]);
+  });
+
+  it('returns null for an unknown template id', () => {
+    expect(createSheetFromTemplate('unknown' as any, NOW)).toBeNull();
+  });
+});

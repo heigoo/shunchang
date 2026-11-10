@@ -1,94 +1,69 @@
-.Screen {
+.Placeholder {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f1eee6;
+  background-color: var(--bg);
 }
 
-.Header {
+.PlaceholderHeader {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px 24px;
+  padding: 16px 24px 14px 24px;
 }
 
-.Brand {
+.PlaceholderBrand {
   font-size: 20px;
-  font-weight: 700;
-  color: #15140f;
+  font-weight: 750;
+  color: var(--fg);
 }
 
-.SheetCode {
-  font-family: monospace;
-  font-size: 11px;
-  color: #8b887a;
+.PlaceholderMeta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--fg-3);
 }
 
-.Rule {
+.PlaceholderRule {
   height: 1px;
-  background-color: #dcd6c6;
+  background-color: var(--rule);
 }
 
-.Body {
+.PlaceholderBody {
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 28px 24px;
+  align-items: flex-start;
+  padding: 32px 24px;
 }
 
-.SectionTitle {
-  font-size: 15px;
-  color: #4b4941;
+.PlaceholderTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fg);
 }
 
-.Empty {
-  display: flex;
-  flex-direction: column;
-  margin-top: 40px;
-  padding: 24px 0;
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: #dcd6c6;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: #dcd6c6;
-}
-
-.EmptyTitle {
-  font-size: 17px;
-  color: #15140f;
-}
-
-.EmptyHint {
+.PlaceholderSubtitle {
   margin-top: 8px;
-  font-size: 13px;
-  color: #8b887a;
+  font-size: 14px;
+  color: var(--fg-2);
 }
 
-.Footer {
+.PlaceholderHint {
+  margin-top: 22px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--fg-3);
+}
+
+.PlaceholderFooter {
   display: flex;
   flex-direction: column;
   padding: 16px 24px 32px 24px;
   border-top-width: 1px;
   border-top-style: solid;
-  border-top-color: #dcd6c6;
-}
-
-.PrimaryButton {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  height: 44px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #15140f;
-  border-radius: 2px;
-  background-color: #15140f;
-}
-
-.PrimaryButtonLabel {
-  font-size: 15px;
-  color: #f1eee6;
+  border-top-color: var(--rule);
 }
