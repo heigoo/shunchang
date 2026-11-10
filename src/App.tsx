@@ -8,6 +8,7 @@ import { FollowScreen } from './app/FollowScreen';
 import { applyLaunchHash, importErrorMessage } from './app/importFlow';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
+import { PrintScreen } from './app/PrintScreen';
 import { RuntimeScreen } from './app/RuntimeScreen';
 import {
   consumeStorageError,
@@ -137,6 +138,9 @@ export function App() {
           onStartRuntime={(id) => {
             navigate('runtime', id);
           }}
+          onPrint={(id) => {
+            navigate('print', id);
+          }}
         />
       ) : (
         <PlaceholderScreen title="编排台" subtitle={subtitle} onBack={back} />
@@ -165,7 +169,16 @@ export function App() {
         />
       );
     case 'print':
-      return <PlaceholderScreen title="打印" subtitle={subtitle} onBack={back} />;
+      return route.sheetId ? (
+        <PrintScreen
+          sheetId={route.sheetId}
+          onBack={() => {
+            navigate('list');
+          }}
+        />
+      ) : (
+        <PlaceholderScreen title="打印" subtitle={subtitle} onBack={back} />
+      );
     default:
       return null;
   }

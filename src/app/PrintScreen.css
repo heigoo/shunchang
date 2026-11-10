@@ -1,0 +1,399 @@
+/* 打印导出：光场纸面 · A4 横版流程表 */
+
+.PrintScreen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 88px;
+  background-color: var(--paper);
+}
+
+.PrintPages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+
+.PrintPage {
+  display: flex;
+  flex-direction: column;
+  width: 1122px;
+  min-height: 793px;
+  margin-bottom: 24px;
+  padding: 36px;
+  background-color: #ffffff;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #dcd6c6;
+}
+
+/* ---------- 页眉 ---------- */
+
+.PrintHead {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.PrintHeadMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.PrintTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #15140f;
+}
+
+.PrintDate {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #4b4941;
+}
+
+.PrintHeadAside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 18px;
+}
+
+.PrintQrBox {
+  display: flex;
+  width: 96px;
+  height: 96px;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+}
+
+.PrintQrFallback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+}
+
+.PrintQrFallbackText {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #8b887a;
+}
+
+.PrintSheetNo {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #15140f;
+}
+
+.PrintMetaRow {
+  display: flex;
+  flex-direction: row;
+  margin-top: 12px;
+  padding-bottom: 8px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #15140f;
+}
+
+.PrintMetaText {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #4b4941;
+}
+
+/* ---------- 表格 ---------- */
+
+.PrintTable {
+  display: flex;
+  flex-direction: column;
+}
+
+.PrintTableHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #15140f;
+}
+
+.PrintTh {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #4b4941;
+}
+
+.PrintRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  min-height: 30px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #dcd6c6;
+}
+
+.PrintRow--alt {
+  background-color: #f7f4ec;
+}
+
+.PrintColNo {
+  flex-shrink: 0;
+  width: 44px;
+  padding-right: 6px;
+}
+
+.PrintColTime {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 74px;
+  padding-right: 6px;
+}
+
+.PrintColDur {
+  flex-shrink: 0;
+  width: 78px;
+  padding-right: 6px;
+}
+
+.PrintColSeg {
+  flex: 1;
+  padding-right: 10px;
+}
+
+.PrintColOwner {
+  flex-shrink: 0;
+  width: 100px;
+  padding-right: 10px;
+}
+
+.PrintColNote {
+  flex: 1;
+  padding-right: 4px;
+}
+
+.PrintCellMono {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #15140f;
+}
+
+.PrintCellTime {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #15140f;
+}
+
+.PrintCellLock {
+  margin-top: 1px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #8b887a;
+}
+
+.PrintCellName {
+  font-size: 12px;
+  color: #15140f;
+}
+
+.PrintCellText {
+  font-size: 11px;
+  color: #4b4941;
+}
+
+.PrintCellNote {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #4b4941;
+}
+
+/* ---------- 页脚 ---------- */
+
+.PrintFoot {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #dcd6c6;
+}
+
+.PrintFootText {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #8b887a;
+}
+
+/* ---------- 底部操作条（打印时隐藏） ---------- */
+
+.PrintActions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background-color: var(--paper);
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--paper-3);
+}
+
+.PrintActionsBack {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.PrintActionsPrint {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.PrintActionsHint {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* ---------- 手册不存在 ---------- */
+
+.PrintMissing {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 48px 24px;
+}
+
+.PrintMissingTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.PrintMissingAction {
+  display: flex;
+  flex-direction: column;
+  margin-top: 18px;
+}
+
+/* ---------- 打印 ---------- */
+
+@media print {
+  html,
+  body {
+    background-color: #ffffff;
+  }
+
+  .PrintScreen {
+    min-height: 0;
+    padding-bottom: 0;
+    background-color: #ffffff;
+  }
+
+  .PrintPages {
+    padding: 0;
+  }
+
+  .PrintPage {
+    width: auto;
+    min-height: 0;
+    margin-bottom: 0;
+    padding: 0;
+    border-width: 0;
+    border-style: none;
+    box-shadow: none;
+    page-break-after: always;
+  }
+
+  .PrintPage--last {
+    page-break-after: auto;
+  }
+
+  .PrintActions {
+    display: none;
+  }
+
+  .PrintTitle {
+    font-size: 14px;
+  }
+
+  .PrintDate {
+    font-size: 9px;
+  }
+
+  .PrintMetaText {
+    font-size: 9px;
+  }
+
+  .PrintQrBox {
+    width: 72px;
+    height: 72px;
+  }
+
+  .PrintTh {
+    font-size: 9px;
+  }
+
+  .PrintRow {
+    min-height: 24px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  .PrintCellMono,
+  .PrintCellTime {
+    font-size: 10px;
+  }
+
+  .PrintCellLock {
+    font-size: 9px;
+  }
+
+  .PrintCellName,
+  .PrintCellText,
+  .PrintCellNote {
+    font-size: 10px;
+  }
+
+  .PrintFootText {
+    font-size: 9px;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}

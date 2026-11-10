@@ -29,6 +29,7 @@ export interface EditorScreenProps {
   sheetId: string;
   onBack(): void;
   onStartRuntime(sheetId: string): void;
+  onPrint(sheetId: string): void;
 }
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
@@ -79,7 +80,7 @@ function lockText(item: Item): string {
 }
 
 export function EditorScreen(props: EditorScreenProps) {
-  const { sheetId, onBack, onStartRuntime } = props;
+  const { sheetId, onBack, onStartRuntime, onPrint } = props;
 
   const [sheet, setSheet] = useState<Sheet | null>(() => getSheet(sheetId));
   const [errors, setErrors] = useState<SheetError[] | null>(null);
@@ -575,6 +576,14 @@ export function EditorScreen(props: EditorScreenProps) {
               default-value={sheet.name}
               bindinput={handleName}
             />
+            <view
+              className="EditorExport"
+              bindtap={() => {
+                onPrint(sheet.id);
+              }}
+            >
+              <text className="EditorExportText">导出</text>
+            </view>
             <view className="EditorPublish">
               <Button
                 label="发布"

@@ -54,7 +54,12 @@ test('renders the sheet name, numbering and computed plan times', async () => {
   saveSheet(makeSheet());
 
   const { container, findByText } = render(
-    <EditorScreen sheetId={SHEET_ID} onBack={() => {}} onStartRuntime={() => {}} />,
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={() => {}}
+      onPrint={() => {}}
+    />,
   );
 
   const nameInput = container.querySelector('.EditorName');
