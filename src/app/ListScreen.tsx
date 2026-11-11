@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from '@lynx-js/react';
 
 import { filterSheets } from './listFilter';
 import type { StatusFilter } from './listFilter';
+import { registerBackHandler } from './backBus';
 import { ImportPanel } from './ImportPanel';
 import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
@@ -16,7 +17,7 @@ import {
   listSheets,
   saveSheet,
 } from '../store/repository';
-import { Badge, Button } from '../ui';
+import { Badge, Button, usePresence } from '../ui';
 
 export interface ListScreenProps {
   onOpenSheet(id: string): void;
@@ -80,9 +81,14 @@ export function ListScreen(props: ListScreenProps) {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const createPresence = usePresence(createOpen);
+  const importPresence = usePresence(importOpen);
+  const deletePresence = usePresence(deleteOpen);
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isWide = useIsWide();
@@ -94,6 +100,35 @@ export function ListScreen(props: ListScreenProps) {
       }
     };
   }, []);
+
+  // 退场动画结束后再清掉被删除项，避免面板内容提前消失。
+  useEffect(() => {
+    if (!deletePresence.mounted) {
+      setPendingDelete(null);
+    }
+  }, [deletePresence.mounted]);
+
+  // 返回键优先关闭当前打开的浮层。
+  useEffect(() => {
+    if (!createOpen && !importOpen && !deleteOpen) {
+      return;
+    }
+    return registerBackHandler(() => {
+      if (deleteOpen) {
+        closeDelete();
+        return true;
+      }
+      if (createOpen) {
+        closeCreate();
+        return true;
+      }
+      if (importOpen) {
+        setImportOpen(false);
+        return true;
+      }
+      return false;
+    });
+  }, [createOpen, importOpen, deleteOpen]);
 
   const reload = () => {
     setSheets(listSheets());
@@ -146,11 +181,12 @@ export function ListScreen(props: ListScreenProps) {
   const openDelete = (sheet: Sheet) => {
     setDeleteError(null);
     setPendingDelete(sheet);
+    setDeleteOpen(true);
   };
 
   const closeDelete = () => {
     setDeleteError(null);
-    setPendingDelete(null);
+    setDeleteOpen(false);
   };
 
   const confirmDelete = () => {
@@ -163,7 +199,7 @@ export function ListScreen(props: ListScreenProps) {
       return;
     }
     setDeleteError(null);
-    setPendingDelete(null);
+    setDeleteOpen(false);
     reload();
   };
 
@@ -194,11 +230,12 @@ export function ListScreen(props: ListScreenProps) {
 
   const renderWideRow = (sheet: Sheet, index: number) => {
     const classes =
-      index % 2 === 1 ? 'ListRow ListRow--alt' : 'ListRow';
+      index % 2 === 1 ? 'ListRow ListRow--alt RowIn' : 'ListRow RowIn';
     return (
       <view
         key={sheet.id}
         className={classes}
+        style={{ animationDelay: `${Math.min(index, 8) * 24}ms` }}
         bindtap={() => {
           onOpenSheet(sheet.id);
         }}
@@ -226,11 +263,12 @@ export function ListScreen(props: ListScreenProps) {
 
   const renderNarrowRow = (sheet: Sheet, index: number) => {
     const classes =
-      index % 2 === 1 ? 'NarrowRow NarrowRow--alt' : 'NarrowRow';
+      index % 2 === 1 ? 'NarrowRow NarrowRow--alt RowIn' : 'NarrowRow RowIn';
     return (
       <view
         key={sheet.id}
         className={classes}
+        style={{ animationDelay: `${Math.min(index, 8) * 24}ms` }}
         bindtap={() => {
           onOpenSheet(sheet.id);
         }}
@@ -385,8 +423,9 @@ export function ListScreen(props: ListScreenProps) {
         <text className="ListFooterText">PAGE 1 / 1 · 数据保存在本设备</text>
       </view>
 
-      {importOpen ? (
+      {importPresence.mounted ? (
         <ImportPanel
+          closing={importPresence.closing}
           onClose={() => {
             setImportOpen(false);
           }}
@@ -397,9 +436,15 @@ export function ListScreen(props: ListScreenProps) {
         />
       ) : null}
 
-      {createOpen ? (
-        <view className="Overlay" bindtap={closeCreate}>
-          <view className="Panel" catchtap={() => {}}>
+      {createPresence.mounted ? (
+        <view
+          className={createPresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+          bindtap={closeCreate}
+        >
+          <view
+            className={createPresence.closing ? 'Panel PanelOut' : 'Panel'}
+            catchtap={() => {}}
+          >
             <view className="PanelHeader">
               <view className="PanelHeaderText">
                 <text className="PanelTitle">新建手册</text>
@@ -410,54 +455,69 @@ export function ListScreen(props: ListScreenProps) {
               </view>
             </view>
 
-            <view
-              className="PanelOption"
-              bindtap={() => {
-                createFrom('blank');
-              }}
+            <scroll-view
+              className="PanelOptions"
+              scroll-orientation="vertical"
             >
-              <text className="PanelOptionName">空白手册</text>
-              <view className="PanelOptionMeta">
-                <text className="PanelOptionMetaText">
-                  {createOptionMeta(1, 30)}
-                </text>
-                <text className="PanelOptionArrow">→</text>
-              </view>
-            </view>
-
-            {TEMPLATES.map((template) => {
-              const minutes = template.items.reduce(
-                (sum, entry) => sum + entry.durationMin,
-                0,
-              );
-              return (
-                <view
-                  key={template.id}
-                  className="PanelOption"
-                  bindtap={() => {
-                    createFrom(template.id);
-                  }}
-                >
-                  <view className="PanelOptionLabel">
-                    <text className="PanelOptionName">{template.name}</text>
-                    <text className="PanelOptionTagline">{template.tagline}</text>
-                  </view>
-                  <view className="PanelOptionMeta">
-                    <text className="PanelOptionMetaText">
-                      {createOptionMeta(template.items.length, minutes)}
-                    </text>
-                    <text className="PanelOptionArrow">→</text>
-                  </view>
+              <view
+                className="PanelOption"
+                bindtap={() => {
+                  createFrom('blank');
+                }}
+              >
+                <text className="PanelOptionName">空白手册</text>
+                <view className="PanelOptionMeta">
+                  <text className="PanelOptionMetaText">
+                    {createOptionMeta(1, 30)}
+                  </text>
+                  <text className="PanelOptionArrow">→</text>
                 </view>
-              );
-            })}
+              </view>
+
+              {TEMPLATES.map((template) => {
+                const minutes = template.items.reduce(
+                  (sum, entry) => sum + entry.durationMin,
+                  0,
+                );
+                return (
+                  <view
+                    key={template.id}
+                    className="PanelOption"
+                    bindtap={() => {
+                      createFrom(template.id);
+                    }}
+                  >
+                    <view className="PanelOptionLabel">
+                      <text className="PanelOptionName">{template.name}</text>
+                      <text className="PanelOptionTagline">{template.tagline}</text>
+                    </view>
+                    <view className="PanelOptionMeta">
+                      <text className="PanelOptionMetaText">
+                        {createOptionMeta(template.items.length, minutes)}
+                      </text>
+                      <text className="PanelOptionArrow">→</text>
+                    </view>
+                  </view>
+                );
+              })}
+            </scroll-view>
           </view>
         </view>
       ) : null}
 
-      {pendingDelete ? (
-        <view className="Overlay" bindtap={closeDelete}>
-          <view className="Panel Panel--confirm" catchtap={() => {}}>
+      {deletePresence.mounted && pendingDelete ? (
+        <view
+          className={deletePresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+          bindtap={closeDelete}
+        >
+          <view
+            className={
+              deletePresence.closing
+                ? 'Panel Panel--confirm PanelOut'
+                : 'Panel Panel--confirm'
+            }
+            catchtap={() => {}}
+          >
             <view className="PanelHeader">
               <text className="PanelTitle">删除手册</text>
             </view>
