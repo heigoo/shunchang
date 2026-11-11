@@ -73,10 +73,10 @@ test('renders the follower view with sync trail and item states', async () => {
   );
 
   expect(await findByText('秋季婚礼流程')).toBeInTheDocument();
-  expect(await findByText(/V3/)).toBeInTheDocument();
+  expect(await findByText(/第 3 版/)).toBeInTheDocument();
   expect(await findByText(/同步于/)).toBeInTheDocument();
   expect(await findByText('已完成')).toBeInTheDocument();
   expect(await findByText('进行中')).toBeInTheDocument();
-  expect(queryByText(/DONE/)).toBeNull();
+  expect(queryByText('完成本环节')).toBeNull();
   expect(queryByText(/顺延/)).toBeNull();
 });

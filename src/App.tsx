@@ -86,7 +86,7 @@ function PlaceholderScreen(props: PlaceholderProps) {
     <view className={classes}>
       <view className="PlaceholderHeader">
         <text className="PlaceholderBrand">顺场</text>
-        <text className="PlaceholderMeta">SCHEDULE SHEET / 占位页</text>
+        <text className="PlaceholderMeta">现场调度 · 占位页</text>
       </view>
 
       <view className="PlaceholderRule" />

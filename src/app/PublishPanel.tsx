@@ -31,7 +31,7 @@ export function PublishPanel(props: PublishPanelProps) {
         catchtap={() => {}}
       >
         <view className="PublishHead">
-          <text className="PublishTitle">{`已发布 V${sheet.version}`}</text>
+          <text className="PublishTitle">{`已发布 · 第 ${sheet.version} 版`}</text>
           <text className="PublishSubtitle">
             扫码即用 · 接收方打开后进入跟随视图
           </text>
@@ -44,7 +44,7 @@ export function PublishPanel(props: PublishPanelProps) {
                 <QrCode value={url} size={180} />
               </view>
               <text className="PublishQrCaption">
-                {`SCAN TO FOLLOW · ${payload.length} B`}
+                {`扫码跟随 · ${payload.length} 字节`}
               </text>
             </view>
           ) : (
@@ -63,7 +63,7 @@ export function PublishPanel(props: PublishPanelProps) {
           {web ? (
             <view className="PublishExport">
               <Button
-                label="导出 .json"
+                label="导出文件"
                 kind="secondary"
                 block
                 onTap={() => {

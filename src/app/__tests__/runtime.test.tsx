@@ -50,6 +50,6 @@ test('renders the execution console for a published sheet', async () => {
   );
 
   expect(await findByText('秋季婚礼流程')).toBeInTheDocument();
-  expect(await findByText('SEG 001 / 002')).toBeInTheDocument();
-  expect(await findByText('DONE · 完成')).toBeInTheDocument();
+  expect(await findByText('环节 001 / 002')).toBeInTheDocument();
+  expect(await findByText('完成本环节')).toBeInTheDocument();
 });

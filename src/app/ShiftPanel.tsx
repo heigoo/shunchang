@@ -97,7 +97,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
           <view className="ShiftSheen" />
           <view className="ShiftInner">
             <view className="ShiftHead">
-              <text className="ShiftLabel">SHIFT · 顺延至</text>
+              <text className="ShiftLabel">顺延至</text>
               <view className="ShiftCancel" catchtap={onCancel}>
                 <text className="ShiftCancelText">取消</text>
               </view>
@@ -141,7 +141,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
                 <view className="ShiftRows">
                   {preview.rows.map((row) => (
                     <view className="ShiftRow" key={`row-${row.index}`}>
-                      <text className="ShiftRowName">{`NEXT ${row.name}`}</text>
+                      <text className="ShiftRowName">{`下一环节 · ${row.name}`}</text>
                       <text className="ShiftRowTime">{row.time}</text>
                     </view>
                   ))}

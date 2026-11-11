@@ -119,7 +119,7 @@ export function FollowScreen(props: FollowScreenProps) {
     return (
       <view className="Follow theme-dark">
         <view className="FollowGuide">
-          <text className="FollowGuideLabel">FOLLOW · 跟随</text>
+          <text className="FollowGuideLabel">现场跟随</text>
           <text className="FollowGuideTitle">跟随现场</text>
           <text className="FollowGuideText">
             扫描督导的二维码，或输入六位短码载入手册
@@ -154,7 +154,7 @@ export function FollowScreen(props: FollowScreenProps) {
   const currentRow = currentIndex >= 0 ? timeline.rows[currentIndex] : null;
   const ended = runtime !== null && runtime.currentIndex >= total;
 
-  const segLabel = `SEG ${
+  const segLabel = `环节 ${
     currentIndex >= 0 ? pad3(currentIndex + 1) : '—'
   } / ${pad3(total)}`;
 
@@ -241,7 +241,7 @@ export function FollowScreen(props: FollowScreenProps) {
               <view className="FollowCurrentLock">
                 <Badge
                   kind="stamp"
-                  label={`LOCK ${formatClockDisplay(currentItem.lockAt)}`}
+                  label={`锁定 ${formatClockDisplay(currentItem.lockAt)}`}
                 />
               </view>
             ) : null}
@@ -325,7 +325,7 @@ export function FollowScreen(props: FollowScreenProps) {
                   </text>
                   {entry.item.lockAt !== null ? (
                     <text className="FollowRowLock">
-                      {`[LOCK ${formatClockDisplay(entry.item.lockAt)}]`}
+                      {`[锁定 ${formatClockDisplay(entry.item.lockAt)}]`}
                     </text>
                   ) : null}
                 </view>

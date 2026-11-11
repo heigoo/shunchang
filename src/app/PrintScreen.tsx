@@ -105,7 +105,7 @@ export function PrintScreen(props: PrintScreenProps) {
             </view>
           )}
           <text className="PrintSheetNo">
-            {`SHEET ${page.pageNo} / ${page.pageTotal} · V${summary.version}`}
+            {`第 ${page.pageNo} / ${page.pageTotal} 张 · 第 ${summary.version} 版`}
           </text>
         </view>
       </view>
@@ -119,22 +119,22 @@ export function PrintScreen(props: PrintScreenProps) {
       <view className="PrintTable">
         <view className="PrintTableHead">
           <view className="PrintColNo">
-            <text className="PrintTh">NO.</text>
+            <text className="PrintTh">序号</text>
           </view>
           <view className="PrintColTime">
-            <text className="PrintTh">TIME</text>
+            <text className="PrintTh">时间</text>
           </view>
           <view className="PrintColDur">
-            <text className="PrintTh">DUR</text>
+            <text className="PrintTh">时长</text>
           </view>
           <view className="PrintColSeg">
-            <text className="PrintTh">SEGMENT</text>
+            <text className="PrintTh">环节</text>
           </view>
           <view className="PrintColOwner">
-            <text className="PrintTh">OWNER</text>
+            <text className="PrintTh">负责人</text>
           </view>
           <view className="PrintColNote">
-            <text className="PrintTh">NOTE</text>
+            <text className="PrintTh">备注</text>
           </view>
         </view>
 
@@ -170,8 +170,8 @@ export function PrintScreen(props: PrintScreenProps) {
       </view>
 
       <view className="PrintFoot">
-        <text className="PrintFootText">{`PRINTED ${stamp} · 顺场`}</text>
-        <text className="PrintFootText">{`PAGE ${page.pageNo} / ${page.pageTotal}`}</text>
+        <text className="PrintFootText">{`打印于 ${stamp} · 顺场`}</text>
+        <text className="PrintFootText">{`第 ${page.pageNo} / ${page.pageTotal} 页`}</text>
       </view>
     </view>
   );
@@ -186,7 +186,7 @@ export function PrintScreen(props: PrintScreenProps) {
         </view>
         {isWeb() ? (
           <view className="PrintActionsPrint">
-            <Button label="打印 / 保存为 PDF" onTap={handlePrint} />
+            <Button label="打印 / 导出文件" onTap={handlePrint} />
           </view>
         ) : (
           <text className="PrintActionsHint">请在浏览器中打开以打印</text>

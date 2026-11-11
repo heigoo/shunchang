@@ -119,7 +119,7 @@ export function ImportPanel(props: ImportPanelProps) {
           <text className="ImportLabel">六位短码</text>
           <input
             className="ImportInput"
-            placeholder="ABC-DEF"
+            placeholder="输入六位短码"
             maxlength={8}
             bindinput={(event) => {
               setCodeText(inputValue(event));
@@ -140,7 +140,7 @@ export function ImportPanel(props: ImportPanelProps) {
             <text className="ImportLabel">文件</text>
             <view className="ImportAction">
               <Button
-                label="选择 .json 文件"
+                label="选择文件"
                 kind="tertiary"
                 block
                 onTap={handleFile}

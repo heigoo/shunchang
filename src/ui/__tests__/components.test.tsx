@@ -51,9 +51,9 @@ test('disabled Button does not call onTap', () => {
 });
 
 test('Badge stamp renders bracket-wrapped text', () => {
-  const { getByText } = render(<Badge label="LOCK 12:08" kind="stamp" />);
+  const { getByText } = render(<Badge label="锁定 12:08" kind="stamp" />);
 
-  expect(getByText('[LOCK 12:08]')).toBeInTheDocument();
+  expect(getByText('[锁定 12:08]')).toBeInTheDocument();
 });
 
 test('GlassPanel renders its children', () => {

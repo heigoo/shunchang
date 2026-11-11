@@ -124,7 +124,7 @@ function durationText(item: Item): string {
 }
 
 function lockText(item: Item): string {
-  return item.lockAt === null ? 'LOCK 待填' : `LOCK ${formatClock(item.lockAt)}`;
+  return item.lockAt === null ? '锁定 待填' : `锁定 ${formatClock(item.lockAt)}`;
 }
 
 export function EditorScreen(props: EditorScreenProps) {
@@ -259,7 +259,7 @@ export function EditorScreen(props: EditorScreenProps) {
   const commitLock = (index: number, item: Item, text: string): boolean => {
     const next = setItemLockAt(sheet, index, text);
     if (!next) {
-      setRowError({ id: item.id, message: '时间格式应为 HH:MM' });
+      setRowError({ id: item.id, message: '时间格式应为 14:00' });
       return false;
     }
     setRowError(null);
@@ -335,7 +335,7 @@ export function EditorScreen(props: EditorScreenProps) {
               setLockEdit(index);
             }}
           >
-            <text className="LockBtnText">LOCK</text>
+            <text className="LockBtnText">锁定</text>
           </view>
           {conflicted ? <Badge kind="stamp" label="冲突" /> : null}
         </view>
@@ -357,7 +357,7 @@ export function EditorScreen(props: EditorScreenProps) {
           <view className="LockEditRow">
             <DraftInput
               className="LockInput"
-              placeholder="HH:MM"
+              placeholder="14:00"
               maxlength={5}
               value={item.lockAt === null ? '' : formatClock(item.lockAt)}
               onCommit={(text) => commitLock(index, item, text)}
@@ -560,7 +560,7 @@ export function EditorScreen(props: EditorScreenProps) {
                   <Badge kind="stamp" label={lockText(item)} />
                   <DraftInput
                     className="FieldInput FieldInput--lock"
-                    placeholder="HH:MM"
+                    placeholder="14:00"
                     maxlength={5}
                     value={item.lockAt === null ? '' : formatClock(item.lockAt)}
                     onCommit={(text) => commitLock(index, item, text)}
@@ -581,7 +581,7 @@ export function EditorScreen(props: EditorScreenProps) {
                     handleToggleLock(index);
                   }}
                 >
-                  <text className="LockBtnText">LOCK</text>
+                  <text className="LockBtnText">锁定</text>
                 </view>
               )}
             </view>
@@ -653,29 +653,29 @@ export function EditorScreen(props: EditorScreenProps) {
 
           <view className="EditorMeta">
             <view className="MetaItem">
-              <text className="MetaLabel">DATE</text>
+              <text className="MetaLabel">日期</text>
               <text className="MetaValue">{sheet.date}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaLabel">START</text>
+              <text className="MetaLabel">开始</text>
               <DraftInput
                 className="StartInput"
                 maxlength={5}
-                placeholder="HH:MM"
+                placeholder="14:00"
                 value={formatClock(sheet.startMin)}
                 onCommit={(text) => handleStartCommit(text)}
               />
             </view>
             <view className="MetaItem">
-              <text className="MetaLabel">DUR</text>
+              <text className="MetaLabel">总时长</text>
               <text className="MetaValue">{formatDuration(timeline.totalPlanMin)}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaLabel">SEG</text>
+              <text className="MetaLabel">环节</text>
               <text className="MetaValue">{`${pad2(sheet.items.length)} / ${MAX_ITEMS}`}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaValue">{`V${sheet.version}`}</text>
+              <text className="MetaValue">{`第 ${sheet.version} 版`}</text>
             </view>
             <view className="MetaBadge">
               <Badge kind="outline" label={STATUS_LABEL[sheet.status]} />
@@ -693,7 +693,7 @@ export function EditorScreen(props: EditorScreenProps) {
           </view>
 
           {startError ? (
-            <text className="EditorInlineError">时间格式应为 HH:MM</text>
+            <text className="EditorInlineError">时间格式应为 14:00</text>
           ) : null}
 
           <view className="EditorTools">
@@ -751,33 +751,34 @@ export function EditorScreen(props: EditorScreenProps) {
         </view>
       </view>
 
+      <scroll-view className="EditorScroll" scroll-orientation="vertical">
       <view className={isWide ? 'EditorBody' : 'EditorBody EditorBody--narrow'}>
         {isWide ? (
           <view className="EditorTable">
             <view className="TableHead">
               <view className="ColNo">
-                <text className="Th">NO.</text>
+                <text className="Th">序号</text>
               </view>
               <view className="ColTime">
-                <text className="Th">TIME</text>
+                <text className="Th">时间</text>
               </view>
               <view className="ColSegName">
-                <text className="Th">SEGMENT</text>
+                <text className="Th">环节</text>
               </view>
               <view className="ColDur">
-                <text className="Th">DUR</text>
+                <text className="Th">时长</text>
               </view>
               <view className="ColOwner">
-                <text className="Th">OWNER</text>
+                <text className="Th">负责人</text>
               </view>
               <view className="ColNote">
-                <text className="Th">NOTE</text>
+                <text className="Th">备注</text>
               </view>
               <view className="ColLock">
-                <text className="Th">LOCK</text>
+                <text className="Th">锁定</text>
               </view>
               <view className="ColAct">
-                <text className="Th">ACT</text>
+                <text className="Th">操作</text>
               </view>
             </view>
             {sheet.items.map((item, index) => renderRow(item, index))}
@@ -803,6 +804,7 @@ export function EditorScreen(props: EditorScreenProps) {
           ) : null}
         </view>
       </view>
+      </scroll-view>
 
       {deletePresence.mounted && pendingDelete ? (
         <view

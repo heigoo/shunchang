@@ -7,7 +7,7 @@ export interface SyncTrail {
   relative: string;
   /** 距上次同步 > 15 分钟；无同步也算 stale */
   stale: boolean;
-  /** "V3" */
+  /** "第 3 版" */
   versionLabel: string;
 }
 
@@ -29,7 +29,7 @@ export function buildSyncTrail(
   runtime: RuntimeState | null,
   now: number,
 ): SyncTrail {
-  const versionLabel = `V${runtime ? runtime.execVersion : 1}`;
+  const versionLabel = `第 ${runtime ? runtime.execVersion : 1} 版`;
 
   if (!runtime || runtime.lastSyncAt === 0) {
     return {

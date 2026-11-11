@@ -61,7 +61,7 @@ export function SyncPanel(props: SyncPanelProps) {
           <view className="SyncSheen" />
           <view className="SyncInner">
             <view className="SyncHead">
-              <text className="SyncLabel">SYNC · 同步凭据</text>
+              <text className="SyncLabel">同步凭据</text>
             </view>
 
             {showQr ? (
@@ -84,7 +84,7 @@ export function SyncPanel(props: SyncPanelProps) {
             <text className="SyncCodeHint">可口述给已持有同一手册的人</text>
 
             <view className="SyncMeta">
-              <text className="SyncMetaVersion">{`当前版本 V${runtime.execVersion}`}</text>
+              <text className="SyncMetaVersion">{`当前为第 ${runtime.execVersion} 版`}</text>
               <text className="SyncMetaTime">{`同步于 ${clockOf(Date.now())}`}</text>
             </view>
 

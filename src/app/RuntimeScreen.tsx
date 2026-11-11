@@ -292,7 +292,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       <view className="RuntimeViewport">
         <view className="Runtime theme-dark">
           <view className="DoneBody">
-            <text className="DoneLabel">COMPLETE</text>
+            <text className="DoneLabel">流程完成</text>
             <text className="DoneTitle">已完成</text>
             <text className="DoneName">
               {sheet.name.length > 0 ? sheet.name : '未命名手册'}
@@ -382,7 +382,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
         <view className="RuntimeBody" key={currentItem ? currentItem.id : 'end'}>
           <text className="RuntimeSeg">
-            {`SEG ${pad3(view.segmentNo)} / ${pad3(view.segmentTotal)}`}
+            {`环节 ${pad3(view.segmentNo)} / ${pad3(view.segmentTotal)}`}
           </text>
           <text className="RuntimeTitle">
             {currentItem && currentItem.name.length > 0 ? currentItem.name : '未命名环节'}
@@ -391,7 +391,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
           {currentRow && currentRow.lockAt !== null ? (
             <view className="RuntimeLockRow">
-              <Badge kind="stamp" label={`LOCK ${formatClockDisplay(currentRow.lockAt)}`} />
+              <Badge kind="stamp" label={`锁定 ${formatClockDisplay(currentRow.lockAt)}`} />
             </view>
           ) : null}
 
@@ -404,13 +404,13 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                   {`${countdown.sign === 'over' ? MINUS : ''}${countdown.text}`}
                 </text>
                 <text className="RuntimeUnit">
-                  {countdown.sign === 'over' ? 'OVER' : 'LEFT'}
+                  {countdown.sign === 'over' ? '已超时' : '剩余'}
                 </text>
               </view>
               <text className="RuntimeCaption">{caption}</text>
               {overMin > 0 ? (
                 <view className="RuntimeDelay">
-                  <Badge kind="reverse" label={`DELAYED ${overMin}`} />
+                  <Badge kind="reverse" label={`超时 ${overMin} 分`} />
                 </view>
               ) : null}
             </view>
@@ -420,13 +420,13 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             {nextItem && nextRow ? (
               <view className="RuntimeNextRows">
                 <view className="RuntimeNextRow">
-                  <text className="RuntimeNextLabel">NEXT</text>
+                  <text className="RuntimeNextLabel">下一环节</text>
                   <text className="RuntimeNextValue">
                     {nextItem.name.length > 0 ? nextItem.name : '未命名环节'}
                   </text>
                 </view>
                 <view className="RuntimeNextRow">
-                  <text className="RuntimeNextLabel">AT</text>
+                  <text className="RuntimeNextLabel">计划</text>
                   <text className="RuntimeNextTime">
                     {formatClockDisplay(nextRow.displayStart)}
                   </text>
@@ -434,8 +434,8 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               </view>
             ) : (
               <view className="RuntimeNextRow">
-                <text className="RuntimeNextLabel">END</text>
-                <text className="RuntimeNextValue">最后一段</text>
+                <text className="RuntimeNextLabel">结束</text>
+                <text className="RuntimeNextValue">最后环节</text>
               </view>
             )}
           </view>
@@ -443,7 +443,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
         {shiftOpen ? null : (
           <view className="RuntimeSyncBar">
-            <Badge kind="outline" label={`V${runtime.execVersion}`} />
+            <Badge kind="outline" label={`第 ${runtime.execVersion} 版`} />
             <view
               className="RuntimeSyncBtn"
               bindtap={() => {
@@ -463,12 +463,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               <view className="RuntimeActionsInner">
                 <view className="RuntimeActionRow">
                   <Button
-                    label={wideActions ? 'DONE · 完成' : '完成'}
+                    label={wideActions ? '完成本环节' : '完成'}
                     className="RuntimeDone"
                     onTap={doDone}
                   />
                   <Button
-                    label={wideActions ? 'SHIFT · 顺延' : '顺延'}
+                    label={wideActions ? '顺延下一环节' : '顺延'}
                     kind="secondary"
                     className="RuntimeShift"
                     disabled={nextItem === null}
@@ -484,7 +484,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                   bindtouchend={stopHold}
                   bindtouchcancel={stopHold}
                 >
-                  <text className="RuntimeHoldText">HOLD 3S · 跳过</text>
+                  <text className="RuntimeHoldText">长按 3 秒 · 跳过</text>
                   <view className="RuntimeHoldTrack">
                     <view
                       className="RuntimeHoldFill"

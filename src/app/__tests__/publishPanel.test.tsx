@@ -40,7 +40,7 @@ test('falls back to the file hint for a 45-step sheet', async () => {
   );
 
   expect(await findByText('环节较多，请使用文件分发')).toBeInTheDocument();
-  expect(queryByText(/SCAN TO FOLLOW/)).toBeNull();
+  expect(queryByText(/扫码跟随/)).toBeNull();
   expect(container.querySelectorAll('svg, x-svg, img').length).toBe(0);
 });
 
@@ -53,6 +53,6 @@ test('renders the QR code for a 10-step sheet', async () => {
     />,
   );
 
-  expect(await findByText(/SCAN TO FOLLOW/)).toBeInTheDocument();
+  expect(await findByText(/扫码跟随/)).toBeInTheDocument();
   expect(container.querySelectorAll('svg, x-svg, img').length).toBeGreaterThan(0);
 });

@@ -34,7 +34,7 @@ function lockLabelOf(item: Item): string {
   if (item.locked !== true && item.lockAt === null) {
     return '';
   }
-  return item.lockAt === null ? 'LOCK 待填' : `LOCK ${formatClock(item.lockAt)}`;
+  return item.lockAt === null ? '锁定 待填' : `锁定 ${formatClock(item.lockAt)}`;
 }
 
 export function buildPrintRows(

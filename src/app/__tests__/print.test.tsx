@@ -40,9 +40,9 @@ test('renders every page of the printed sheet', async () => {
   );
 
   expect((await findAllByText('秋季婚礼流程')).length).toBe(2);
-  expect(await findByText('PAGE 1 / 2')).toBeInTheDocument();
-  expect(await findByText('PAGE 2 / 2')).toBeInTheDocument();
-  expect(await findByText('SHEET 1 / 2 · V2')).toBeInTheDocument();
+  expect(await findByText('第 1 / 2 页')).toBeInTheDocument();
+  expect(await findByText('第 2 / 2 页')).toBeInTheDocument();
+  expect(await findByText('第 1 / 2 张 · 第 2 版')).toBeInTheDocument();
 });
 
 test('falls back to the file hint when the sheet is too large for a QR code', async () => {
@@ -63,5 +63,5 @@ test('shows the print button on web', async () => {
     <PrintScreen sheetId={SHEET_ID} onBack={() => {}} />,
   );
 
-  expect(await findByText('打印 / 保存为 PDF')).toBeInTheDocument();
+  expect(await findByText('打印 / 导出文件')).toBeInTheDocument();
 });

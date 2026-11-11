@@ -120,8 +120,8 @@ test('renders lock labels for locked rows only', () => {
   const rows = buildPrintRows(sheet, null);
 
   expect(rows[0].lockLabel).toBe('');
-  expect(rows[1].lockLabel).toBe('LOCK 08:18');
-  expect(rows[2].lockLabel).toBe('LOCK 待填');
+  expect(rows[1].lockLabel).toBe('锁定 08:18');
+  expect(rows[2].lockLabel).toBe('锁定 待填');
   expect(rows[2].name).toBe('合影');
 });
 

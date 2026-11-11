@@ -321,25 +321,25 @@ export function ListScreen(props: ListScreenProps) {
       <view className="Table">
         <view className="ListTableHead">
           <view className="ColNo">
-            <text className="Th">No.</text>
+            <text className="Th">序号</text>
           </view>
           <view className="ColDate">
-            <text className="Th">DATE</text>
+            <text className="Th">日期</text>
           </view>
           <view className="ColName">
-            <text className="Th">NAME</text>
+            <text className="Th">名称</text>
           </view>
           <view className="ColStatus">
-            <text className="Th">STATUS</text>
+            <text className="Th">状态</text>
           </view>
           <view className="ColSeg">
-            <text className="Th">SEG</text>
+            <text className="Th">环节</text>
           </view>
           <view className="ColUpdated">
-            <text className="Th">UPDATED</text>
+            <text className="Th">更新</text>
           </view>
           <view className="ColAction">
-            <text className="Th">ACTION</text>
+            <text className="Th">操作</text>
           </view>
         </view>
         {visible.map((sheet, index) => renderWideRow(sheet, index))}
@@ -358,7 +358,7 @@ export function ListScreen(props: ListScreenProps) {
       <view className="ListHeader">
         <text className="ListBrand">顺场</text>
         <view className="ListHeaderRight">
-          <text className="ListMeta">SCHEDULE SHEET / 现场调度</text>
+          <text className="ListMeta">现场调度 · 手册总览</text>
           <view
             className="ListLoad"
             bindtap={() => {
@@ -375,12 +375,13 @@ export function ListScreen(props: ListScreenProps) {
 
       <view className="ListRule" />
 
-      <view className="ListMain">
+      <scroll-view className="ListScroll" scroll-orientation="vertical">
+        <view className="ListMain">
         <view className="ListTitleRow">
           <text className="ListTitle">现场手册</text>
           <view className="ListTitleRight">
             {copied ? <text className="ListToast">已复制为新手册</text> : null}
-            <text className="ListCount">{`SHEET ${pad2(sheets.length)}`}</text>
+            <text className="ListCount">{`共 ${pad2(sheets.length)} 份`}</text>
           </view>
         </view>
 
@@ -420,8 +421,9 @@ export function ListScreen(props: ListScreenProps) {
       </view>
 
       <view className="ListFooter">
-        <text className="ListFooterText">PAGE 1 / 1 · 数据保存在本设备</text>
+        <text className="ListFooterText">第 1 / 1 页 · 数据保存在本设备</text>
       </view>
+      </scroll-view>
 
       {importPresence.mounted ? (
         <ImportPanel

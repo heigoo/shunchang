@@ -53,7 +53,7 @@ test('buildSyncTrail reports relative minutes for a fresh sync', () => {
   expect(trail.absolute).toMatch(/^同步于 \d{2}:\d{2}$/);
   expect(trail.relative).toBe('3 分钟前');
   expect(trail.stale).toBe(false);
-  expect(trail.versionLabel).toBe('V3');
+  expect(trail.versionLabel).toBe('第 3 版');
 });
 
 test('buildSyncTrail marks a sync older than 15 minutes as stale', () => {
