@@ -34,6 +34,16 @@
   color: var(--bg);
 }
 
+/* 喜事光场：主操作改用喜红实心，与印章、图标同色 */
+.theme-xishi .theme-light .Btn--primary {
+  background-color: var(--xishi-red);
+  border-color: var(--xishi-red);
+}
+
+.theme-xishi .theme-light .Btn--primary .BtnLabel {
+  color: #FFF8EF;
+}
+
 /* 浅/深底 + 1px 描边 */
 .Btn--secondary {
   background-color: var(--bg);

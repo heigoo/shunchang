@@ -245,6 +245,10 @@
   border-bottom-color: var(--ink);
 }
 
+.theme-xishi .theme-light .FilterItem--active {
+  border-bottom-color: var(--xishi-red);
+}
+
 .FilterText {
   font-size: 13px;
   color: var(--ink-3);

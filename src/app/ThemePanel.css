@@ -24,6 +24,10 @@
   border-left-color: var(--ink);
 }
 
+.theme-xishi .ThemeOption--active {
+  border-left-color: var(--xishi-red);
+}
+
 .ThemeOption:active {
   background-color: var(--paper-2);
 }

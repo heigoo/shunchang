@@ -61,42 +61,44 @@
 
 /* 覆盖原始色：所有通过 var() 取色的页面会整体换肤。 */
 .theme-xishi {
-  --paper: #F7EBE2;
-  --paper-2: #F1DCD0;
-  --paper-3: #E4C6B6;
-  --ink: #2A0C07;
-  --ink-2: #5E271C;
-  --ink-3: #9A6B5C;
+  /* 光场：暖象牙纸，文字回到墨色，喜红只做强调 */
+  --paper: #F7F3EA;
+  --paper-2: #EFE8DB;
+  --paper-3: #E2D9C8;
+  --ink: #1A1712;
+  --ink-2: #4F4A40;
+  --ink-3: #7C7566;
   --amber-deep: #A66A12;
-  --amber-wash: #F7D6C4;
+  --amber-wash: #F6E2B6;
 
-  --screen: #140705;
-  --screen-2: #24100A;
-  --screen-3: #33160E;
-  --screen-line: #47211A;
-  --dim: #B08C7C;
-  --bright: #FFF1E4;
+  /* 暗场：极深暖墨 + 金色，保持信息屏的清晰度 */
+  --screen: #0F0B08;
+  --screen-2: #1A1410;
+  --screen-3: #241D17;
+  --screen-line: #2E2620;
+  --dim: #918878;
+  --bright: #F8F2E6;
   --amber: #FFB020;
   --amber-light: #FFD98A;
 
-  --scrim: rgba(42, 12, 7, 0.38);
+  --scrim: rgba(26, 23, 18, 0.42);
 }
 
 .theme-xishi .theme-light {
-  --bg: #F7EBE2;
-  --fg: #2A0C07;
-  --fg-2: #5E271C;
-  --fg-3: #9A6B5C;
-  --rule: #E4C6B6;
+  --bg: #F7F3EA;
+  --fg: #1A1712;
+  --fg-2: #4F4A40;
+  --fg-3: #7C7566;
+  --rule: #E2D9C8;
   --accent: #BE2A20;
 }
 
 .theme-xishi .theme-dark {
-  --bg: #140705;
-  --fg: #FFF1E4;
-  --fg-2: #B08C7C;
-  --fg-3: #8A6A5E;
-  --rule: #47211A;
+  --bg: #0F0B08;
+  --fg: #F8F2E6;
+  --fg-2: #918878;
+  --fg-3: #756D60;
+  --rule: #2E2620;
   --accent: #FFB020;
 }
 
