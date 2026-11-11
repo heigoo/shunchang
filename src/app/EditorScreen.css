@@ -573,8 +573,9 @@
 }
 
 .FieldInput--lock {
-  flex: 0;
   width: 64px;
+  flex-shrink: 0;
+  margin-left: 8px;
   font-family: var(--mono);
   font-size: 12px;
 }
@@ -589,6 +590,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .CardError {

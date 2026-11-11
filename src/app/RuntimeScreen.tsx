@@ -88,9 +88,13 @@ function offsetText(offsetMin: number): string {
   return `${offsetMin > 0 ? '+' : MINUS}${Math.abs(offsetMin)}`;
 }
 
-function secondsUntil(targetMin: number, nowMs: number): number {
-  const nowSec = nowMs / 1000;
-  const dayStart = Math.floor(nowSec / 86400) * 86400;
+export function secondsUntil(targetMin: number, nowMs: number): number {
+  const now = new Date(nowMs);
+  const nowSec = Math.floor(nowMs / 1000);
+  // 计划时间是本地墙钟分钟，日界线必须用本地零点而不是 UTC 零点。
+  const dayStart = Math.floor(
+    new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000,
+  );
   let best: number | null = null;
 
   for (const shift of [-1, 0, 1]) {
@@ -104,7 +108,10 @@ function secondsUntil(targetMin: number, nowMs: number): number {
   return Math.round(best ?? 0);
 }
 
-function formatCountdown(seconds: number): { sign: 'left' | 'over'; text: string } {
+export function formatCountdown(seconds: number): {
+  sign: 'left' | 'over';
+  text: string;
+} {
   const over = seconds < 0;
   const total = Math.abs(seconds);
   const hours = Math.floor(total / 3600);
