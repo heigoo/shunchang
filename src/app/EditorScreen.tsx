@@ -8,7 +8,8 @@ import type { SheetError } from '../domain/validate';
 import { findPlanConflicts } from '../domain/validate';
 import { useIsWide } from '../platform/viewport';
 import { getSheet, saveSheet } from '../store/repository';
-import { Badge, Button } from '../ui';
+import { Badge, Button, usePresence } from '../ui';
+import { registerBackHandler } from './backBus';
 import { PublishPanel } from './PublishPanel';
 import {
   MAX_ITEMS,
@@ -141,9 +142,13 @@ export function EditorScreen(props: EditorScreenProps) {
     index: number;
     name: string;
   } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [published, setPublished] = useState<{ version: number } | null>(null);
   const [nowMin, setNowMin] = useState<number>(currentMinuteOfDay);
   const isWide = useIsWide();
+
+  const deletePresence = usePresence(deleteOpen);
+  const publishPresence = usePresence(published !== null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -153,6 +158,31 @@ export function EditorScreen(props: EditorScreenProps) {
       clearInterval(timer);
     };
   }, []);
+
+  // 退场动画结束后再清掉待删除项，避免面板内容提前消失。
+  useEffect(() => {
+    if (!deletePresence.mounted) {
+      setPendingDelete(null);
+    }
+  }, [deletePresence.mounted]);
+
+  // 返回键优先关闭删除确认或发布面板。
+  useEffect(() => {
+    if (!deleteOpen && !published) {
+      return;
+    }
+    return registerBackHandler(() => {
+      if (deleteOpen) {
+        setDeleteOpen(false);
+        return true;
+      }
+      if (published) {
+        setPublished(null);
+        return true;
+      }
+      return false;
+    });
+  }, [deleteOpen, published]);
 
   const apply = (next: Sheet | null) => {
     if (!next) {
@@ -274,7 +304,7 @@ export function EditorScreen(props: EditorScreenProps) {
     }
     const index = pendingDelete.index;
     apply(removeItem(sheet, index));
-    setPendingDelete(null);
+    setDeleteOpen(false);
     setExpanded((previous) => {
       if (previous === null) return null;
       if (previous === index) return null;
@@ -351,13 +381,17 @@ export function EditorScreen(props: EditorScreenProps) {
   const renderRow = (item: Item, index: number) => {
     const row = timeline.rows[index];
     const conflicted = conflicts.indexOf(index) >= 0;
-    const classes = ['RowWrap'];
+    const classes = ['RowWrap', 'RowIn'];
     if (index % 2 === 1) classes.push('RowWrap--alt');
     if (index === nowIndex) classes.push('RowWrap--now');
     const error = rowError && rowError.id === item.id ? rowError.message : null;
 
     return (
-      <view key={item.id} className={classes.join(' ')}>
+      <view
+        key={item.id}
+        className={classes.join(' ')}
+        style={{ animationDelay: `${Math.min(index, 10) * 22}ms` }}
+      >
         <view className="Row">
           <view className="ColNo">
             <text className="CellNo">{pad3(index + 1)}</text>
@@ -431,6 +465,7 @@ export function EditorScreen(props: EditorScreenProps) {
               className="ActBtn"
               bindtap={() => {
                 setPendingDelete({ index, name: item.name });
+                setDeleteOpen(true);
               }}
             >
               <text className="ActBtnText">×</text>
@@ -448,7 +483,11 @@ export function EditorScreen(props: EditorScreenProps) {
     const error = rowError && rowError.id === item.id ? rowError.message : null;
 
     return (
-      <view key={item.id} className="Card">
+      <view
+        key={item.id}
+        className="Card RowIn"
+        style={{ animationDelay: `${Math.min(index, 10) * 22}ms` }}
+      >
         <view
           className="CardHead"
           bindtap={() => {
@@ -574,6 +613,7 @@ export function EditorScreen(props: EditorScreenProps) {
                 className="CardAction"
                 bindtap={() => {
                   setPendingDelete({ index, name: item.name });
+                  setDeleteOpen(true);
                 }}
               >
                 <text className="CardActionText">删除</text>
@@ -602,14 +642,6 @@ export function EditorScreen(props: EditorScreenProps) {
                 handleName(text);
               }}
             />
-            <view
-              className="EditorExport"
-              bindtap={() => {
-                onPrint(sheet.id);
-              }}
-            >
-              <text className="EditorExportText">导出</text>
-            </view>
             <view className="EditorPublish">
               <Button
                 label="发布"
@@ -682,8 +714,18 @@ export function EditorScreen(props: EditorScreenProps) {
                 onTap={handleAdd}
               />
             </view>
+            <view className="EditorToolBtn">
+              <Button
+                label="导出"
+                kind="tertiary"
+                className="EditorSmallBtn"
+                onTap={() => {
+                  onPrint(sheet.id);
+                }}
+              />
+            </view>
             <view className="EditorToolHint">
-              <text className="EditorHintText">修改后自动保存</text>
+              <text className="EditorHintText">自动保存</text>
             </view>
           </view>
 
@@ -762,14 +804,21 @@ export function EditorScreen(props: EditorScreenProps) {
         </view>
       </view>
 
-      {pendingDelete ? (
+      {deletePresence.mounted && pendingDelete ? (
         <view
-          className="EditorOverlay"
+          className={
+            deletePresence.closing ? 'EditorOverlay OverlayOut' : 'EditorOverlay'
+          }
           bindtap={() => {
-            setPendingDelete(null);
+            setDeleteOpen(false);
           }}
         >
-          <view className="EditorPanel" catchtap={() => {}}>
+          <view
+            className={
+              deletePresence.closing ? 'EditorPanel PanelOut' : 'EditorPanel'
+            }
+            catchtap={() => {}}
+          >
             <view className="EditorPanelRule" />
             <text className="EditorPanelTitle">
               {`删除环节「${pendingDelete.name}」？`}
@@ -781,7 +830,7 @@ export function EditorScreen(props: EditorScreenProps) {
                   label="取消"
                   kind="tertiary"
                   onTap={() => {
-                    setPendingDelete(null);
+                    setDeleteOpen(false);
                   }}
                 />
               </view>
@@ -793,9 +842,10 @@ export function EditorScreen(props: EditorScreenProps) {
         </view>
       ) : null}
 
-      {published ? (
+      {publishPresence.mounted ? (
         <PublishPanel
           sheet={sheet}
+          closing={publishPresence.closing}
           onClose={() => {
             setPublished(null);
           }}

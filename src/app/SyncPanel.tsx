@@ -9,6 +9,7 @@ import { buildShareUrl, isWeb } from './share';
 export interface SyncPanelProps {
   sheet: Sheet;
   runtime: RuntimeState;
+  closing?: boolean;
   onClose(): void;
 }
 
@@ -29,7 +30,7 @@ function formatCode(code: string): string {
 }
 
 export function SyncPanel(props: SyncPanelProps) {
-  const { sheet, runtime, onClose } = props;
+  const { sheet, runtime, closing = false, onClose } = props;
 
   const payload = encodePayload(sheet, runtime);
   const url = buildShareUrl(payload);
@@ -38,11 +39,26 @@ export function SyncPanel(props: SyncPanelProps) {
 
   const glassClasses = ['SyncGlass'];
   if (isWeb()) glassClasses.push('SyncGlass--web');
+  if (closing) glassClasses.push('GlassOut');
 
   return (
-    <view className="SyncOverlay" catchtap={onClose}>
-      <view className="SyncStage" catchtap={() => {}}>
-        <view className={glassClasses.join(' ')} catchtap={() => {}}>
+    <view
+      className={closing ? 'SyncOverlay OverlayOut' : 'SyncOverlay'}
+      flatten={false}
+      catchtap={onClose}
+    >
+      <view className="SyncStage" flatten={false} catchtap={() => {}}>
+        <blur-view
+          className={glassClasses.join(' ')}
+          android-capture-target="runtime-capture"
+          blur-radius="40"
+          blur-sampling={4}
+          enable-auto-blur={true}
+          experimental-update-blur-radius={true}
+          flatten={false}
+          catchtap={() => {}}
+        >
+          <view className="SyncSheen" />
           <view className="SyncInner">
             <view className="SyncHead">
               <text className="SyncLabel">SYNC · 同步凭据</text>
@@ -76,7 +92,7 @@ export function SyncPanel(props: SyncPanelProps) {
               <Button label="关闭" kind="tertiary" block onTap={onClose} />
             </view>
           </view>
-        </view>
+        </blur-view>
       </view>
     </view>
   );

@@ -12,7 +12,8 @@ import {
   saveRuntime,
   saveSheet,
 } from '../store/repository';
-import { Badge, Button } from '../ui';
+import { Badge, Button, usePresence } from '../ui';
+import { registerBackHandler } from './backBus';
 import {
   applyShift,
   buildRuntimeView,
@@ -152,6 +153,26 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [holdProgress, setHoldProgress] = useState(0);
   const isWideActions = useIsWide(NARROW_ACTIONS_WIDTH);
   const [mainWidth, setMainWidth] = useState<number | null>(null);
+
+  const shiftPresence = usePresence(shiftOpen);
+  const syncPresence = usePresence(syncOpen);
+
+  useEffect(() => {
+    if (!shiftOpen && !syncOpen) {
+      return;
+    }
+    return registerBackHandler(() => {
+      if (shiftOpen) {
+        setShiftOpen(false);
+        return true;
+      }
+      if (syncOpen) {
+        setSyncOpen(false);
+        return true;
+      }
+      return false;
+    });
+  }, [shiftOpen, syncOpen]);
 
   useEffect(() => {
     viewportWidthListener = (width: number) => {
@@ -337,13 +358,19 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const metaText = owner.length > 0 ? `${view.planRangeText} · ${owner}` : view.planRangeText;
 
   return (
-    <view className="RuntimeViewport">
+    <view className="RuntimeViewport" id="runtime-capture" flatten={false}>
       <view className="Runtime theme-dark">
-        <view className="RuntimeTop">
-          <text className="RuntimeTopName">
-            {sheet.name.length > 0 ? sheet.name : '未命名手册'}
-          </text>
-          <view className="RuntimeTopBadges">
+        <view className="RuntimeCapture">
+          <view className="RuntimeTop">
+            <view className="RuntimeTopLeft">
+              <view className="RuntimeBack" bindtap={onBack}>
+                <text className="RuntimeBackText">←</text>
+              </view>
+              <text className="RuntimeTopName">
+                {sheet.name.length > 0 ? sheet.name : '未命名手册'}
+              </text>
+            </view>
+            <view className="RuntimeTopBadges">
             {view.hasConflict ? (
               <view className="RuntimeTopBadge">
                 <Badge kind="reverse" label="无法吸收" />
@@ -353,7 +380,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           </view>
         </view>
 
-        <view className="RuntimeBody">
+        <view className="RuntimeBody" key={currentItem ? currentItem.id : 'end'}>
           <text className="RuntimeSeg">
             {`SEG ${pad3(view.segmentNo)} / ${pad3(view.segmentTotal)}`}
           </text>
@@ -470,11 +497,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           </view>
         )}
 
-        {shiftOpen ? (
+        {shiftPresence.mounted ? (
           <ShiftPanel
             sheet={sheet}
             runtime={runtime}
             nowMin={minuteOfDay(nowMs)}
+            closing={shiftPresence.closing}
             onCancel={() => {
               setShiftOpen(false);
             }}
@@ -490,15 +518,17 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           />
         ) : null}
 
-        {syncOpen ? (
+        {syncPresence.mounted ? (
           <SyncPanel
             sheet={sheet}
             runtime={runtime}
+            closing={syncPresence.closing}
             onClose={() => {
               setSyncOpen(false);
             }}
           />
         ) : null}
+        </view>
       </view>
     </view>
   );

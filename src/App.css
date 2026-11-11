@@ -1,3 +1,47 @@
+/* 页面栈：承载转场动画；外层底色沿用旧页面主题，避免卸载瞬间露白 */
+.ScreenBackdrop {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #F1EEE6;
+}
+
+.ScreenBackdrop--dark {
+  background-color: #0B0B09;
+}
+
+.ScreenStack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.ScreenStack--light {
+  background-color: #F1EEE6;
+}
+
+.ScreenStack--dark {
+  background-color: #0B0B09;
+}
+
+.ScreenStack--forward-a {
+  animation: scScreenForwardA 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.ScreenStack--forward-b {
+  animation: scScreenForwardB 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.ScreenStack--back-a {
+  animation: scScreenBackA 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.ScreenStack--back-b {
+  animation: scScreenBackB 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
 .Placeholder {
   display: flex;
   flex-direction: column;

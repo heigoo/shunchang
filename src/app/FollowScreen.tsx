@@ -9,7 +9,8 @@ import {
 } from '../domain/timeline';
 import type { Item, RuntimeState, Sheet } from '../domain/types';
 import { getRuntime, getSheet, setRole } from '../store/repository';
-import { Badge, Button } from '../ui';
+import { Badge, Button, usePresence } from '../ui';
+import { registerBackHandler } from './backBus';
 import { buildSyncTrail, itemState, ownerOptions } from './followOps';
 import type { ItemState } from './followOps';
 import { ImportPanel } from './ImportPanel';
@@ -66,6 +67,18 @@ export function FollowScreen(props: FollowScreenProps) {
   const [importOpen, setImportOpen] = useState(false);
   const [tick, setTick] = useState(0);
 
+  const importPresence = usePresence(importOpen);
+
+  useEffect(() => {
+    if (!importOpen) {
+      return;
+    }
+    return registerBackHandler(() => {
+      setImportOpen(false);
+      return true;
+    });
+  }, [importOpen]);
+
   useEffect(() => {
     const loaded = activeId ? getSheet(activeId) : null;
     setSheet(loaded);
@@ -119,8 +132,12 @@ export function FollowScreen(props: FollowScreenProps) {
           </view>
         </view>
 
-        {importOpen ? (
-          <ImportPanel onClose={closeImport} onImported={handleImported} />
+        {importPresence.mounted ? (
+          <ImportPanel
+            closing={importPresence.closing}
+            onClose={closeImport}
+            onImported={handleImported}
+          />
         ) : null}
       </view>
     );
@@ -211,7 +228,7 @@ export function FollowScreen(props: FollowScreenProps) {
         </view>
       </view>
 
-      <view className="FollowCurrent">
+      <view className="FollowCurrent" key={`current-${currentIndex}`}>
         <text className="FollowSeg">{segLabel}</text>
 
         {currentItem && currentRow ? (
@@ -283,7 +300,7 @@ export function FollowScreen(props: FollowScreenProps) {
 
       <scroll-view className="FollowScroll" scroll-orientation="vertical">
         {visibleRows.map((entry) => {
-          const classes = ['FollowRow'];
+          const classes = ['FollowRow', 'RowIn'];
           if (entry.state === 'active') {
             classes.push('FollowRow--active');
           }
@@ -292,7 +309,11 @@ export function FollowScreen(props: FollowScreenProps) {
             statusClasses.push('FollowRowStatus--dim');
           }
           return (
-            <view key={entry.item.id} className={classes.join(' ')}>
+            <view
+              key={entry.item.id}
+              className={classes.join(' ')}
+              style={{ animationDelay: `${Math.min(entry.index, 10) * 22}ms` }}
+            >
               <text className="FollowRowNo">{pad3(entry.index + 1)}</text>
               <text className="FollowRowTime">
                 {formatClockDisplay(entry.row.displayStart)}
@@ -325,8 +346,12 @@ export function FollowScreen(props: FollowScreenProps) {
         </view>
       </view>
 
-      {importOpen ? (
-        <ImportPanel onClose={closeImport} onImported={handleImported} />
+      {importPresence.mounted ? (
+        <ImportPanel
+          closing={importPresence.closing}
+          onClose={closeImport}
+          onImported={handleImported}
+        />
       ) : null}
     </view>
   );

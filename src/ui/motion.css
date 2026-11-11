@@ -1,0 +1,288 @@
+/* 统一动效：入场、按压反馈与状态过渡 */
+
+/* ---------- 关键帧 ---------- */
+
+@keyframes scFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 页面转场：轻位移 + 淡入；A/B 两组关键帧用于连续跳转时强制重启动画 */
+@keyframes scScreenForwardA {
+  from {
+    opacity: 0.35;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scScreenForwardB {
+  from {
+    opacity: 0.35;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scScreenBackA {
+  from {
+    opacity: 0.35;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scScreenBackB {
+  from {
+    opacity: 0.35;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scRiseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scModalOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+@keyframes scSheetOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(26px) scale(0.96);
+  }
+}
+
+/* ---------- 通用入场类 ---------- */
+
+.RiseIn {
+  animation: scRiseIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.ModalIn {
+  animation: scModalIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.PopIn {
+  animation: scPopIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.RowIn {
+  animation: scRowIn 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- 退场 ---------- */
+
+.Overlay.OverlayOut,
+.ImportOverlay.OverlayOut,
+.PublishOverlay.OverlayOut,
+.EditorOverlay.OverlayOut,
+.ShiftOverlay.OverlayOut,
+.SyncOverlay.OverlayOut {
+  animation: scFadeOut 160ms ease-in both;
+  pointer-events: none;
+}
+
+.Panel.PanelOut,
+.ImportPanel.PanelOut,
+.PublishPanel.PanelOut,
+.EditorPanel.PanelOut {
+  animation: scModalOut 200ms cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+.ShiftGlass.GlassOut,
+.SyncGlass.GlassOut {
+  animation: scSheetOut 220ms cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+/* ---------- 按压反馈 ---------- */
+
+.Btn,
+.RowAction,
+.PanelOption,
+.PanelClose,
+.ImportClose,
+.ErrorClose,
+.EditorBack,
+.CardAction,
+.CardHead,
+.LockBtn,
+.LockOff,
+.EditorAdd,
+.RuntimeSyncBtn,
+.RuntimeBack,
+.FollowSyncAction,
+.FollowFooterAction,
+.FollowGuideBack,
+.FollowChip,
+.FilterItem,
+.ListLoad,
+.ListFollow,
+.ActBtn {
+  transition:
+    transform 120ms ease-out,
+    opacity 120ms ease-out,
+    background-color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.Btn:active,
+.RowAction:active,
+.PanelOption:active,
+.PanelClose:active,
+.ImportClose:active,
+.ErrorClose:active,
+.EditorBack:active,
+.CardAction:active,
+.LockBtn:active,
+.LockOff:active,
+.EditorAdd:active,
+.RuntimeSyncBtn:active,
+.RuntimeBack:active,
+.FollowSyncAction:active,
+.FollowFooterAction:active,
+.FollowGuideBack:active,
+.FollowChip:active,
+.FilterItem:active,
+.ListLoad:active,
+.ListFollow:active {
+  opacity: 0.72;
+  transform: scale(0.97);
+}
+
+.PanelOption:active {
+  background-color: var(--paper-2);
+}
+
+.CardHead:active {
+  opacity: 0.7;
+}
+
+.ActBtn:active {
+  transform: scale(0.86);
+}
+
+/* 列表行只做轻微压暗，避免整行缩放 */
+.ListRow,
+.NarrowRow,
+.FollowRow {
+  transition:
+    opacity 120ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.ListRow:active,
+.NarrowRow:active {
+  opacity: 0.78;
+}
+
+/* 不可用状态不响应按压缩放 */
+.Btn--disabled,
+.Btn--disabled:active {
+  opacity: 0.35;
+  transform: none;
+}
+
+.ActBtn--off:active {
+  transform: none;
+}
+
+.CardAction--off:active {
+  opacity: 1;
+  transform: none;
+}
+
+.EditorAdd--off:active {
+  opacity: 0.35;
+  transform: none;
+}

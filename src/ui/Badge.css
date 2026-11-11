@@ -9,6 +9,10 @@
   border-color: transparent;
   border-radius: 3px;
   background-color: transparent;
+  animation: scPopIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out;
 }
 
 .BadgeText {

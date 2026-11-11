@@ -1,10 +1,12 @@
 import './ui/tokens.css';
+import './ui/motion.css';
 import './App.css';
 
-import { useEffect, useState } from '@lynx-js/react';
+import { useEffect, useLynxGlobalEventListener, useRef, useState } from '@lynx-js/react';
 
 import { EditorScreen } from './app/EditorScreen';
 import { FollowScreen } from './app/FollowScreen';
+import { dispatchBack } from './app/backBus';
 import { applyLaunchHash, importErrorMessage } from './app/importFlow';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
@@ -27,6 +29,29 @@ import { Button } from './ui';
 interface Route {
   view: AppView;
   sheetId?: string;
+}
+
+interface ScreenTransition {
+  id: number;
+  dir: 'forward' | 'back';
+  from: 'light' | 'dark';
+}
+
+function viewTheme(view: AppView): 'light' | 'dark' {
+  return view === 'runtime' || view === 'follow' ? 'dark' : 'light';
+}
+
+declare const NativeModules: any;
+
+function getHostModule(): any {
+  try {
+    if (typeof NativeModules !== 'undefined' && NativeModules) {
+      return NativeModules.ShunchangHost;
+    }
+  } catch {
+    // Ignore.
+  }
+  return undefined;
 }
 
 function readInitialRoute(): Route {
@@ -83,6 +108,23 @@ export function App() {
   const [hydrated, setHydrated] = useState(false);
   const [route, setRoute] = useState<Route>({ view: 'list' });
   const [notice, setNotice] = useState<string | null>(null);
+  const [transition, setTransition] = useState<ScreenTransition | null>(null);
+
+  const routeRef = useRef<Route>(route);
+  routeRef.current = route;
+  const navigateRef = useRef<(view: AppView, sheetId?: string) => void>(() => {});
+  const lastBackAtRef = useRef(0);
+  const transitionSeqRef = useRef(0);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current !== null) {
+        clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,14 +178,54 @@ export function App() {
   }, []);
 
   const navigate = (view: AppView, sheetId?: string) => {
-    if (sheetId) {
-      setRoute({ view, sheetId });
-      setLastView({ view, sheetId });
+    const previous = routeRef.current;
+    if (previous.view === view && previous.sheetId === sheetId) {
       return;
     }
-    setRoute({ view });
-    setLastView({ view });
+
+    const next: Route = sheetId ? { view, sheetId } : { view };
+    // 进入列表是返回，其余都是进入下一层；据此决定转场方向。
+    const dir: 'forward' | 'back' = view === 'list' ? 'back' : 'forward';
+
+    transitionSeqRef.current += 1;
+    if (transitionTimerRef.current !== null) {
+      clearTimeout(transitionTimerRef.current);
+    }
+    setTransition({
+      id: transitionSeqRef.current,
+      dir,
+      from: viewTheme(previous.view),
+    });
+    transitionTimerRef.current = setTimeout(() => {
+      setTransition(null);
+      transitionTimerRef.current = null;
+    }, 320);
+
+    setRoute(next);
+    setLastView(next);
   };
+
+  navigateRef.current = navigate;
+
+  // 原生返回键：先让打开的浮层消费，再回退页面，最后才是双击退出。
+  useLynxGlobalEventListener('shunchang:back', () => {
+    if (dispatchBack()) {
+      return;
+    }
+    if (routeRef.current.view !== 'list') {
+      navigateRef.current('list');
+      return;
+    }
+
+    const module = getHostModule();
+    const now = Date.now();
+    if (now - lastBackAtRef.current < 2000) {
+      module?.exitApp?.();
+      return;
+    }
+    lastBackAtRef.current = now;
+    module?.showExitHint?.();
+  });
 
   const openSheet = (id: string) => {
     const sheet = getSheet(id);
@@ -246,13 +328,24 @@ export function App() {
     }
   }
 
+  const stackClasses = ['ScreenStack'];
+  // 转场期间底色沿用旧页面的主题色，避免卸载瞬间露出白/黑底造成闪烁。
+  const backdrop = transition ? transition.from : viewTheme(route.view);
+  stackClasses.push(backdrop === 'dark' ? 'ScreenStack--dark' : 'ScreenStack--light');
+  if (transition) {
+    const variant = transition.id % 2 === 0 ? 'a' : 'b';
+    stackClasses.push(`ScreenStack--${transition.dir}-${variant}`);
+  }
+
   return (
     <>
       <view
         style={{ display: 'none' }}
         main-thread:ref={installMainThreadBridge}
       />
-      {content}
+      <view className={`ScreenBackdrop${backdrop === 'dark' ? ' ScreenBackdrop--dark' : ''}`}>
+        <view className={stackClasses.join(' ')}>{content}</view>
+      </view>
     </>
   );
 }

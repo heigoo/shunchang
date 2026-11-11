@@ -82,8 +82,11 @@ export function PrintScreen(props: PrintScreenProps) {
     <view
       key={`page-${page.pageNo}`}
       className={
-        page.pageNo === page.pageTotal ? 'PrintPage PrintPage--last' : 'PrintPage'
+        page.pageNo === page.pageTotal
+          ? 'PrintPage PrintPage--last RowIn'
+          : 'PrintPage RowIn'
       }
+      style={{ animationDelay: `${Math.min(page.pageNo - 1, 5) * 40}ms` }}
     >
       <view className="PrintHead">
         <view className="PrintHeadMain">

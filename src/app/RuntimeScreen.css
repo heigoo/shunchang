@@ -13,11 +13,19 @@
 .Runtime {
   width: 100%;
   max-width: 560px;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: var(--screen);
   position: relative;
+}
+
+/* 玻璃浮层的模糊捕获范围：只包含背景内容，不包含浮层本身 */
+.RuntimeCapture {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* ---------- 顶栏 ---------- */
@@ -27,9 +35,9 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  height: var(--topbar-h);
-  padding-left: 18px;
-  padding-right: 18px;
+  height: 48px;
+  padding-left: 12px;
+  padding-right: 16px;
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--screen-line);
@@ -37,7 +45,34 @@
 
 .RuntimeTopName {
   max-width: 58%;
-  font-size: 12px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.RuntimeTopLeft {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.RuntimeTopLeft .RuntimeTopName {
+  flex: 1;
+  max-width: none;
+}
+
+.RuntimeBack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: 0;
+}
+
+.RuntimeBackText {
+  font-size: 16px;
   color: var(--dim);
 }
 
@@ -58,6 +93,7 @@
   flex: 1;
   flex-direction: column;
   padding: 18px;
+  animation: scRiseIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .RuntimeSeg {
@@ -189,9 +225,9 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  height: 34px;
+  height: 44px;
   padding-left: 16px;
-  padding-right: 16px;
+  padding-right: 8px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--screen-line);
@@ -202,12 +238,13 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 34px;
+  height: 44px;
   padding-left: 12px;
+  padding-right: 12px;
 }
 
 .RuntimeSyncBtnText {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--bright);
 }
 
@@ -282,6 +319,7 @@
 .RuntimeHoldFill {
   height: 2px;
   background-color: var(--bright);
+  transition: width 100ms linear;
 }
 
 .RuntimeReadonly {
@@ -298,6 +336,7 @@
   flex: 1;
   flex-direction: column;
   padding: 32px 24px;
+  animation: scRiseIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .DoneLabel {
@@ -369,6 +408,7 @@
   align-items: center;
   justify-content: center;
   padding: 64px 24px;
+  animation: scRiseIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .RuntimeMissingTitle {

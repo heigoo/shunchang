@@ -11,6 +11,7 @@
     inset 0 1px 0 rgba(245, 242, 232, 0.26),
     inset 0 -1px 0 rgba(0, 0, 0, 0.42),
     0 14px 34px -14px rgba(0, 0, 0, 0.72);
+  animation: scPopIn 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .GlassInner {

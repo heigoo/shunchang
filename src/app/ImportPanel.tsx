@@ -14,6 +14,7 @@ import {
 import { isWeb, pickJsonFile } from './share';
 
 export interface ImportPanelProps {
+  closing?: boolean;
   onClose(): void;
   onImported(sheetId: string): void;
 }
@@ -37,7 +38,7 @@ function extractPayload(text: string): string {
 }
 
 export function ImportPanel(props: ImportPanelProps) {
-  const { onClose, onImported } = props;
+  const { closing = false, onClose, onImported } = props;
 
   const [linkText, setLinkText] = useState('');
   const [codeText, setCodeText] = useState('');
@@ -72,12 +73,15 @@ export function ImportPanel(props: ImportPanelProps) {
 
   return (
     <view
-      className="ImportOverlay"
+      className={closing ? 'ImportOverlay OverlayOut' : 'ImportOverlay'}
       bindtap={() => {
         onClose();
       }}
     >
-      <view className="ImportPanel" catchtap={() => {}}>
+      <view
+        className={closing ? 'ImportPanel PanelOut' : 'ImportPanel'}
+        catchtap={() => {}}
+      >
         <view className="ImportHead">
           <view className="ImportHeadText">
             <text className="ImportTitle">载入手册</text>

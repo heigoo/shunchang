@@ -7,6 +7,7 @@
   min-height: 100vh;
   padding-bottom: 88px;
   background-color: var(--paper);
+  animation: none;
 }
 
 .PrintPages {
@@ -268,6 +269,7 @@
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--paper-3);
+  animation: scRiseIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .PrintActionsBack {
@@ -295,6 +297,7 @@
   flex-direction: column;
   align-items: flex-start;
   padding: 48px 24px;
+  animation: scRiseIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .PrintMissingTitle {
@@ -321,6 +324,11 @@
     min-height: 0;
     padding-bottom: 0;
     background-color: #ffffff;
+    animation: none;
+  }
+
+  .PrintPage {
+    animation: none;
   }
 
   .PrintPages {

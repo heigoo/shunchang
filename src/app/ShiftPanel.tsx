@@ -15,6 +15,7 @@ export interface ShiftPanelProps {
   sheet: Sheet;
   runtime: RuntimeState;
   nowMin: number;
+  closing?: boolean;
   onCancel(): void;
   onConfirm(startMin: number): void;
 }
@@ -67,18 +68,33 @@ function LockBlock(props: { preview: ShiftPreview }) {
 }
 
 export function ShiftPanel(props: ShiftPanelProps) {
-  const { sheet, runtime, nowMin, onCancel, onConfirm } = props;
+  const { sheet, runtime, nowMin, closing = false, onCancel, onConfirm } = props;
   const [startMin, setStartMin] = useState(() => nowMin);
 
   const preview = buildShiftPreview(sheet, runtime, startMin, nowMin);
 
   const glassClasses = ['ShiftGlass'];
   if (isWeb) glassClasses.push('ShiftGlass--web');
+  if (closing) glassClasses.push('GlassOut');
 
   return (
-    <view className="ShiftOverlay" catchtap={onCancel}>
-      <view className="ShiftStage" catchtap={() => {}}>
-        <view className={glassClasses.join(' ')} catchtap={() => {}}>
+    <view
+      className={closing ? 'ShiftOverlay OverlayOut' : 'ShiftOverlay'}
+      flatten={false}
+      catchtap={onCancel}
+    >
+      <view className="ShiftStage" flatten={false} catchtap={() => {}}>
+        <blur-view
+          className={glassClasses.join(' ')}
+          android-capture-target="runtime-capture"
+          blur-radius="40"
+          blur-sampling={4}
+          enable-auto-blur={true}
+          experimental-update-blur-radius={true}
+          flatten={false}
+          catchtap={() => {}}
+        >
+          <view className="ShiftSheen" />
           <view className="ShiftInner">
             <view className="ShiftHead">
               <text className="ShiftLabel">SHIFT · 顺延至</text>
@@ -164,7 +180,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
               </view>
             </view>
           </view>
-        </view>
+        </blur-view>
       </view>
     </view>
   );
