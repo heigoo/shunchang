@@ -18,6 +18,8 @@ import { webPrint } from './webBridge';
 export interface PrintScreenProps {
   sheetId: string;
   onBack(): void;
+  safeTop?: number;
+  safeBottom?: number;
 }
 
 const MAX_QR_ITEMS = 40;
@@ -46,7 +48,7 @@ function stampText(ms: number): string {
 }
 
 export function PrintScreen(props: PrintScreenProps) {
-  const { sheetId, onBack } = props;
+  const { sheetId, onBack, safeTop = 0, safeBottom = 0 } = props;
 
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
@@ -54,7 +56,10 @@ export function PrintScreen(props: PrintScreenProps) {
 
   if (!sheet) {
     return (
-      <view className="PrintScreen">
+      <view
+      className="PrintScreen"
+      style={{ paddingTop: safeTop, paddingBottom: 88 + safeBottom }}
+    >
         <view className="PrintMissing">
           <text className="PrintMissingTitle">手册不存在</text>
           <view className="PrintMissingAction">
@@ -177,7 +182,10 @@ export function PrintScreen(props: PrintScreenProps) {
   );
 
   return (
-    <view className="PrintScreen">
+    <view
+      className="PrintScreen"
+      style={{ paddingTop: safeTop, paddingBottom: 88 + safeBottom }}
+    >
       <view className="PrintPages">{pages.map(renderPage)}</view>
 
       <view className="PrintActions">

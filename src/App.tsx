@@ -12,7 +12,15 @@ import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
 import { PrintScreen } from './app/PrintScreen';
 import { RuntimeScreen } from './app/RuntimeScreen';
+import { SplashScreen } from './app/SplashScreen';
 import { isWeb } from './app/share';
+import {
+  EMPTY_INSETS,
+  applyBarsStyle,
+  readInsetsEvent,
+  requestSafeInsets,
+} from './app/systemBars';
+import type { SafeInsets } from './app/systemBars';
 import { webSyncLocation, installMainThreadBridge } from './app/webBridge';
 import type { WebLocationSnapshot } from './app/webBridge';
 import {
@@ -109,6 +117,9 @@ export function App() {
   const [route, setRoute] = useState<Route>({ view: 'list' });
   const [notice, setNotice] = useState<string | null>(null);
   const [transition, setTransition] = useState<ScreenTransition | null>(null);
+  const [insets, setInsets] = useState<SafeInsets>(EMPTY_INSETS);
+  const [booted, setBooted] = useState(false);
+  const [splashClosing, setSplashClosing] = useState(false);
 
   const routeRef = useRef<Route>(route);
   routeRef.current = route;
@@ -125,6 +136,36 @@ export function App() {
       }
     };
   }, []);
+
+  // 启动页：900ms 播完翻牌，再用 160ms 交叉淡化交给首页。
+  useEffect(() => {
+    applyBarsStyle(true);
+    requestSafeInsets();
+    const closeTimer = setTimeout(() => {
+      setSplashClosing(true);
+    }, 900);
+    const doneTimer = setTimeout(() => {
+      setBooted(true);
+    }, 1060);
+    return () => {
+      clearTimeout(closeTimer);
+      clearTimeout(doneTimer);
+    };
+  }, []);
+
+  useLynxGlobalEventListener('shunchang:insets', (value: any) => {
+    const next = readInsetsEvent(value);
+    if (next) {
+      setInsets(next);
+    }
+  });
+
+  useEffect(() => {
+    if (!booted) {
+      return;
+    }
+    applyBarsStyle(viewTheme(route.view) === 'dark');
+  }, [route.view, booted]);
 
   useEffect(() => {
     let cancelled = false;
@@ -246,6 +287,8 @@ export function App() {
       <ListScreen
         key={hydrated ? 'list-ready' : 'list-boot'}
         notice={notice ?? undefined}
+        safeTop={insets.top}
+        safeBottom={insets.bottom}
         onOpenSheet={openSheet}
         onOpenFollow={() => {
           setRole('follower');
@@ -269,6 +312,8 @@ export function App() {
         content = route.sheetId ? (
           <EditorScreen
             sheetId={route.sheetId}
+            safeTop={insets.top}
+            safeBottom={insets.bottom}
             onBack={back}
             onStartRuntime={(id) => {
               navigate('runtime', id);
@@ -285,6 +330,8 @@ export function App() {
         content = route.sheetId ? (
           <RuntimeScreen
             sheetId={route.sheetId}
+            safeTop={insets.top}
+            safeBottom={insets.bottom}
             onBack={() => {
               navigate('list');
             }}
@@ -305,6 +352,8 @@ export function App() {
         content = (
           <FollowScreen
             sheetId={route.sheetId}
+            safeTop={insets.top}
+            safeBottom={insets.bottom}
             onBack={() => {
               navigate('list');
             }}
@@ -315,6 +364,8 @@ export function App() {
         content = route.sheetId ? (
           <PrintScreen
             sheetId={route.sheetId}
+            safeTop={insets.top}
+            safeBottom={insets.bottom}
             onBack={() => {
               navigate('list');
             }}
@@ -345,6 +396,9 @@ export function App() {
       />
       <view className={`ScreenBackdrop${backdrop === 'dark' ? ' ScreenBackdrop--dark' : ''}`}>
         <view className={stackClasses.join(' ')}>{content}</view>
+        {!booted ? (
+          <SplashScreen closing={splashClosing} safeBottom={insets.bottom} />
+        ) : null}
       </view>
     </>
   );

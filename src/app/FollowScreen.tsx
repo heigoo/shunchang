@@ -18,6 +18,8 @@ import { ImportPanel } from './ImportPanel';
 export interface FollowScreenProps {
   sheetId?: string;
   onBack(): void;
+  safeTop?: number;
+  safeBottom?: number;
 }
 
 const MINUS = '\u2212';
@@ -53,7 +55,7 @@ function rowSubText(item: Item): string {
 }
 
 export function FollowScreen(props: FollowScreenProps) {
-  const { sheetId, onBack } = props;
+  const { sheetId, onBack, safeTop = 0, safeBottom = 0 } = props;
 
   const [activeId, setActiveId] = useState<string | undefined>(sheetId);
   const [sheet, setSheet] = useState<Sheet | null>(() =>
@@ -117,7 +119,10 @@ export function FollowScreen(props: FollowScreenProps) {
 
   if (!sheet) {
     return (
-      <view className="Follow theme-dark">
+      <view
+      className="Follow theme-dark"
+      style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+    >
         <view className="FollowGuide">
           <text className="FollowGuideLabel">现场跟随</text>
           <text className="FollowGuideTitle">跟随现场</text>
@@ -192,7 +197,10 @@ export function FollowScreen(props: FollowScreenProps) {
   }
 
   return (
-    <view className="Follow theme-dark">
+    <view
+      className="Follow theme-dark"
+      style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+    >
       <view className="FollowSync">
         <view className="FollowSyncRow">
           <text className="FollowSyncText">{syncText}</text>

@@ -28,6 +28,8 @@ export interface RuntimeScreenProps {
   sheetId: string;
   onBack(): void;
   onPrint?(sheetId: string): void;
+  safeTop?: number;
+  safeBottom?: number;
 }
 
 const MINUS = '\u2212';
@@ -136,7 +138,7 @@ function diffText(value: number): string {
 }
 
 export function RuntimeScreen(props: RuntimeScreenProps) {
-  const { sheetId, onBack, onPrint } = props;
+  const { sheetId, onBack, onPrint, safeTop = 0, safeBottom = 0 } = props;
 
   const [sheet, setSheet] = useState<Sheet | null>(() => getSheet(sheetId));
   const [runtime, setRuntime] = useState<RuntimeState | null>(() => {
@@ -227,7 +229,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
   if (!sheet || !runtime) {
     return (
-      <view className="Runtime theme-dark">
+      <view
+        className="Runtime theme-dark"
+        style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+      >
         <view className="RuntimeMissing">
           <text className="RuntimeMissingTitle">手册不存在</text>
           <view className="RuntimeMissingAction">
@@ -290,7 +295,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   if (finished) {
     return (
       <view className="RuntimeViewport">
-        <view className="Runtime theme-dark">
+        <view
+        className="Runtime theme-dark"
+        style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+      >
           <view className="DoneBody">
             <text className="DoneLabel">流程完成</text>
             <text className="DoneTitle">已完成</text>
@@ -359,7 +367,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
   return (
     <view className="RuntimeViewport" id="runtime-capture" flatten={false}>
-      <view className="Runtime theme-dark">
+      <view
+        className="Runtime theme-dark"
+        style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+      >
         <view className="RuntimeCapture">
           <view className="RuntimeTop">
             <view className="RuntimeTopLeft">

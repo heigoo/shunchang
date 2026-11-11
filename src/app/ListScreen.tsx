@@ -25,6 +25,8 @@ export interface ListScreenProps {
   onImported(sheetId: string): void;
   onCreate?(id: string): void;
   notice?: string;
+  safeTop?: number;
+  safeBottom?: number;
 }
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
@@ -74,7 +76,15 @@ function createOptionMeta(count: number, minutes: number): string {
 }
 
 export function ListScreen(props: ListScreenProps) {
-  const { onOpenSheet, onOpenFollow, onImported, onCreate, notice } = props;
+  const {
+    onOpenSheet,
+    onOpenFollow,
+    onImported,
+    onCreate,
+    notice,
+    safeTop = 0,
+    safeBottom = 0,
+  } = props;
 
   const [sheets, setSheets] = useState<Sheet[]>(() => listSheets());
   const [query, setQuery] = useState('');
@@ -348,7 +358,10 @@ export function ListScreen(props: ListScreenProps) {
   };
 
   return (
-    <view className="ListScreen theme-light">
+    <view
+      className="ListScreen theme-light"
+      style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+    >
       {notice ? (
         <view className="ListNotice">
           <text className="ListNoticeText">{notice}</text>

@@ -31,6 +31,8 @@ export interface EditorScreenProps {
   onBack(): void;
   onStartRuntime(sheetId: string): void;
   onPrint(sheetId: string): void;
+  safeTop?: number;
+  safeBottom?: number;
 }
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
@@ -128,7 +130,14 @@ function lockText(item: Item): string {
 }
 
 export function EditorScreen(props: EditorScreenProps) {
-  const { sheetId, onBack, onStartRuntime, onPrint } = props;
+  const {
+    sheetId,
+    onBack,
+    onStartRuntime,
+    onPrint,
+    safeTop = 0,
+    safeBottom = 0,
+  } = props;
 
   const [sheet, setSheet] = useState<Sheet | null>(() => getSheet(sheetId));
   const [errors, setErrors] = useState<SheetError[] | null>(null);
@@ -197,7 +206,10 @@ export function EditorScreen(props: EditorScreenProps) {
 
   if (!sheet) {
     return (
-      <view className="Editor theme-light">
+      <view
+        className="Editor theme-light"
+        style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+      >
         <view className="EditorMissing">
           <text className="EditorMissingTitle">手册不存在</text>
           <view className="EditorMissingAction">
@@ -626,7 +638,10 @@ export function EditorScreen(props: EditorScreenProps) {
   };
 
   return (
-    <view className="Editor theme-light">
+    <view
+      className="Editor theme-light"
+      style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+    >
       <view className="EditorHeader">
         <view className="EditorHeaderInner">
           <view className="EditorHeadRow">
