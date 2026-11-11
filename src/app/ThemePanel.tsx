@@ -13,27 +13,43 @@ interface ThemeOption {
   id: AppTheme;
   name: string;
   tagline: string;
-  bg: string;
-  bar: string;
-  rule: string;
+  icon: string;
 }
+
+/**
+ * 主题预览使用官方图标 SVG 的几何数据（顺场-AppIcon.svg / 顺场-喜事Icon.svg），
+ * 仅补上官方圆角半径 115，避免在面板里再画一套近似色块。
+ */
+const ICON_DEFAULT =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+  '<rect width="512" height="512" rx="115" fill="#0B0B09"/>' +
+  '<rect x="0" y="148" width="252" height="80" fill="#FFB020"/>' +
+  '<rect x="0" y="228" width="252" height="14" fill="#A66A12"/>' +
+  '<rect x="196" y="270" width="316" height="80" fill="#FFB020"/>' +
+  '<rect x="196" y="350" width="316" height="14" fill="#A66A12"/>' +
+  '</svg>';
+
+const ICON_XISHI =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+  '<rect width="512" height="512" rx="115" fill="#BE2A20"/>' +
+  '<rect x="0" y="148" width="252" height="80" fill="#FFB020"/>' +
+  '<rect x="0" y="228" width="252" height="14" fill="#A66A12"/>' +
+  '<rect x="196" y="270" width="316" height="80" fill="#FFB020"/>' +
+  '<rect x="196" y="350" width="316" height="14" fill="#A66A12"/>' +
+  '</svg>';
 
 const OPTIONS: ThemeOption[] = [
   {
     id: 'default',
     name: '墨金',
     tagline: '纸面调度 · 沉稳现场',
-    bg: '#0B0B09',
-    bar: '#FFB020',
-    rule: '#2A2A22',
+    icon: ICON_DEFAULT,
   },
   {
     id: 'xishi',
     name: '喜事',
     tagline: '朱红喜帖 · 金线压边',
-    bg: '#BE2A20',
-    bar: '#FFB020',
-    rule: '#8A2416',
+    icon: ICON_XISHI,
   },
 ];
 
@@ -69,15 +85,16 @@ export function ThemePanel(props: ThemePanelProps) {
                 }
               }}
             >
-              <view
-                className="ThemeSwatch"
-                style={{ backgroundColor: option.bg, borderColor: option.rule }}
-              >
-                <view
-                  className="ThemeSwatchBar"
-                  style={{ backgroundColor: option.bar }}
-                />
-              </view>
+              <svg
+                className="ThemeSwatchIcon"
+                content={option.icon}
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  flexShrink: 0,
+                  marginRight: '14px',
+                }}
+              />
               <view className="ThemeOptionMain">
                 <text className="ThemeOptionName">{option.name}</text>
                 <text className="ThemeOptionTagline">{option.tagline}</text>

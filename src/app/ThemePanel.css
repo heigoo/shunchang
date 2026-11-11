@@ -28,24 +28,6 @@
   background-color: var(--paper-2);
 }
 
-.ThemeSwatch {
-  position: relative;
-  flex-shrink: 0;
-  width: 46px;
-  height: 46px;
-  margin-right: 14px;
-  border-width: 1px;
-  border-style: solid;
-}
-
-.ThemeSwatchBar {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 10px;
-  height: 7px;
-}
-
 .ThemeOptionMain {
   display: flex;
   flex: 1;
