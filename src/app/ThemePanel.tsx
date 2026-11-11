@@ -65,7 +65,7 @@ export function ThemePanel(props: ThemePanelProps) {
         <view className="PanelHeader">
           <view className="PanelHeaderText">
             <text className="PanelTitle">外观主题</text>
-            <text className="PanelSubtitle">切换后桌面图标同步更换</text>
+            <text className="PanelSubtitle">切换后自动重启并更换桌面图标</text>
           </view>
           <view className="PanelClose" bindtap={onClose}>
             <text className="PanelCloseText">取消</text>

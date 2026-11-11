@@ -244,6 +244,11 @@ export function App() {
     // 进入列表是返回，其余都是进入下一层；据此决定转场方向。
     const dir: 'forward' | 'back' = view === 'list' ? 'back' : 'forward';
 
+    // 跟随是一次性会话：离开跟随视图就恢复督导身份，避免点任何手册都只能只读。
+    if (view === 'list' && previous.view === 'follow') {
+      setRole('owner');
+    }
+
     transitionSeqRef.current += 1;
     if (transitionTimerRef.current !== null) {
       clearTimeout(transitionTimerRef.current);

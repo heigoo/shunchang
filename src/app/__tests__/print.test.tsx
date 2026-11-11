@@ -63,5 +63,5 @@ test('shows the print button on web', async () => {
     <PrintScreen sheetId={SHEET_ID} onBack={() => {}} />,
   );
 
-  expect(await findByText('打印 / 导出文件')).toBeInTheDocument();
+  expect(await findByText('打印')).toBeInTheDocument();
 });

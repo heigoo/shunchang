@@ -3,6 +3,7 @@ import './PrintScreen.css';
 import { useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
+import { useIsWide } from '../platform/viewport';
 import { getRuntime, getSheet } from '../store/repository';
 import { Button } from '../ui';
 import { QrCode } from './QrCode';
@@ -53,6 +54,7 @@ export function PrintScreen(props: PrintScreenProps) {
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
   const [printedAt] = useState(() => Date.now());
+  const compact = !useIsWide(900);
 
   if (!sheet) {
     return (
@@ -101,7 +103,7 @@ export function PrintScreen(props: PrintScreenProps) {
         <view className="PrintHeadAside">
           {showQr ? (
             <view className="PrintQrBox">
-              <QrCode value={url} size={96} />
+              <QrCode value={url} size={compact ? 56 : 96} />
             </view>
           ) : (
             <view className="PrintQrFallback">
@@ -183,7 +185,7 @@ export function PrintScreen(props: PrintScreenProps) {
 
   return (
     <view
-      className="PrintScreen"
+      className={compact ? 'PrintScreen PrintScreen--compact' : 'PrintScreen'}
       style={{ paddingTop: safeTop, paddingBottom: 88 + safeBottom }}
     >
       <view className="PrintPages">{pages.map(renderPage)}</view>
@@ -194,10 +196,12 @@ export function PrintScreen(props: PrintScreenProps) {
         </view>
         {isWeb() ? (
           <view className="PrintActionsPrint">
-            <Button label="打印 / 导出文件" onTap={handlePrint} />
+            <Button label="打印" onTap={handlePrint} />
           </view>
         ) : (
-          <text className="PrintActionsHint">请在浏览器中打开以打印</text>
+          <text className="PrintActionsHint">
+            {compact ? '横屏查看更清晰 · 打印请在浏览器打开' : '请在浏览器中打开以打印'}
+          </text>
         )}
       </view>
     </view>

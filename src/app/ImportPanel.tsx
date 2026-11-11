@@ -86,7 +86,7 @@ export function ImportPanel(props: ImportPanelProps) {
           <view className="ImportHeadText">
             <text className="ImportTitle">载入手册</text>
             <text className="ImportSubtitle">
-              扫码打开会自动载入；也可粘贴链接或输入六位短码
+              扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件
             </text>
           </view>
           <view className="ImportClose" bindtap={onClose}>

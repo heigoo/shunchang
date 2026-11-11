@@ -313,6 +313,97 @@
   margin-top: 18px;
 }
 
+/* ---------- 手机 / 窄屏：按宽度重排，避免只看得到右侧两列 ---------- */
+
+.PrintScreen--compact .PrintPages {
+  padding: 12px;
+}
+
+.PrintScreen--compact .PrintPage {
+  width: 100%;
+  min-height: 0;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.PrintScreen--compact .PrintTitle {
+  font-size: 15px;
+}
+
+.PrintScreen--compact .PrintDate {
+  font-size: 10px;
+}
+
+.PrintScreen--compact .PrintMetaText {
+  font-size: 9px;
+  letter-spacing: 0;
+}
+
+.PrintScreen--compact .PrintQrBox,
+.PrintScreen--compact .PrintQrFallback {
+  width: 56px;
+  height: 56px;
+}
+
+.PrintScreen--compact .PrintQrFallbackText {
+  font-size: 8px;
+}
+
+.PrintScreen--compact .PrintSheetNo {
+  margin-top: 4px;
+  font-size: 9px;
+}
+
+.PrintScreen--compact .PrintTh {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.PrintScreen--compact .PrintColNo {
+  width: 26px;
+}
+
+.PrintScreen--compact .PrintColTime {
+  width: 50px;
+}
+
+.PrintScreen--compact .PrintColDur {
+  width: 44px;
+}
+
+.PrintScreen--compact .PrintColOwner {
+  width: 58px;
+}
+
+.PrintScreen--compact .PrintColNote {
+  display: none;
+}
+
+.PrintScreen--compact .PrintCellMono,
+.PrintScreen--compact .PrintCellTime {
+  font-size: 10px;
+}
+
+.PrintScreen--compact .PrintCellName,
+.PrintScreen--compact .PrintCellText {
+  font-size: 10px;
+}
+
+.PrintScreen--compact .PrintCellLock {
+  font-size: 8px;
+}
+
+.PrintScreen--compact .PrintRow {
+  min-height: 26px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.PrintScreen--compact .PrintFootText {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
 /* ---------- 打印 ---------- */
 
 @media print {

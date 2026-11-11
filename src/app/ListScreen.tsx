@@ -15,11 +15,13 @@ import { useIsWide } from '../platform/viewport';
 import {
   deleteSheet,
   duplicateSheet,
+  getRuntime,
   listSheets,
   saveSheet,
 } from '../store/repository';
 import type { AppTheme } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
+import { exportSheetFile } from './share';
 
 export interface ListScreenProps {
   onOpenSheet(id: string): void;
@@ -99,14 +101,18 @@ export function ListScreen(props: ListScreenProps) {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreSheet, setMoreSheet] = useState<Sheet | null>(null);
+  const [renameText, setRenameText] = useState('');
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const createPresence = usePresence(createOpen);
   const importPresence = usePresence(importOpen);
   const deletePresence = usePresence(deleteOpen);
   const themePresence = usePresence(themeOpen);
+  const morePresence = usePresence(moreOpen);
   const xishi = theme === 'xishi';
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -129,10 +135,14 @@ export function ListScreen(props: ListScreenProps) {
 
   // 返回键优先关闭当前打开的浮层。
   useEffect(() => {
-    if (!createOpen && !importOpen && !deleteOpen && !themeOpen) {
+    if (!createOpen && !importOpen && !deleteOpen && !themeOpen && !moreOpen) {
       return;
     }
     return registerBackHandler(() => {
+      if (moreOpen) {
+        setMoreOpen(false);
+        return true;
+      }
       if (themeOpen) {
         setThemeOpen(false);
         return true;
@@ -151,7 +161,7 @@ export function ListScreen(props: ListScreenProps) {
       }
       return false;
     });
-  }, [createOpen, importOpen, deleteOpen, themeOpen]);
+  }, [createOpen, importOpen, deleteOpen, themeOpen, moreOpen]);
 
   const reload = () => {
     setSheets(listSheets());
@@ -185,20 +195,66 @@ export function ListScreen(props: ListScreenProps) {
     onCreate?.(sheet.id);
   };
 
+  const showToast = (text: string) => {
+    setToast(text);
+    if (toastTimer.current !== null) {
+      clearTimeout(toastTimer.current);
+    }
+    toastTimer.current = setTimeout(() => {
+      setToast(null);
+      toastTimer.current = null;
+    }, 2000);
+  };
+
   const handleDuplicate = (id: string) => {
     const copy = duplicateSheet(id);
     if (!copy) {
       return;
     }
     reload();
-    setCopied(true);
-    if (toastTimer.current !== null) {
-      clearTimeout(toastTimer.current);
+    showToast('已复制为新手册');
+  };
+
+  const openMore = (sheet: Sheet) => {
+    setMoreSheet(sheet);
+    setRenameText(displayName(sheet));
+    setMoreOpen(true);
+  };
+
+  const closeMore = () => {
+    setMoreOpen(false);
+  };
+
+  const handleRenameInput = (event: any) => {
+    const detail = event && event.detail ? event.detail : null;
+    setRenameText(detail && typeof detail.value === 'string' ? detail.value : '');
+  };
+
+  const saveRename = () => {
+    if (!moreSheet) {
+      return;
     }
-    toastTimer.current = setTimeout(() => {
-      setCopied(false);
-      toastTimer.current = null;
-    }, 2000);
+    const name = renameText.trim();
+    if (name.length === 0) {
+      showToast('手册名称不能为空');
+      return;
+    }
+    saveSheet({ ...moreSheet, name });
+    setMoreOpen(false);
+    reload();
+    showToast('已保存名称');
+  };
+
+  const exportBackup = () => {
+    if (!moreSheet) {
+      return;
+    }
+    void exportSheetFile(moreSheet, getRuntime(moreSheet.id) ?? undefined).then(
+      (ok) => {
+        setMoreOpen(false);
+        showToast(ok ? '已导出备份' : '请在 Web 端导出备份');
+      },
+    );
   };
 
   const openDelete = (sheet: Sheet) => {
@@ -235,18 +291,10 @@ export function ListScreen(props: ListScreenProps) {
       <view
         className="RowAction"
         catchtap={() => {
-          handleDuplicate(sheet.id);
+          openMore(sheet);
         }}
       >
-        <text className="RowActionText">复制</text>
-      </view>
-      <view
-        className="RowAction"
-        catchtap={() => {
-          openDelete(sheet);
-        }}
-      >
-        <text className="RowActionText">删除</text>
+        <text className="RowActionText">更多</text>
       </view>
     </view>
   );
@@ -411,7 +459,7 @@ export function ListScreen(props: ListScreenProps) {
         <view className="ListTitleRow">
           <text className="ListTitle">现场手册</text>
           <view className="ListTitleRight">
-            {copied ? <text className="ListToast">已复制为新手册</text> : null}
+            {toast ? <text className="ListToast">{toast}</text> : null}
             <view
               className="ListTheme"
               bindtap={() => {
@@ -492,6 +540,67 @@ export function ListScreen(props: ListScreenProps) {
             onThemeChange?.(next);
           }}
         />
+      ) : null}
+
+      {morePresence.mounted && moreSheet ? (
+        <view
+          className={morePresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+          bindtap={closeMore}
+        >
+          <view
+            className={
+              morePresence.closing ? 'Panel SheetMore PanelOut' : 'Panel SheetMore'
+            }
+            catchtap={() => {}}
+          >
+            <view className="PanelHeader">
+              <view className="PanelHeaderText">
+                <text className="PanelTitle">手册操作</text>
+                <text className="PanelSubtitle">{displayName(moreSheet)}</text>
+              </view>
+              <view className="PanelClose" bindtap={closeMore}>
+                <text className="PanelCloseText">取消</text>
+              </view>
+            </view>
+
+            <view className="SheetRename">
+              <text className="SheetRenameLabel">重命名</text>
+              <input
+                className="SheetRenameInput"
+                default-value={displayName(moreSheet)}
+                placeholder="输入手册名称"
+                bindinput={handleRenameInput}
+              />
+              <Button label="保存名称" kind="secondary" block onTap={saveRename} />
+            </view>
+
+            <view
+              className="PanelOption"
+              bindtap={() => {
+                closeMore();
+                handleDuplicate(moreSheet.id);
+              }}
+            >
+              <text className="PanelOptionName">复制为新手册</text>
+              <text className="PanelOptionArrow">→</text>
+            </view>
+            <view className="PanelOption" bindtap={exportBackup}>
+              <text className="PanelOptionName">导出备份</text>
+              <text className="PanelOptionArrow">→</text>
+            </view>
+            <view
+              className="PanelOption PanelOption--danger"
+              bindtap={() => {
+                const target = moreSheet;
+                closeMore();
+                openDelete(target);
+              }}
+            >
+              <text className="PanelOptionName">删除手册</text>
+              <text className="PanelOptionArrow">→</text>
+            </view>
+          </view>
+        </view>
       ) : null}
 
       {createPresence.mounted ? (

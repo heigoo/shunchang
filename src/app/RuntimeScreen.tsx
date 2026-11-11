@@ -3,6 +3,7 @@ import './RuntimeScreen.css';
 import { runOnBackground, runOnMainThread, useEffect, useRef, useState } from '@lynx-js/react';
 
 import { formatClockDisplay, formatDuration } from '../domain/timeline';
+import { encodeShortCode } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
 import { useIsWide } from '../platform/viewport';
 import {
@@ -152,18 +153,25 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [role] = useState<'owner' | 'follower'>(() => getRole());
   const [shiftOpen, setShiftOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
+  const [shiftToast, setShiftToast] = useState<string | null>(null);
   const [holdProgress, setHoldProgress] = useState(0);
   const isWideActions = useIsWide(NARROW_ACTIONS_WIDTH);
   const [mainWidth, setMainWidth] = useState<number | null>(null);
 
   const shiftPresence = usePresence(shiftOpen);
   const syncPresence = usePresence(syncOpen);
+  const endPresence = usePresence(endOpen);
 
   useEffect(() => {
-    if (!shiftOpen && !syncOpen) {
+    if (!shiftOpen && !syncOpen && !endOpen) {
       return;
     }
     return registerBackHandler(() => {
+      if (endOpen) {
+        setEndOpen(false);
+        return true;
+      }
       if (shiftOpen) {
         setShiftOpen(false);
         return true;
@@ -174,7 +182,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       }
       return false;
     });
-  }, [shiftOpen, syncOpen]);
+  }, [shiftOpen, syncOpen, endOpen]);
 
   useEffect(() => {
     viewportWidthListener = (width: number) => {
@@ -202,7 +210,16 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     mainWidth !== null ? mainWidth >= NARROW_ACTIONS_WIDTH : isWideActions;
 
   const holdTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const shiftToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDoneAt = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      if (shiftToastTimer.current !== null) {
+        clearTimeout(shiftToastTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (runtime) {
@@ -266,6 +283,27 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const doSkip = () => {
     commit(skipCurrent(sheet, runtime, minuteOfDay(Date.now())));
   };
+
+  const endExecution = () => {
+    saveSheet({ ...sheet, status: 'done' });
+    setEndOpen(false);
+    onBack();
+  };
+
+  const showShiftToast = (text: string) => {
+    setShiftToast(text);
+    if (shiftToastTimer.current !== null) {
+      clearTimeout(shiftToastTimer.current);
+    }
+    shiftToastTimer.current = setTimeout(() => {
+      setShiftToast(null);
+      shiftToastTimer.current = null;
+    }, 2400);
+  };
+
+  const syncCode = encodeShortCode(sheet.id, runtime);
+  const syncCodeText =
+    syncCode.length === 6 ? `${syncCode.slice(0, 3)}-${syncCode.slice(3)}` : syncCode;
 
   const stopHold = () => {
     if (holdTimer.current !== null) {
@@ -388,6 +426,14 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               </view>
             ) : null}
             <Badge kind="outline" label={offsetText(runtime.offsetMin)} />
+            <view
+              className="RuntimeEndBtn"
+              bindtap={() => {
+                setEndOpen(true);
+              }}
+            >
+              <text className="RuntimeEndText">结束</text>
+            </view>
           </view>
         </view>
 
@@ -452,6 +498,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           </view>
         </view>
 
+        {shiftToast ? (
+          <view className="RuntimeShiftToast">
+            <text className="RuntimeShiftToastText">{shiftToast}</text>
+          </view>
+        ) : null}
+
         {shiftOpen ? null : (
           <view className="RuntimeSyncBar">
             <Badge kind="outline" label={`第 ${runtime.execVersion} 版`} />
@@ -461,7 +513,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 setSyncOpen(true);
               }}
             >
-              <text className="RuntimeSyncBtnText">同步码</text>
+              <text className="RuntimeSyncBtnText">{`同步码 ${syncCodeText}`}</text>
             </view>
           </view>
         )}
@@ -508,6 +560,47 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           </view>
         )}
 
+        {endPresence.mounted ? (
+          <view
+            className={endPresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+            bindtap={() => {
+              setEndOpen(false);
+            }}
+          >
+            <view
+              className={
+                endPresence.closing
+                  ? 'Panel Panel--confirm PanelOut'
+                  : 'Panel Panel--confirm'
+              }
+              catchtap={() => {}}
+            >
+              <view className="PanelHeader">
+                <text className="PanelTitle">结束执行</text>
+              </view>
+              <view className="PanelBody">
+                <text className="PanelBodyText">
+                  结束后本场流程将标记为已完成，可在手册列表中查看或删除。
+                </text>
+              </view>
+              <view className="PanelActions">
+                <view className="PanelAction">
+                  <Button
+                    label="继续执行"
+                    kind="tertiary"
+                    onTap={() => {
+                      setEndOpen(false);
+                    }}
+                  />
+                </view>
+                <view className="PanelAction">
+                  <Button label="结束执行" kind="secondary" onTap={endExecution} />
+                </view>
+              </view>
+            </view>
+          </view>
+        ) : null}
+
         {shiftPresence.mounted ? (
           <ShiftPanel
             sheet={sheet}
@@ -522,9 +615,15 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               if (next === runtime) {
                 return;
               }
+              const delta = next.offsetMin - runtime.offsetMin;
               saveRuntime(next);
               setRuntime(next);
               setShiftOpen(false);
+              if (delta !== 0) {
+                showShiftToast(
+                  `已顺延 ${Math.abs(delta)} 分钟，后续环节已重排`,
+                );
+              }
             }}
           />
         ) : null}

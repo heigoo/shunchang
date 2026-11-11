@@ -19,23 +19,26 @@ describe('templates', () => {
     });
   });
 
-  it('keeps the banquet segment locked until a lock time is filled', () => {
+  it('locks the banquet segment at its planned start', () => {
     TEMPLATES.forEach((template) => {
-      const lockedTemplateItem = template.items.find(
+      const lockedIndex = template.items.findIndex(
         (entry) => entry.locked === true,
       );
-      expect(lockedTemplateItem).toBeDefined();
-      expect(lockedTemplateItem?.name).toBe(LOCKED_NAME[template.id]);
+      expect(lockedIndex).toBeGreaterThanOrEqual(0);
+      expect(template.items[lockedIndex].name).toBe(LOCKED_NAME[template.id]);
 
       const sheet = createSheetFromTemplate(template.id, NOW);
       expect(sheet).not.toBeNull();
 
-      const lockedItem = sheet!.items.find(
-        (entry) => entry.name === LOCKED_NAME[template.id],
-      );
-      expect(lockedItem).toBeDefined();
-      expect(lockedItem!.locked).toBe(true);
-      expect(lockedItem!.lockAt).toBeNull();
+      const lockedItem = sheet!.items[lockedIndex];
+      expect(lockedItem.locked).toBe(true);
+
+      const plannedStart =
+        template.startMin +
+        template.items
+          .slice(0, lockedIndex)
+          .reduce((sum, entry) => sum + entry.durationMin, 0);
+      expect(lockedItem.lockAt).toBe(plannedStart);
     });
   });
 

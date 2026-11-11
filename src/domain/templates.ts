@@ -110,18 +110,21 @@ export function createSheetFromTemplate(
   }
 
   const date = new Date(now);
+  let cursor = template.startMin;
   const items: Item[] = template.items.map((entry) => {
+    const locked = entry.locked === true;
     const next: Item = {
       id: createId(),
       name: entry.name,
       durationMin: entry.durationMin,
       owner: entry.owner,
       note: entry.note,
-      lockAt: null,
+      lockAt: locked ? cursor : null,
     };
-    if (entry.locked === true) {
+    if (locked) {
       next.locked = true;
     }
+    cursor += entry.durationMin;
     return next;
   });
 

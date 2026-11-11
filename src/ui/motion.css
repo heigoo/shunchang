@@ -209,6 +209,7 @@
 .ListLoad,
 .ListFollow,
 .ListTheme,
+.RuntimeEndBtn,
 .ActBtn {
   transition:
     transform 120ms ease-out,
@@ -237,7 +238,8 @@
 .FilterItem:active,
 .ListLoad:active,
 .ListFollow:active,
-.ListTheme:active {
+.ListTheme:active,
+.RuntimeEndBtn:active {
   opacity: 0.72;
   transform: scale(0.97);
 }

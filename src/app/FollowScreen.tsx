@@ -132,7 +132,7 @@ export function FollowScreen(props: FollowScreenProps) {
           <view className="FollowGuideAction">
             <Button label="载入手册" block onTap={openImport} />
           </view>
-          <view className="FollowGuideBack" bindtap={onBack}>
+          <view className="FollowGuideBack" bindtap={exitFollow}>
             <text className="FollowGuideBackText">返回手册列表</text>
           </view>
         </view>

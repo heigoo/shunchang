@@ -1,6 +1,6 @@
 import './EditorScreen.css';
 
-import { useEffect, useState } from '@lynx-js/react';
+import { useEffect, useRef, useState } from '@lynx-js/react';
 
 import { computeTimeline, formatClock, formatDuration } from '../domain/timeline';
 import type { Item, Sheet, SheetStatus } from '../domain/types';
@@ -154,10 +154,22 @@ export function EditorScreen(props: EditorScreenProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [published, setPublished] = useState<{ version: number } | null>(null);
   const [nowMin, setNowMin] = useState<number>(currentMinuteOfDay);
+  const [undo, setUndo] = useState<string | null>(null);
   const isWide = useIsWide();
+
+  const undoSheet = useRef<Sheet | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const deletePresence = usePresence(deleteOpen);
   const publishPresence = usePresence(published !== null);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimer.current !== null) {
+        clearTimeout(undoTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -202,6 +214,33 @@ export function EditorScreen(props: EditorScreenProps) {
     }
     const saved = saveSheet(next);
     setSheet(saved);
+  };
+
+  const rememberUndo = (label: string, snapshot: Sheet) => {
+    undoSheet.current = snapshot;
+    setUndo(label);
+    if (undoTimer.current !== null) {
+      clearTimeout(undoTimer.current);
+    }
+    undoTimer.current = setTimeout(() => {
+      setUndo(null);
+      undoSheet.current = null;
+      undoTimer.current = null;
+    }, 5000);
+  };
+
+  const handleUndo = () => {
+    const snapshot = undoSheet.current;
+    if (!snapshot) {
+      return;
+    }
+    if (undoTimer.current !== null) {
+      clearTimeout(undoTimer.current);
+      undoTimer.current = null;
+    }
+    undoSheet.current = null;
+    setUndo(null);
+    apply(snapshot);
   };
 
   if (!sheet) {
@@ -306,6 +345,7 @@ export function EditorScreen(props: EditorScreenProps) {
     if (next === sheet) {
       return;
     }
+    rememberUndo('已按时排序', sheet);
     apply(next);
     setExpanded(null);
   };
@@ -315,6 +355,7 @@ export function EditorScreen(props: EditorScreenProps) {
       return;
     }
     const index = pendingDelete.index;
+    rememberUndo('已删除环节', sheet);
     apply(removeItem(sheet, index));
     setDeleteOpen(false);
     setExpanded((previous) => {
@@ -731,7 +772,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
             <view className="EditorToolBtn">
               <Button
-                label="导出"
+                label="打印"
                 kind="tertiary"
                 className="EditorSmallBtn"
                 onTap={() => {
@@ -868,6 +909,17 @@ export function EditorScreen(props: EditorScreenProps) {
           }}
           onStart={onStartRuntime}
         />
+      ) : null}
+
+      {undo ? (
+        <view className="EditorUndo">
+          <view className="EditorUndoBody">
+            <text className="EditorUndoText">{undo}</text>
+            <view className="EditorUndoBtn" bindtap={handleUndo}>
+              <text className="EditorUndoBtnText">撤销</text>
+            </view>
+          </view>
+        </view>
       ) : null}
     </view>
   );

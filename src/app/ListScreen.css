@@ -634,3 +634,43 @@
 .PanelAction {
   margin-left: 12px;
 }
+
+/* ---------- 手册操作面板 ---------- */
+
+.SheetMore {
+  max-width: 420px;
+}
+
+.SheetRename {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 20px 18px 20px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+}
+
+.SheetRenameLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+
+.SheetRenameInput {
+  height: 44px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  background-color: var(--bg);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--rule);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.PanelOption--danger .PanelOptionName {
+  color: var(--vermilion);
+}

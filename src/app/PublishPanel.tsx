@@ -63,7 +63,7 @@ export function PublishPanel(props: PublishPanelProps) {
           {web ? (
             <view className="PublishExport">
               <Button
-                label="导出文件"
+                label="导出备份"
                 kind="secondary"
                 block
                 onTap={() => {
