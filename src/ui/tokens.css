@@ -33,21 +33,22 @@
 }
 
 .theme-light {
-  --bg: var(--paper);
-  --fg: var(--ink);
-  --fg-2: var(--ink-2);
-  --fg-3: var(--ink-3);
-  --rule: var(--paper-3);
-  --accent: var(--amber-deep);
+  /* 语义变量直接使用字面量，避免原生端对嵌套 var() 解析差异 */
+  --bg: #F1EEE6;
+  --fg: #15140F;
+  --fg-2: #4B4941;
+  --fg-3: #8B887A;
+  --rule: #DCD6C6;
+  --accent: #A66A12;
 }
 
 .theme-dark {
-  --bg: var(--screen);
-  --fg: var(--bright);
-  --fg-2: var(--dim);
+  --bg: #0B0B09;
+  --fg: #F5F2E8;
+  --fg-2: #8A8778;
   --fg-3: #6F6C60;
-  --rule: var(--screen-line);
-  --accent: var(--amber);
+  --rule: #2A2A22;
+  --accent: #FFB020;
 }
 
 /* 工具类 */

@@ -8,8 +8,12 @@ import { clearAllForTest } from '../store/repository';
 test('renders the shunchang shell', async () => {
   clearAllForTest();
 
-  const { findByText } = render(<App />);
+  const view = render(<App />);
+  // 原生端存储需要异步水合，首帧可能为空；等待一次水合完成。
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 300);
+  });
 
-  expect(await findByText('顺场')).toBeInTheDocument();
-  expect(await findByText('还没有手册')).toBeInTheDocument();
+  expect(view.container.textContent).toContain('顺场');
+  expect(view.container.textContent).toContain('还没有手册');
 });

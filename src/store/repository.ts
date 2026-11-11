@@ -257,6 +257,19 @@ export function consumeStorageError(): string | null {
   return error;
 }
 
+export async function hydrateStorage(): Promise<void> {
+  if (!storage.hydrate) {
+    return;
+  }
+
+  await storage.hydrate([SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY]);
+
+  const sheetIds = readSheets().map((sheet) => sheet.id);
+  if (sheetIds.length > 0) {
+    await storage.hydrate(sheetIds.map(runtimeKey));
+  }
+}
+
 export function clearAllForTest(): void {
   const sheetIds = new Set<string>(runtimeKeys);
   for (const sheet of readSheets()) {

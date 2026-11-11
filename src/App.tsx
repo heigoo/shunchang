@@ -18,6 +18,7 @@ import {
   getLastView,
   getRole,
   getSheet,
+  hydrateStorage,
   setLastView,
   setRole,
 } from './store/repository';
@@ -79,45 +80,56 @@ function PlaceholderScreen(props: PlaceholderProps) {
 }
 
 export function App() {
-  const [boot] = useState(() => applyLaunchHash());
-  const [route, setRoute] = useState<Route>(() =>
-    boot && boot.ok ? { view: 'runtime', sheetId: boot.sheetId } : readInitialRoute(),
-  );
-  const [notice] = useState<string | null>(() =>
-    boot && !boot.ok ? importErrorMessage(boot.error) : consumeStorageError(),
-  );
+  const [hydrated, setHydrated] = useState(false);
+  const [route, setRoute] = useState<Route>({ view: 'list' });
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isWeb() || typeof document !== 'undefined') {
-      return undefined;
-    }
-
     let cancelled = false;
-    void (async () => {
-      const wait = (ms: number) =>
-        new Promise<void>((resolve) => {
-          setTimeout(resolve, ms);
-        });
 
-      let location: WebLocationSnapshot | null = null;
-      for (let attempt = 0; attempt < 10 && !location; attempt += 1) {
-        location = await Promise.race([
-          webSyncLocation(),
-          wait(150).then(() => null),
-        ]);
-        if (!location) {
-          await wait(50);
-        }
-      }
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, ms);
+      });
+
+    void (async () => {
+      // 原生端存储是异步的，先把数据读入缓存；首页会以 key 重挂载读取新数据。
+      await hydrateStorage();
       if (cancelled) {
         return;
       }
-      const pending = applyLaunchHash();
-      if (pending && pending.ok) {
-        setRoute({ view: 'runtime', sheetId: pending.sheetId });
-        setLastView({ view: 'runtime', sheetId: pending.sheetId });
+
+      if (isWeb() && typeof document === 'undefined') {
+        let location: WebLocationSnapshot | null = null;
+        for (let attempt = 0; attempt < 10 && !location; attempt += 1) {
+          location = await Promise.race([
+            webSyncLocation(),
+            wait(150).then(() => null),
+          ]);
+          if (!location) {
+            await wait(50);
+          }
+        }
+        if (cancelled) {
+          return;
+        }
       }
+
+      const boot = applyLaunchHash();
+      if (boot && boot.ok) {
+        setRoute({ view: 'runtime', sheetId: boot.sheetId });
+        setLastView({ view: 'runtime', sheetId: boot.sheetId });
+      } else {
+        if (boot && !boot.ok) {
+          setNotice(importErrorMessage(boot.error));
+        } else {
+          setNotice(consumeStorageError());
+        }
+        setRoute(readInitialRoute());
+      }
+      setHydrated(true);
     })();
+
     return () => {
       cancelled = true;
     };
@@ -150,6 +162,7 @@ export function App() {
   if (route.view === 'list') {
     content = (
       <ListScreen
+        key={hydrated ? 'list-ready' : 'list-boot'}
         notice={notice ?? undefined}
         onOpenSheet={openSheet}
         onOpenFollow={() => {

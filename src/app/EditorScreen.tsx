@@ -72,9 +72,11 @@ function DraftInput(props: DraftInputProps) {
     return detail && typeof detail.value === 'string' ? detail.value : '';
   };
 
-  // `value` is the controlled-input attribute ReactLynx renders, but the
-  // installed @lynx-js/types does not declare it, so it is spread in.
-  const controlled: { value: string } = { value: text };
+  // Web 读取受控 value，原生端读取 default-value；同时下发以兼容两端。
+  const controlled: { value: string; 'default-value': string } = {
+    value: text,
+    'default-value': text,
+  };
 
   return (
     <input

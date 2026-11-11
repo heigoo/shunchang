@@ -22,3 +22,5 @@ npm run test   # 运行测试
 ## 技术
 
 一套 ReactLynx 代码同时产出 Web 与 Lynx 原生 bundle，数据默认只保存在本设备，不依赖账号与网络。Web 端支持文件导入导出与打印；原生端通过二维码展示与六位短码完成分发和同步。
+
+预览说明：LynxExplorer 宿主未提供持久化存储模块，数据仅保留在当前进程内；接入真实宿主提供的 `lynx.getStorage` / `lynx.setStorage` 后即可跨重启保存。

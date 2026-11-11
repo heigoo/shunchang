@@ -2,9 +2,10 @@ export interface KVStore {
   get(key: string): string | null;
   set(key: string, value: string): void;
   remove(key: string): void;
+  hydrate?(keys: string[]): Promise<void>;
 }
 
-type Backend = 'web' | 'lynx-sync' | 'lynx-async' | 'memory';
+type Backend = 'web' | 'lynx-sync' | 'lynx-async' | 'lynx-session' | 'memory';
 
 const memory = new Map<string, string>();
 
@@ -49,6 +50,13 @@ function detectBackend(): Backend {
       typeof lynx.setStorage === 'function'
     ) {
       return 'lynx-async';
+    }
+    if (
+      lynx &&
+      typeof lynx.getSessionStorageItem === 'function' &&
+      typeof lynx.setSessionStorageItem === 'function'
+    ) {
+      return 'lynx-session';
     }
   } catch {
     // Ignore broken global objects.
@@ -178,6 +186,71 @@ function removeLynxAsync(key: string): void {
   }
 }
 
+function readLynxSession(key: string): string | null {
+  return memory.get(key) ?? null;
+}
+
+function writeLynxSession(key: string, value: string): void {
+  memory.set(key, value);
+  try {
+    getLynx().setSessionStorageItem(key, value);
+  } catch {
+    // Keep the in-memory copy when persistence is unavailable.
+  }
+}
+
+function removeLynxSession(key: string): void {
+  memory.delete(key);
+  try {
+    // Session storage has no remove API; an empty value reads back as missing.
+    getLynx().setSessionStorageItem(key, '');
+  } catch {
+    // Ignore.
+  }
+}
+
+function hydrateLynxSession(keys: string[]): Promise<void> {
+  const lynx = getLynx();
+  if (!lynx || typeof lynx.getSessionStorageItem !== 'function') {
+    return Promise.resolve();
+  }
+
+  return Promise.all(
+    keys.map(
+      (key) =>
+        new Promise<void>((resolve) => {
+          if (memory.has(key)) {
+            resolve();
+            return;
+          }
+
+          let settled = false;
+          const finish = () => {
+            if (!settled) {
+              settled = true;
+              resolve();
+            }
+          };
+          const timer = setTimeout(finish, 250);
+
+          try {
+            lynx.getSessionStorageItem(key, (value: unknown) => {
+              const text = nativeValue(value);
+              if (text !== null && text.length > 0) {
+                memory.set(key, text);
+              }
+              clearTimeout(timer);
+              finish();
+            });
+          } catch {
+            clearTimeout(timer);
+            finish();
+          }
+        }),
+    ),
+  ).then(() => undefined);
+}
+
 export const storage: KVStore = {
   get(key: string): string | null {
     try {
@@ -189,6 +262,9 @@ export const storage: KVStore = {
       }
       if (backend === 'lynx-async') {
         return readLynxAsync(key);
+      }
+      if (backend === 'lynx-session') {
+        return readLynxSession(key);
       }
       return memory.get(key) ?? null;
     } catch {
@@ -204,6 +280,8 @@ export const storage: KVStore = {
         writeLynxSync(key, value);
       } else if (backend === 'lynx-async') {
         writeLynxAsync(key, value);
+      } else if (backend === 'lynx-session') {
+        writeLynxSession(key, value);
       } else {
         memory.set(key, value);
       }
@@ -228,11 +306,20 @@ export const storage: KVStore = {
         }
       } else if (backend === 'lynx-async') {
         removeLynxAsync(key);
+      } else if (backend === 'lynx-session') {
+        removeLynxSession(key);
       } else {
         memory.delete(key);
       }
     } catch {
       memory.delete(key);
     }
+  },
+
+  hydrate(keys: string[]): Promise<void> {
+    if (backend === 'lynx-session') {
+      return hydrateLynxSession(keys);
+    }
+    return Promise.resolve();
   },
 };
