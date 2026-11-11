@@ -42,6 +42,13 @@ Project-level Lynx Agent Skills live in `.trae/skills/`, covering ReactLynx best
 
 - `npm run test` - Run the tests with Rstest
 
+## Git
+
+- 每次完成一个可交付的改动后必须提交 git，禁止把修改留在工作区。
+- 提交前运行 `npm run test`；涉及界面时再运行 `npm run build`。
+- 使用约定式提交：`type(scope): 中文描述`，一次提交只做一件事。
+- Android 壳（`../shunchang-sparkling`）的改动同样必须提交。
+
 ## Related Docs
 
 - Rsbuild: <https://rsbuild.rs/llms.txt>
