@@ -1,3 +1,6 @@
+import pipe from 'sparkling-method';
+import { getItem, setItem } from 'sparkling-storage';
+
 export interface KVStore {
   get(key: string): string | null;
   set(key: string, value: string): void;
@@ -5,7 +8,15 @@ export interface KVStore {
   hydrate?(keys: string[]): Promise<void>;
 }
 
-type Backend = 'web' | 'lynx-sync' | 'lynx-async' | 'lynx-session' | 'memory';
+type Backend =
+  | 'web'
+  | 'sparkling-storage'
+  | 'lynx-sync'
+  | 'lynx-async'
+  | 'lynx-session'
+  | 'memory';
+
+declare const NativeModules: any;
 
 const memory = new Map<string, string>();
 
@@ -25,7 +36,23 @@ function getLynx(): any {
   }
 }
 
+function hasSparklingStorage(): boolean {
+  // Sparkling 容器把 Method pipe 注入为 spkPipe；裸标识符访问，globalThis 上可能取不到。
+  try {
+    if (typeof NativeModules !== 'undefined' && NativeModules) {
+      return !!NativeModules.spkPipe && typeof NativeModules.spkPipe.call === 'function';
+    }
+  } catch {
+    // Ignore.
+  }
+  return false;
+}
+
 function detectBackend(): Backend {
+  if (hasSparklingStorage()) {
+    return 'sparkling-storage';
+  }
+
   try {
     const win = getWindow();
     if (win && win.localStorage && typeof win.localStorage.getItem === 'function') {
@@ -109,6 +136,92 @@ function writeWeb(key: string, value: string): void {
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
   }
+}
+
+function unwrapSparkling(response: unknown): string | null {
+  const res = response as any;
+  if (!res) {
+    return null;
+  }
+  const payload =
+    res.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res.data;
+  return nativeValue(payload);
+}
+
+function readSparkling(key: string): string | null {
+  const cached = memory.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  try {
+    getItem({ key }, (response) => {
+      const text = unwrapSparkling(response);
+      if (text !== null) {
+        memory.set(key, text);
+      }
+    });
+  } catch {
+    // Asynchronous persistence is best-effort only.
+  }
+
+  return null;
+}
+
+function writeSparkling(key: string, value: string): void {
+  memory.set(key, value);
+  try {
+    setItem({ key, data: value }, () => undefined);
+  } catch {
+    // Keep the in-memory copy when persistence is unavailable.
+  }
+}
+
+function removeSparkling(key: string): void {
+  memory.delete(key);
+  try {
+    // sparkling-storage 的 JS 包未导出 removeItem，直接调用同名原生方法。
+    pipe.call('storage.removeItem', { key }, () => undefined);
+  } catch {
+    // Ignore.
+  }
+}
+
+function hydrateSparkling(keys: string[]): Promise<void> {
+  return Promise.all(
+    keys.map(
+      (key) =>
+        new Promise<void>((resolve) => {
+          if (memory.has(key)) {
+            resolve();
+            return;
+          }
+
+          let settled = false;
+          const finish = () => {
+            if (!settled) {
+              settled = true;
+              resolve();
+            }
+          };
+          const timer = setTimeout(finish, 800);
+
+          try {
+            getItem({ key }, (response) => {
+              const text = unwrapSparkling(response);
+              if (text !== null) {
+                memory.set(key, text);
+              }
+              clearTimeout(timer);
+              finish();
+            });
+          } catch {
+            clearTimeout(timer);
+            finish();
+          }
+        }),
+    ),
+  ).then(() => undefined);
 }
 
 function readLynxSync(key: string): string | null {
@@ -251,11 +364,25 @@ function hydrateLynxSession(keys: string[]): Promise<void> {
   ).then(() => undefined);
 }
 
+// NativeModules 由宿主在页面启动后才注入，检测延迟到首次读写时进行。
+let cachedBackend: Backend | null = null;
+
+function currentBackend(): Backend {
+  if (cachedBackend === null) {
+    cachedBackend = detectBackend();
+  }
+  return cachedBackend;
+}
+
 export const storage: KVStore = {
   get(key: string): string | null {
     try {
+      const backend = currentBackend();
       if (backend === 'web') {
         return readWeb(key);
+      }
+      if (backend === 'sparkling-storage') {
+        return readSparkling(key);
       }
       if (backend === 'lynx-sync') {
         return readLynxSync(key);
@@ -274,8 +401,11 @@ export const storage: KVStore = {
 
   set(key: string, value: string): void {
     try {
+      const backend = currentBackend();
       if (backend === 'web') {
         writeWeb(key, value);
+      } else if (backend === 'sparkling-storage') {
+        writeSparkling(key, value);
       } else if (backend === 'lynx-sync') {
         writeLynxSync(key, value);
       } else if (backend === 'lynx-async') {
@@ -292,12 +422,15 @@ export const storage: KVStore = {
 
   remove(key: string): void {
     try {
+      const backend = currentBackend();
       if (backend === 'web') {
         memory.delete(key);
         const localStorage = getLocalStorage();
         if (localStorage) {
           localStorage.removeItem(key);
         }
+      } else if (backend === 'sparkling-storage') {
+        removeSparkling(key);
       } else if (backend === 'lynx-sync') {
         memory.delete(key);
         const lynx = getLynx();
@@ -317,6 +450,10 @@ export const storage: KVStore = {
   },
 
   hydrate(keys: string[]): Promise<void> {
+    const backend = currentBackend();
+    if (backend === 'sparkling-storage') {
+      return hydrateSparkling(keys);
+    }
     if (backend === 'lynx-session') {
       return hydrateLynxSession(keys);
     }

@@ -11,7 +11,9 @@
   "dependencies": {
     "@lynx-js/react": "^0.126.2",
     "fflate": "^0.8.3",
-    "qrcode-generator": "^2.0.4"
+    "qrcode-generator": "^2.0.4",
+    "sparkling-method": "^2.0.1",
+    "sparkling-storage": "^2.0.1"
   },
   "devDependencies": {
     "@lynx-js/devtool-mcp-server": "^0.16.15",
