@@ -10,12 +10,14 @@ import {
   getRole,
   getRuntime,
   getSheet,
+  getTheme,
   listSheets,
   removeRuntime,
   saveRuntime,
   saveSheet,
   setLastView,
   setRole,
+  setTheme,
 } from '../repository';
 import { storage } from '../storage';
 
@@ -194,6 +196,20 @@ describe('role and last view', () => {
 
     setLastView({ view: 'list' });
     expect(getLastView()).toEqual({ view: 'list' });
+  });
+});
+
+describe('theme', () => {
+  it('defaults to the ink theme', () => {
+    expect(getTheme()).toBe('default');
+  });
+
+  it('persists the xishi theme and can switch back', () => {
+    setTheme('xishi');
+    expect(getTheme()).toBe('xishi');
+
+    setTheme('default');
+    expect(getTheme()).toBe('default');
   });
 });
 

@@ -38,10 +38,26 @@
   padding: 10px 24px 8px 24px;
 }
 
+.ListBrandRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 .ListBrand {
   font-size: 20px;
   font-weight: 750;
   color: var(--ink);
+}
+
+.ListBrandSeal {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background-color: var(--xishi-red);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #FFF7E9;
 }
 
 .ListHeaderRight {
@@ -139,6 +155,33 @@
   font-size: 11px;
   letter-spacing: 0.14em;
   color: var(--ink-3);
+}
+
+.ListTheme {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 44px;
+  margin-right: 6px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.ListThemeDot {
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 4px;
+  background-color: var(--amber);
+}
+
+.ListThemeDot--xishi {
+  background-color: var(--xishi-red);
+}
+
+.ListThemeText {
+  font-size: 12px;
+  color: var(--ink-2);
 }
 
 .ListToolbar {
@@ -438,7 +481,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background-color: rgba(21, 20, 15, 0.38);
+  background-color: var(--scrim);
   animation: scFadeIn 180ms ease-out both;
 }
 

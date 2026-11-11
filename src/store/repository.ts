@@ -5,9 +5,12 @@ import { storage } from './storage';
 const SHEETS_KEY = 'shunchang.sheets.v1';
 const ROLE_KEY = 'shunchang.role';
 const LAST_VIEW_KEY = 'shunchang.lastView';
+const THEME_KEY = 'shunchang.theme';
 const CORRUPT_MESSAGE = '本地数据损坏，已忽略';
 
 type AppView = 'list' | 'editor' | 'runtime' | 'follow' | 'print';
+
+export type AppTheme = 'default' | 'xishi';
 
 interface LastView {
   view: AppView;
@@ -219,6 +222,36 @@ export function setRole(role: 'owner' | 'follower'): void {
   }
 }
 
+export function getTheme(): AppTheme {
+  try {
+    return storage.get(THEME_KEY) === 'xishi' ? 'xishi' : 'default';
+  } catch {
+    return 'default';
+  }
+}
+
+export function setTheme(theme: AppTheme): void {
+  try {
+    storage.set(THEME_KEY, theme === 'xishi' ? 'xishi' : 'default');
+  } catch {
+    // Ignore persistence failures.
+  }
+}
+
+/** 等主题落盘后再切换桌面图标：原生会从新入口重启应用。 */
+export function setThemeAsync(theme: AppTheme): Promise<void> {
+  const value = theme === 'xishi' ? 'xishi' : 'default';
+  try {
+    if (storage.setAsync) {
+      return storage.setAsync(THEME_KEY, value);
+    }
+    storage.set(THEME_KEY, value);
+  } catch {
+    // Ignore persistence failures.
+  }
+  return Promise.resolve();
+}
+
 export function getLastView(): LastView | null {
   try {
     const raw = storage.get(LAST_VIEW_KEY);
@@ -262,7 +295,7 @@ export async function hydrateStorage(): Promise<void> {
     return;
   }
 
-  await storage.hydrate([SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY]);
+  await storage.hydrate([SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY, THEME_KEY]);
 
   const sheetIds = readSheets().map((sheet) => sheet.id);
   if (sheetIds.length > 0) {
@@ -285,7 +318,7 @@ export function clearAllForTest(): void {
   });
   runtimeKeys.clear();
 
-  [SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY].forEach((key) => {
+  [SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY, THEME_KEY].forEach((key) => {
     try {
       storage.remove(key);
     } catch {

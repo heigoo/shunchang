@@ -1,0 +1,91 @@
+/* 主题选择：两套配色的色板与选中态 */
+
+.ThemePanel {
+  max-width: 420px;
+}
+
+.ThemeOption {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 72px;
+  padding: 12px 20px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: transparent;
+  transition: background-color 160ms ease-out;
+}
+
+.ThemeOption--active {
+  background-color: var(--paper-2);
+  border-left-color: var(--ink);
+}
+
+.ThemeOption:active {
+  background-color: var(--paper-2);
+}
+
+.ThemeSwatch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  margin-right: 14px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.ThemeSwatchBar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 10px;
+  height: 7px;
+}
+
+.ThemeOptionMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-right: 12px;
+}
+
+.ThemeOptionName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ThemeOptionTagline {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.ThemeOptionState {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+
+.ThemeOptionState--active {
+  color: var(--ink);
+}
+
+.ThemeNote {
+  padding: 12px 20px 16px 20px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+}
+
+.ThemeNoteText {
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--ink-3);
+}

@@ -4,11 +4,11 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  background-color: #F1EEE6;
+  background-color: var(--paper);
 }
 
 .ScreenBackdrop--dark {
-  background-color: #0B0B09;
+  background-color: var(--screen);
 }
 
 .ScreenStack {
@@ -19,11 +19,11 @@
 }
 
 .ScreenStack--light {
-  background-color: #F1EEE6;
+  background-color: var(--paper);
 }
 
 .ScreenStack--dark {
-  background-color: #0B0B09;
+  background-color: var(--screen);
 }
 
 .ScreenStack--forward-a {

@@ -28,10 +28,13 @@ import {
   getLastView,
   getRole,
   getSheet,
+  getTheme,
   hydrateStorage,
   setLastView,
   setRole,
+  setThemeAsync,
 } from './store/repository';
+import type { AppTheme } from './store/repository';
 import { Button } from './ui';
 
 interface Route {
@@ -60,6 +63,14 @@ function getHostModule(): any {
     // Ignore.
   }
   return undefined;
+}
+
+function applyLauncherTheme(theme: AppTheme): void {
+  try {
+    getHostModule()?.applyLauncherTheme?.(theme);
+  } catch {
+    // 图标切换是增强能力，web 或旧壳上忽略。
+  }
 }
 
 function readInitialRoute(): Route {
@@ -120,6 +131,7 @@ export function App() {
   const [insets, setInsets] = useState<SafeInsets>(EMPTY_INSETS);
   const [booted, setBooted] = useState(false);
   const [splashClosing, setSplashClosing] = useState(false);
+  const [theme, setThemeState] = useState<AppTheme>(() => getTheme());
 
   const routeRef = useRef<Route>(route);
   routeRef.current = route;
@@ -181,6 +193,10 @@ export function App() {
       if (cancelled) {
         return;
       }
+
+      // 存储是异步的，水合完成后才能确定主题。
+      const bootTheme = getTheme();
+      setThemeState(bootTheme);
 
       if (isWeb() && typeof document === 'undefined') {
         let location: WebLocationSnapshot | null = null;
@@ -280,6 +296,15 @@ export function App() {
     navigate(sheet.status === 'running' ? 'runtime' : 'editor', id);
   };
 
+  const changeTheme = (next: AppTheme) => {
+    setThemeState(next);
+    // 先等主题写入原生存储，再由原生切换桌面图标并从新入口重启，
+    // 避免新实例读到旧主题。
+    void setThemeAsync(next).then(() => {
+      applyLauncherTheme(next);
+    });
+  };
+
   let content: any;
 
   if (route.view === 'list') {
@@ -298,6 +323,8 @@ export function App() {
           navigate('follow', id);
         }}
         onCreate={openSheet}
+        theme={theme}
+        onThemeChange={changeTheme}
       />
     );
   } else {
@@ -388,16 +415,28 @@ export function App() {
     stackClasses.push(`ScreenStack--${transition.dir}-${variant}`);
   }
 
+  const backdropClasses = ['ScreenBackdrop'];
+  if (backdrop === 'dark') {
+    backdropClasses.push('ScreenBackdrop--dark');
+  }
+  if (theme === 'xishi') {
+    backdropClasses.push('theme-xishi');
+  }
+
   return (
     <>
       <view
         style={{ display: 'none' }}
         main-thread:ref={installMainThreadBridge}
       />
-      <view className={`ScreenBackdrop${backdrop === 'dark' ? ' ScreenBackdrop--dark' : ''}`}>
+      <view className={backdropClasses.join(' ')}>
         <view className={stackClasses.join(' ')}>{content}</view>
         {!booted ? (
-          <SplashScreen closing={splashClosing} safeBottom={insets.bottom} />
+          <SplashScreen
+            closing={splashClosing}
+            safeBottom={insets.bottom}
+            theme={theme}
+          />
         ) : null}
       </view>
     </>

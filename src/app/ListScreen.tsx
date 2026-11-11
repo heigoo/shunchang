@@ -6,6 +6,7 @@ import { filterSheets } from './listFilter';
 import type { StatusFilter } from './listFilter';
 import { registerBackHandler } from './backBus';
 import { ImportPanel } from './ImportPanel';
+import { ThemePanel } from './ThemePanel';
 import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
@@ -17,6 +18,7 @@ import {
   listSheets,
   saveSheet,
 } from '../store/repository';
+import type { AppTheme } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
 
 export interface ListScreenProps {
@@ -27,6 +29,8 @@ export interface ListScreenProps {
   notice?: string;
   safeTop?: number;
   safeBottom?: number;
+  theme?: AppTheme;
+  onThemeChange?(theme: AppTheme): void;
 }
 
 const STATUS_LABEL: Record<SheetStatus, string> = {
@@ -84,6 +88,8 @@ export function ListScreen(props: ListScreenProps) {
     notice,
     safeTop = 0,
     safeBottom = 0,
+    theme = 'default',
+    onThemeChange,
   } = props;
 
   const [sheets, setSheets] = useState<Sheet[]>(() => listSheets());
@@ -92,6 +98,7 @@ export function ListScreen(props: ListScreenProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -99,6 +106,8 @@ export function ListScreen(props: ListScreenProps) {
   const createPresence = usePresence(createOpen);
   const importPresence = usePresence(importOpen);
   const deletePresence = usePresence(deleteOpen);
+  const themePresence = usePresence(themeOpen);
+  const xishi = theme === 'xishi';
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isWide = useIsWide();
@@ -120,10 +129,14 @@ export function ListScreen(props: ListScreenProps) {
 
   // 返回键优先关闭当前打开的浮层。
   useEffect(() => {
-    if (!createOpen && !importOpen && !deleteOpen) {
+    if (!createOpen && !importOpen && !deleteOpen && !themeOpen) {
       return;
     }
     return registerBackHandler(() => {
+      if (themeOpen) {
+        setThemeOpen(false);
+        return true;
+      }
       if (deleteOpen) {
         closeDelete();
         return true;
@@ -138,7 +151,7 @@ export function ListScreen(props: ListScreenProps) {
       }
       return false;
     });
-  }, [createOpen, importOpen, deleteOpen]);
+  }, [createOpen, importOpen, deleteOpen, themeOpen]);
 
   const reload = () => {
     setSheets(listSheets());
@@ -369,9 +382,14 @@ export function ListScreen(props: ListScreenProps) {
       ) : null}
 
       <view className="ListHeader">
-        <text className="ListBrand">顺场</text>
+        <view className="ListBrandRow">
+          <text className="ListBrand">顺场</text>
+          {xishi ? <text className="ListBrandSeal">喜事</text> : null}
+        </view>
         <view className="ListHeaderRight">
-          <text className="ListMeta">现场调度 · 手册总览</text>
+          <text className="ListMeta">
+            {xishi ? '喜事现场 · 手册总览' : '现场调度 · 手册总览'}
+          </text>
           <view
             className="ListLoad"
             bindtap={() => {
@@ -394,6 +412,17 @@ export function ListScreen(props: ListScreenProps) {
           <text className="ListTitle">现场手册</text>
           <view className="ListTitleRight">
             {copied ? <text className="ListToast">已复制为新手册</text> : null}
+            <view
+              className="ListTheme"
+              bindtap={() => {
+                setThemeOpen(true);
+              }}
+            >
+              <view
+                className={xishi ? 'ListThemeDot ListThemeDot--xishi' : 'ListThemeDot'}
+              />
+              <text className="ListThemeText">{xishi ? '喜事' : '墨金'}</text>
+            </view>
             <text className="ListCount">{`共 ${pad2(sheets.length)} 份`}</text>
           </view>
         </view>
@@ -447,6 +476,20 @@ export function ListScreen(props: ListScreenProps) {
           onImported={(sheetId) => {
             reload();
             onImported(sheetId);
+          }}
+        />
+      ) : null}
+
+      {themePresence.mounted ? (
+        <ThemePanel
+          theme={theme}
+          closing={themePresence.closing}
+          onClose={() => {
+            setThemeOpen(false);
+          }}
+          onSelect={(next) => {
+            setThemeOpen(false);
+            onThemeChange?.(next);
           }}
         />
       ) : null}

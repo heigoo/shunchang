@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render } from '@lynx-js/react/testing-library';
+import { fireEvent, render } from '@lynx-js/react/testing-library';
 import { beforeEach, expect, test } from '@rstest/core';
 
 import type { Sheet, SheetStatus } from '../../domain/types';
@@ -62,4 +62,28 @@ test('shows the empty state when no sheets exist', async () => {
   );
 
   expect(await findByText('还没有手册')).toBeInTheDocument();
+});
+
+test('switches to the xishi theme from the theme panel', async () => {
+  let selected: string | null = null;
+  const { container, findByText } = render(
+    <ListScreen
+      onOpenSheet={() => {}}
+      onOpenFollow={() => {}}
+      onImported={() => {}}
+      theme="default"
+      onThemeChange={(next) => {
+        selected = next;
+      }}
+    />,
+  );
+
+  fireEvent.tap(await findByText('墨金'));
+  expect(await findByText('外观主题')).toBeInTheDocument();
+
+  const options = container.querySelectorAll('.ThemeOption');
+  expect(options.length).toBe(2);
+  fireEvent.tap(options[1]);
+
+  expect(selected).toBe('xishi');
 });

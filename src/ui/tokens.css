@@ -11,6 +11,9 @@
   --amber-deep: #A66A12;
   --amber-wash: #F6E2B6;
   --vermilion: #A8321E;
+  /* 喜事品牌色：喜红只用于喜事场景，不是危险色 */
+  --xishi-red: #BE2A20;
+  --xishi-red-deep: #8A2416;
 
   /* 暗场原始色 */
   --screen: #0B0B09;
@@ -21,6 +24,9 @@
   --bright: #F5F2E8;
   --amber: #FFB020;
   --amber-light: #FFD98A;
+
+  /* 浮层遮罩 */
+  --scrim: rgba(21, 20, 15, 0.38);
 
   /* 尺寸 */
   --btn-h: 52px;
@@ -48,6 +54,49 @@
   --fg-2: #8A8778;
   --fg-3: #6F6C60;
   --rule: #2A2A22;
+  --accent: #FFB020;
+}
+
+/* ---------- 喜事主题：朱红喜帖与金线 ---------- */
+
+/* 覆盖原始色：所有通过 var() 取色的页面会整体换肤。 */
+.theme-xishi {
+  --paper: #F7EBE2;
+  --paper-2: #F1DCD0;
+  --paper-3: #E4C6B6;
+  --ink: #2A0C07;
+  --ink-2: #5E271C;
+  --ink-3: #9A6B5C;
+  --amber-deep: #A66A12;
+  --amber-wash: #F7D6C4;
+
+  --screen: #140705;
+  --screen-2: #24100A;
+  --screen-3: #33160E;
+  --screen-line: #47211A;
+  --dim: #B08C7C;
+  --bright: #FFF1E4;
+  --amber: #FFB020;
+  --amber-light: #FFD98A;
+
+  --scrim: rgba(42, 12, 7, 0.38);
+}
+
+.theme-xishi .theme-light {
+  --bg: #F7EBE2;
+  --fg: #2A0C07;
+  --fg-2: #5E271C;
+  --fg-3: #9A6B5C;
+  --rule: #E4C6B6;
+  --accent: #BE2A20;
+}
+
+.theme-xishi .theme-dark {
+  --bg: #140705;
+  --fg: #FFF1E4;
+  --fg-2: #B08C7C;
+  --fg-3: #8A6A5E;
+  --rule: #47211A;
   --accent: #FFB020;
 }
 

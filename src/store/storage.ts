@@ -4,6 +4,7 @@ import { getItem, setItem } from 'sparkling-storage';
 export interface KVStore {
   get(key: string): string | null;
   set(key: string, value: string): void;
+  setAsync?(key: string, value: string): Promise<void>;
   remove(key: string): void;
   hydrate?(keys: string[]): Promise<void>;
 }
@@ -175,6 +176,31 @@ function writeSparkling(key: string, value: string): void {
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
   }
+}
+
+/** 等待原生落盘完成；切换桌面图标后应用会重启，需要保证新实例读到新值。 */
+function writeSparklingAsync(key: string, value: string): Promise<void> {
+  memory.set(key, value);
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (!settled) {
+        settled = true;
+        resolve();
+      }
+    };
+    const timer = setTimeout(finish, 600);
+
+    try {
+      setItem({ key, data: value }, () => {
+        clearTimeout(timer);
+        finish();
+      });
+    } catch {
+      clearTimeout(timer);
+      finish();
+    }
+  });
 }
 
 function removeSparkling(key: string): void {
@@ -418,6 +444,18 @@ export const storage: KVStore = {
     } catch {
       memory.set(key, value);
     }
+  },
+
+  setAsync(key: string, value: string): Promise<void> {
+    try {
+      if (currentBackend() === 'sparkling-storage') {
+        return writeSparklingAsync(key, value);
+      }
+    } catch {
+      // Fall through to the synchronous path.
+    }
+    storage.set(key, value);
+    return Promise.resolve();
   },
 
   remove(key: string): void {

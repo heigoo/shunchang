@@ -681,7 +681,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(21, 20, 15, 0.38);
+  background-color: var(--scrim);
   animation: scFadeIn 180ms ease-out both;
 }
 
