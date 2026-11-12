@@ -2612,3 +2612,553 @@ page {
   color: var(--ink);
   letter-spacing: 0.24em;
 }
+
+/* ---------- deck ---------- */
+
+.Site {
+  overflow: hidden;
+}
+
+.Deck {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.DeckBar {
+  flex-shrink: 0;
+  height: 64px;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rule2);
+  background-color: var(--paper);
+  z-index: 5;
+}
+
+.DeckBarNarrow {
+  height: 54px;
+  padding: 0 18px;
+}
+
+.DeckBarRight {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.DeckStage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.SlideAnim {
+  width: 100%;
+  height: 100%;
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.SlideInNext {
+  animation-name: slideInNext;
+}
+
+.SlideInPrev {
+  animation-name: slideInPrev;
+}
+
+@keyframes slideInNext {
+  from {
+    opacity: 0;
+    transform: translateX(64px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInPrev {
+  from {
+    opacity: 0;
+    transform: translateX(-64px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.Slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.SlideCover,
+.SlidePaper {
+  background-color: var(--paper);
+}
+
+.SlideDark {
+  background-color: var(--screen);
+}
+
+.SlideQuote {
+  background-color: var(--red);
+}
+
+.SlideInnerDeck {
+  width: 100%;
+  max-width: 1180px;
+  height: 100%;
+  padding: 30px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.SlideInnerDeckNarrow {
+  padding: 20px;
+}
+
+.SlideInnerDeckGrow {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* cover */
+
+.CoverInner {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  min-height: 0;
+  padding: 18px 40px 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 48px;
+}
+
+.CoverInnerNarrow {
+  padding: 12px 20px 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 18px;
+}
+
+.CoverStats {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 1180px;
+  padding: 14px 40px 18px;
+  display: flex;
+  flex-direction: row;
+  gap: 28px;
+  border-top: 1px solid var(--rule2);
+}
+
+.CoverStatsNarrow {
+  padding: 10px 20px 12px;
+  gap: 12px;
+}
+
+.CoverStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.CoverStatValue {
+  font-family: var(--mono);
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.CoverStatLabel {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ink3);
+}
+
+.CoverStatsNarrow .CoverStatValue {
+  font-size: 14px;
+}
+
+.CoverStatsNarrow .CoverStatLabel {
+  font-size: 8.5px;
+}
+
+.Deck .HeroTitle {
+  font-size: 66px;
+}
+
+.Deck .HeroTitleNarrow {
+  font-size: 38px;
+  line-height: 1.1;
+}
+
+.Deck .HeroTitleWrap {
+  margin-top: 12px;
+}
+
+.Deck .HeroLead {
+  margin-top: 18px;
+  font-size: 15.5px;
+}
+
+.Deck .HeroLeadNarrow {
+  margin-top: 12px;
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.Deck .Actions {
+  margin-top: 22px;
+}
+
+.Deck .PhoneNarrow {
+  width: 116px;
+  height: 258px;
+}
+
+.Deck .PhoneImgNarrow {
+  width: 116px;
+  height: 258px;
+}
+
+/* inner slides */
+
+.DeckHead {
+  margin-bottom: 28px;
+}
+
+.Deck .SectionTitle {
+  font-size: 46px;
+}
+
+.Deck .SectionTitleNarrow {
+  font-size: 30px;
+  line-height: 1.18;
+}
+
+.Deck .SectionLead {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.Deck .SectionLeadNarrow {
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.Deck .Cards,
+.Deck .Features {
+  gap: 32px;
+}
+
+.Deck .Card,
+.Deck .Feature {
+  padding-top: 14px;
+}
+
+.Deck .CardBody,
+.Deck .FeatureBody {
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.Deck .CardTitle {
+  font-size: 19px;
+}
+
+.Deck .FeatureTitle {
+  font-size: 18px;
+}
+
+.Deck .Pull {
+  margin-top: 34px;
+}
+
+.Deck .PullText {
+  font-size: 24px;
+}
+
+.Deck .PullTextNarrow {
+  font-size: 19px;
+}
+
+/* board slide */
+
+.DeckBoardInner {
+  flex-direction: row;
+  align-items: center;
+  gap: 48px;
+}
+
+.DeckBoardInnerNarrow {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 18px;
+}
+
+.ShowcaseCopyNarrow {
+  width: 100%;
+}
+
+.Deck .ShowcaseCopy {
+  width: 36%;
+}
+
+.Deck .DarkTitle {
+  font-size: 38px;
+}
+
+.Deck .DarkTitleNarrow {
+  font-size: 25px;
+}
+
+.Deck .DarkBody {
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.Deck .Board {
+  padding: 16px 20px;
+}
+
+.Deck .BoardRow {
+  padding: 9px 6px;
+}
+
+.Deck .BoardNote {
+  font-size: 10.5px;
+}
+
+/* brand slide */
+
+.Deck .BrandInner {
+  gap: 48px;
+}
+
+.Deck .BrandPara {
+  font-size: 14px;
+  line-height: 1.85;
+  margin-top: 12px;
+}
+
+/* quote slide */
+
+.SlideQuote .QuoteInner {
+  height: 100%;
+  justify-content: center;
+  padding: 24px 40px;
+}
+
+.QuoteInnerDeckNarrow {
+  padding: 20px;
+}
+
+.Deck .QuoteTitle {
+  font-size: 56px;
+}
+
+.Deck .QuoteTitleNarrow {
+  font-size: 36px;
+}
+
+.Deck .QuoteBody {
+  margin-top: 14px;
+}
+
+/* start slide */
+
+.Deck .CtaInner {
+  flex: 1;
+  align-items: center;
+  gap: 48px;
+}
+
+.Deck .CtaInnerNarrow {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 18px;
+}
+
+.Deck .CtaBody {
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+.Deck .CtaActions {
+  margin-top: 20px;
+}
+
+.Deck .PosterNarrow {
+  width: 190px;
+  height: 254px;
+}
+
+.Deck .PosterImgNarrow {
+  width: 190px;
+  height: 254px;
+}
+
+.SlideFootRow {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--rule2);
+}
+
+.SlideFootBrand {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink3);
+}
+
+.SlideFootCopy {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+}
+
+.SlideMarquee {
+  flex-shrink: 0;
+}
+
+/* deck footer */
+
+.DeckFoot {
+  flex-shrink: 0;
+  height: 66px;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  border-top: 1px solid var(--rule2);
+  background-color: var(--paper);
+}
+
+.DeckFootNarrow {
+  height: 58px;
+  padding: 0 14px;
+  gap: 10px;
+}
+
+.DeckCounter {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+
+.DeckDots {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.DeckDot {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.DeckDotInner {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--rule);
+  transition: width 0.22s ease, background-color 0.22s ease;
+}
+
+.DeckDotOn .DeckDotInner {
+  width: 20px;
+  background-color: var(--amber);
+}
+
+.DeckNav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.DeckHint {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink3);
+  margin-right: 6px;
+}
+
+.DeckBtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.DeckBtnOn {
+  background-color: var(--ink);
+  border-color: var(--ink);
+}
+
+.DeckBtnOff {
+  opacity: 0.28;
+}
+
+.DeckBtn:active {
+  transform: scale(0.94);
+}
+
+.DeckBtnText {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.DeckBtnTextOn {
+  color: var(--amber);
+}

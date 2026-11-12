@@ -66,6 +66,7 @@ export interface Copy {
     posterCaption: string;
   };
   footer: { tagline: string; copyright: string; marquee: string };
+  deck: { prev: string; next: string; hint: string };
 }
 
 const ZH: Copy = {
@@ -189,6 +190,11 @@ const ZH: Copy = {
     copyright: '© 2026 顺场 · Cue',
     marquee: '有顺序，也能顺延 · 让今天，按顺序发生 · 顺场 · CUE · ',
   },
+  deck: {
+    prev: '上一步',
+    next: '下一步',
+    hint: '逐步推进 · 每一步只做一件事',
+  },
 };
 
 const EN: Copy = {
@@ -311,6 +317,11 @@ const EN: Copy = {
     tagline: 'Order, and shift',
     copyright: '© 2026 Cue · 顺场',
     marquee: 'ORDER, AND SHIFT · LET TODAY HAPPEN IN ORDER · CUE · SHUNCHANG · ',
+  },
+  deck: {
+    prev: 'PREV',
+    next: 'NEXT',
+    hint: 'STEP BY STEP · ONE THING AT A TIME',
   },
 };
 

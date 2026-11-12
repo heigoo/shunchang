@@ -11,13 +11,7 @@ import splashStandardEn from './assets/splash-standard-en.png';
 import splashStandardZh from './assets/splash-standard-zh.png';
 import './site.css';
 
-const SECTION = {
-  hero: 1,
-  product: 4,
-  board: 5,
-  brand: 6,
-  start: 8,
-};
+const SLIDE_COUNT = 7;
 
 const CONFETTI = Array.from({ length: 34 }, (_, i) => ({
   left: (i * 37 + 9) % 100,
@@ -109,49 +103,53 @@ function BoardLine({
 export function App() {
   const [lang, setLang] = useState<Lang>('zh');
   const [joined, setJoined] = useState(false);
-  const [toIndex, setToIndex] = useState(0);
-  const [scrollPct, setScrollPct] = useState(0);
-  const [showTop, setShowTop] = useState(false);
+  const [slide, setSlide] = useState(0);
+  const [dir, setDir] = useState<'next' | 'prev'>('next');
   const [doneRows, setDoneRows] = useState<Record<number, boolean>>({});
   const [fwKey, setFwKey] = useState(0);
   const [markTap, setMarkTap] = useState(0);
-  const scrollRef = useRef<any>(null);
+  const touchStart = useRef({ x: 0, y: 0 });
   const wide = useIsWide(1000);
   const c = COPY[lang];
 
-  const go = useCallback((index: number) => {
-    setToIndex(index);
+  const goSlide = useCallback(
+    (target: number) => {
+      const next = Math.max(0, Math.min(SLIDE_COUNT - 1, target));
+      if (next === slide) return;
+      setDir(next > slide ? 'next' : 'prev');
+      setSlide(next);
+    },
+    [slide],
+  );
+
+  const nextSlide = useCallback(() => goSlide(slide + 1), [goSlide, slide]);
+  const prevSlide = useCallback(() => goSlide(slide - 1), [goSlide, slide]);
+
+  const onTouchStart = useCallback((event: any) => {
+    const t = event?.touches?.[0] ?? event?.detail?.touches?.[0];
+    if (!t) return;
+    touchStart.current = {
+      x: t.clientX ?? t.pageX ?? 0,
+      y: t.clientY ?? t.pageY ?? 0,
+    };
   }, []);
 
-  const toTop = useCallback(() => {
-    (scrollRef.current as any)?.invoke?.({
-      method: 'scrollTo',
-      params: { offset: 0, index: 0, smooth: true },
-    });
-    if (toIndex === 0) {
-      setToIndex(1);
-      setTimeout(() => setToIndex(0), 40);
-    } else {
-      setToIndex(0);
-    }
-    setShowTop(false);
-  }, [toIndex]);
-
-  const onScroll = useCallback((event: any) => {
-    const detail = event?.detail;
-    if (!detail || typeof detail.scrollTop !== 'number') return;
-    const height =
-      typeof detail.scrollHeight === 'number' && detail.scrollHeight > 0
-        ? detail.scrollHeight
-        : 1;
-    const pct = Math.max(
-      0,
-      Math.min(100, Math.round((detail.scrollTop / (height * 0.85)) * 100)),
-    );
-    setScrollPct((prev) => (prev === pct ? prev : pct));
-    const nextShow = detail.scrollTop > 700;
-    setShowTop((prev) => (prev === nextShow ? prev : nextShow));
-  }, []);
+  const onTouchEnd = useCallback(
+    (event: any) => {
+      const t =
+        event?.changedTouches?.[0] ??
+        event?.touches?.[0] ??
+        event?.detail?.changedTouches?.[0];
+      if (!t) return;
+      const dx = (t.clientX ?? t.pageX ?? 0) - touchStart.current.x;
+      const dy = (t.clientY ?? t.pageY ?? 0) - touchStart.current.y;
+      if (Math.abs(dy) > 46 && Math.abs(dy) > Math.abs(dx)) {
+        if (dy < 0) goSlide(slide + 1);
+        else goSlide(slide - 1);
+      }
+    },
+    [goSlide, slide],
+  );
 
   const toggleRow = useCallback((index: number) => {
     setDoneRows((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -172,85 +170,10 @@ export function App() {
   const splashFestive = lang === 'zh' ? splashFestiveZh : splashFestiveEn;
   const poster = lang === 'zh' ? posterStandardZh : posterStandardEn;
 
-  return (
-    <view
-      className={lang === 'en' ? 'Site SiteEn' : 'Site'}
-      bindlayoutchange={(event: any) => {
-        const width = event?.detail?.width;
-        if (typeof width === 'number') {
-          reportViewportWidth(width);
-        }
-      }}
-    >
-      <view className="ScrollBar">
-        <view className="ScrollBarFill" style={{ width: `${scrollPct}%` }} />
-      </view>
-      <view className="Boot">
-        <BigMark />
-        <text className="BootWord T">{lang === 'zh' ? '顺场' : 'Cue'}</text>
-      </view>
-      <scroll-view
-        className="SiteScroll"
-        scroll-orientation="vertical"
-        scroll-to-index={toIndex}
-        bindscroll={onScroll}
-        ref={scrollRef}
-      >
-        {/* header */}
-        <view className="Header">
-          <view className={wide ? 'HeaderInner' : 'HeaderInner HeaderInnerNarrow'}>
-            <view className="Lockup" bindtap={toTop}>
-              <Mark />
-              <text className={lang === 'en' ? 'Wordmark WordmarkEn T' : 'Wordmark T'}>
-                {lang === 'zh' ? '顺场' : 'Cue'}
-              </text>
-              <text className="WordmarkAlt T">{lang === 'zh' ? 'CUE' : '顺场'}</text>
-            </view>
-
-            {wide ? (
-              <view className="Nav">
-                <view className="NavItemWrap" bindtap={() => go(SECTION.product)}>
-                  <text className="NavItem T">{c.nav.product}</text>
-                  <view className="NavLine" />
-                </view>
-                <view className="NavItemWrap" bindtap={() => go(SECTION.board)}>
-                  <text className="NavItem T">{c.nav.board}</text>
-                  <view className="NavLine" />
-                </view>
-                <view className="NavItemWrap" bindtap={() => go(SECTION.brand)}>
-                  <text className="NavItem T">{c.nav.brand}</text>
-                  <view className="NavLine" />
-                </view>
-                <view className="NavItemWrap" bindtap={() => go(SECTION.start)}>
-                  <text className="NavItem NavItemStrong T">{c.nav.start}</text>
-                  <view className="NavLine" />
-                </view>
-              </view>
-            ) : null}
-
-            <view className="Lang">
-              <view
-                className={lang === 'zh' ? 'LangBtn LangBtnOn' : 'LangBtn'}
-                bindtap={() => setLang('zh')}
-              >
-                <text className={lang === 'zh' ? 'LangText LangTextOn T' : 'LangText T'}>
-                  中文
-                </text>
-              </view>
-              <view
-                className={lang === 'en' ? 'LangBtn LangBtnOn' : 'LangBtn'}
-                bindtap={() => setLang('en')}
-              >
-                <text className={lang === 'en' ? 'LangText LangTextOn T' : 'LangText T'}>
-                  EN
-                </text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        {/* hero */}
-        <view className="Hero">
+  const renderSlide = () => {
+    if (slide === 0) {
+      return (
+        <view className="Slide SlideCover">
           <view className="Orb OrbA" />
           <view className="Orb OrbB" />
           <view className="HeroScan" />
@@ -263,7 +186,8 @@ export function App() {
               />
             ))}
           </view>
-          <view className={wide ? 'HeroInner' : 'HeroInner HeroInnerNarrow'}>
+
+          <view className={wide ? 'CoverInner' : 'CoverInner CoverInnerNarrow'}>
             <view className="HeroCopy">
               <text className="Eyebrow HeroEyebrow T">{c.hero.eyebrow}</text>
               <view className="HeroTitleWrap">
@@ -281,16 +205,22 @@ export function App() {
                   </text>
                 ))}
               </view>
-              <text className={wide ? 'HeroLead Reveal Delay3 T' : 'HeroLead HeroLeadNarrow Reveal Delay3 T'}>
+              <text
+                className={
+                  wide
+                    ? 'HeroLead Reveal Delay3 T'
+                    : 'HeroLead HeroLeadNarrow Reveal Delay3 T'
+                }
+              >
                 {c.hero.lead}
               </text>
               <view className={wide ? 'Actions Reveal Delay4' : 'Actions ActionsNarrow Reveal Delay4'}>
-                <view className="Btn BtnAmber" bindtap={() => go(SECTION.start)}>
+                <view className="Btn BtnAmber" bindtap={() => goSlide(6)}>
                   <view className="BtnShine" />
                   <text className="BtnText BtnTextAmber T">{c.hero.primary}</text>
                   <text className="BtnArrow T">→</text>
                 </view>
-                <view className="Btn BtnGhost" bindtap={() => go(SECTION.board)}>
+                <view className="Btn BtnGhost" bindtap={() => goSlide(3)}>
                   <text className="BtnText T">{c.hero.secondary}</text>
                 </view>
               </view>
@@ -321,34 +251,25 @@ export function App() {
               </view>
             </view>
           </view>
-        </view>
 
-        {/* stats */}
-        <view className="Stats">
-          <view className={wide ? 'StatsInner' : 'StatsInner StatsInnerNarrow'}>
-            {c.stats.map((stat, index) => (
-              <view
-                key={stat.label}
-                className={
-                  wide
-                    ? index === 0
-                      ? 'Stat StatFirst'
-                      : 'Stat'
-                    : 'Stat StatNarrow'
-                }
-              >
-                <text className="StatValue T">{stat.value}</text>
-                <text className="StatLabel T">{stat.label}</text>
+          <view className={wide ? 'CoverStats' : 'CoverStats CoverStatsNarrow'}>
+            {c.stats.map((stat) => (
+              <view key={stat.label} className="CoverStat">
+                <text className="CoverStatValue T">{stat.value}</text>
+                <text className="CoverStatLabel T">{stat.label}</text>
               </view>
             ))}
           </view>
         </view>
+      );
+    }
 
-        {/* problem */}
-        <view className="Section">
-          <view className={wide ? 'SectionInner' : 'SectionInner SectionInnerNarrow'}>
+    if (slide === 1) {
+      return (
+        <view className="Slide SlidePaper">
+          <view className={wide ? 'SlideInnerDeck' : 'SlideInnerDeck SlideInnerDeckNarrow'}>
             <view className="SectionRule" />
-            <view className={wide ? 'SectionHead' : 'SectionHead SectionHeadNarrow'}>
+            <view className={wide ? 'SectionHead DeckHead' : 'SectionHead SectionHeadNarrow DeckHead'}>
               <view className="HeadLeft">
                 <text className="Eyebrow T">{c.problem.eyebrow}</text>
                 <text className={wide ? 'SectionTitle T' : 'SectionTitle SectionTitleNarrow T'}>
@@ -360,7 +281,7 @@ export function App() {
               </text>
             </view>
 
-            <view className={wide ? 'Cards' : 'Cards CardsNarrow'}>
+            <view className={wide ? 'Cards Reveal Delay2' : 'Cards CardsNarrow Reveal Delay2'}>
               {c.problem.cards.map((card) => (
                 <view key={card.no} className="Card">
                   <text className="CardNo T">{card.no}</text>
@@ -370,19 +291,22 @@ export function App() {
               ))}
             </view>
 
-            <view className="Pull">
+            <view className="Pull Reveal Delay3">
               <text className={wide ? 'PullText T' : 'PullText PullTextNarrow T'}>
                 {c.problem.pull}
               </text>
             </view>
           </view>
         </view>
+      );
+    }
 
-        {/* product */}
-        <view className="Section">
-          <view className={wide ? 'SectionInner' : 'SectionInner SectionInnerNarrow'}>
+    if (slide === 2) {
+      return (
+        <view className="Slide SlidePaper">
+          <view className={wide ? 'SlideInnerDeck' : 'SlideInnerDeck SlideInnerDeckNarrow'}>
             <view className="SectionRule" />
-            <view className={wide ? 'SectionHead' : 'SectionHead SectionHeadNarrow'}>
+            <view className={wide ? 'SectionHead DeckHead' : 'SectionHead SectionHeadNarrow DeckHead'}>
               <view className="HeadLeft">
                 <text className="Eyebrow T">{c.product.eyebrow}</text>
                 <text className={wide ? 'SectionTitle T' : 'SectionTitle SectionTitleNarrow T'}>
@@ -394,7 +318,7 @@ export function App() {
               </text>
             </view>
 
-            <view className={wide ? 'Features' : 'Features FeaturesNarrow'}>
+            <view className={wide ? 'Features Reveal Delay2' : 'Features FeaturesNarrow Reveal Delay2'}>
               {c.product.features.map((feature) => (
                 <view key={feature.no} className="Feature">
                   <text className="FeatureNo T">{feature.no}</text>
@@ -405,14 +329,23 @@ export function App() {
             </view>
           </view>
         </view>
+      );
+    }
 
-        {/* live board */}
-        <view className="Showcase">
+    if (slide === 3) {
+      return (
+        <view className="Slide SlideDark">
           <view className="Beam BeamA" />
           <view className="Beam BeamB" />
           <view className="Beam BeamC" />
-          <view className={wide ? 'ShowcaseInner' : 'ShowcaseInner ShowcaseInnerNarrow'}>
-            <view className="ShowcaseCopy">
+          <view
+            className={
+              wide
+                ? 'SlideInnerDeck DeckBoardInner'
+                : 'SlideInnerDeck SlideInnerDeckNarrow DeckBoardInner DeckBoardInnerNarrow'
+            }
+          >
+            <view className={wide ? 'ShowcaseCopy' : 'ShowcaseCopy ShowcaseCopyNarrow'}>
               <text className="Eyebrow DarkEyebrow T">{c.board.eyebrow}</text>
               <view className="DarkTitleWrap">
                 {c.board.title.map((line) => (
@@ -459,10 +392,7 @@ export function App() {
                   <text className="BoardStat T">{c.board.stat}</text>
                   <view className="BoardProgress">
                     <view className="BoardTrack">
-                      <view
-                        className="BoardFill"
-                        style={{ width: `${boardPct}%` }}
-                      />
+                      <view className="BoardFill" style={{ width: `${boardPct}%` }} />
                     </view>
                     <text className="BoardStat T">{c.board.progress}</text>
                   </view>
@@ -477,16 +407,16 @@ export function App() {
             </view>
           </view>
         </view>
+      );
+    }
 
-        {/* brand mark */}
-        <view className="Section">
-          <view className={wide ? 'SectionInner' : 'SectionInner SectionInnerNarrow'}>
+    if (slide === 4) {
+      return (
+        <view className="Slide SlidePaper">
+          <view className={wide ? 'SlideInnerDeck' : 'SlideInnerDeck SlideInnerDeckNarrow'}>
             <view className="SectionRule" />
             <view className={wide ? 'BrandInner' : 'BrandInner BrandInnerNarrow'}>
-              <view
-                className="BrandMarkCard"
-                bindtap={() => setMarkTap((n) => n + 1)}
-              >
+              <view className="BrandMarkCard" bindtap={() => setMarkTap((n) => n + 1)}>
                 <view className="MarkHalo" />
                 <view className="MarkHalo MarkHalo2" />
                 <view key={markTap} className={markTap > 0 ? 'MarkPop MarkPopOn' : 'MarkPop'}>
@@ -511,9 +441,12 @@ export function App() {
             </view>
           </view>
         </view>
+      );
+    }
 
-        {/* quote */}
-        <view className="Quote" bindtap={() => setFwKey((n) => n + 1)}>
+    if (slide === 5) {
+      return (
+        <view className="Slide SlideQuote" bindtap={() => setFwKey((n) => n + 1)}>
           <view className="Fireworks" key={fwKey}>
             {BURSTS.map((burst, index) => (
               <view
@@ -536,12 +469,12 @@ export function App() {
             ))}
           </view>
           {fwKey > 0 ? (
-            <view className="QuoteWave" key={fwKey}>
+            <view className="QuoteWave" key={`wave-${fwKey}`}>
               <view className="QuoteWaveRing" />
               <view className="QuoteWaveRing QuoteWaveRing2" />
             </view>
           ) : null}
-          <view className="QuoteInner">
+          <view className={wide ? 'QuoteInner' : 'QuoteInner QuoteInnerDeckNarrow'}>
             {wide ? (
               <text className={lang === 'en' ? 'QuoteGlyph QuoteGlyphEn T' : 'QuoteGlyph T'}>
                 {lang === 'zh' ? '顺' : 'Cue'}
@@ -557,80 +490,177 @@ export function App() {
             </text>
           </view>
         </view>
+      );
+    }
 
-        {/* start */}
-        <view className="Section">
-          <view className={wide ? 'SectionInner' : 'SectionInner SectionInnerNarrow'}>
-            <view className="SectionRule" />
-            <view className={wide ? 'CtaInner' : 'CtaInner CtaInnerNarrow'}>
+    return (
+      <view className="Slide SlidePaper SlideStart">
+        <view
+          className={
+            wide
+              ? 'SlideInnerDeck SlideInnerDeckGrow DeckStartInner'
+              : 'SlideInnerDeck SlideInnerDeckGrow SlideInnerDeckNarrow DeckStartInner DeckStartInnerNarrow'
+          }
+        >
+          <view className={wide ? 'CtaInner' : 'CtaInner CtaInnerNarrow'}>
+            {joined ? (
+              <view className="Celebrate">
+                {CELEBRATE.map((piece, index) => (
+                  <view
+                    key={index}
+                    className={`CelebratePiece ${piece.color} ${piece.size} ${piece.delay}`}
+                    style={{ left: `${piece.left}%` }}
+                  />
+                ))}
+              </view>
+            ) : null}
+            <view className="CtaCopy">
+              <text className="Eyebrow T">{c.cta.eyebrow}</text>
+              <text className={wide ? 'SectionTitle T' : 'SectionTitle SectionTitleNarrow T'}>
+                {c.cta.title}
+              </text>
+              <text className="CtaBody T">{c.cta.body}</text>
+              <view className={wide ? 'CtaActions' : 'CtaActions CtaActionsNarrow'}>
+                <view className="Btn BtnAmber" bindtap={() => setJoined(true)}>
+                  <view className="BtnShine" />
+                  <text className="BtnText BtnTextAmber T">{c.cta.button}</text>
+                  <text className="BtnArrow T">→</text>
+                </view>
+                <text className="CtaNote T">{c.cta.note}</text>
+              </view>
               {joined ? (
-                <view className="Celebrate">
-                  {CELEBRATE.map((piece, index) => (
-                    <view
-                      key={index}
-                      className={`CelebratePiece ${piece.color} ${piece.size} ${piece.delay}`}
-                      style={{ left: `${piece.left}%` }}
-                    />
-                  ))}
+                <view className="Toast" bindtap={() => setJoined(false)}>
+                  <text className="ToastText T">{c.cta.done}</text>
                 </view>
               ) : null}
-              <view className="CtaCopy">
-                <text className="Eyebrow T">{c.cta.eyebrow}</text>
-                <text className={wide ? 'SectionTitle T' : 'SectionTitle SectionTitleNarrow T'}>
-                  {c.cta.title}
+            </view>
+
+            <view className={wide ? 'PosterWrap' : 'PosterWrap PosterWrapNarrow'}>
+              <view className={wide ? 'Poster' : 'Poster PosterNarrow'}>
+                <image
+                  className={wide ? 'PosterImg' : 'PosterImg PosterImgNarrow'}
+                  src={poster}
+                  mode="aspectFill"
+                />
+              </view>
+              <text className="PosterCaption T">{c.cta.posterCaption}</text>
+            </view>
+          </view>
+
+          <view className="SlideFootRow">
+            <text className="SlideFootBrand T">{c.footer.tagline}</text>
+            <text className="SlideFootCopy T">{c.footer.copyright}</text>
+          </view>
+        </view>
+
+        <view className="Marquee SlideMarquee">
+          <view className="MarqueeTrack">
+            <text className="MarqueeText T">{c.footer.marquee.repeat(3)}</text>
+            <text className="MarqueeText T">{c.footer.marquee.repeat(3)}</text>
+          </view>
+        </view>
+      </view>
+    );
+  };
+
+  return (
+    <view
+      className={lang === 'en' ? 'Site SiteEn' : 'Site'}
+      bindlayoutchange={(event: any) => {
+        const width = event?.detail?.width;
+        if (typeof width === 'number') {
+          reportViewportWidth(width);
+        }
+      }}
+    >
+      <view className="Boot">
+        <BigMark />
+        <text className="BootWord T">{lang === 'zh' ? '顺场' : 'Cue'}</text>
+      </view>
+
+      <view className="Deck">
+        <view className={wide ? 'DeckBar' : 'DeckBar DeckBarNarrow'}>
+          <view className="Lockup" bindtap={() => goSlide(0)}>
+            <Mark />
+            <text className={lang === 'en' ? 'Wordmark WordmarkEn T' : 'Wordmark T'}>
+              {lang === 'zh' ? '顺场' : 'Cue'}
+            </text>
+            <text className="WordmarkAlt T">{lang === 'zh' ? 'CUE' : '顺场'}</text>
+          </view>
+
+          <view className="DeckBarRight">
+            <view className="Lang">
+              <view
+                className={lang === 'zh' ? 'LangBtn LangBtnOn' : 'LangBtn'}
+                bindtap={() => setLang('zh')}
+              >
+                <text className={lang === 'zh' ? 'LangText LangTextOn T' : 'LangText T'}>
+                  中文
                 </text>
-                <text className="CtaBody T">{c.cta.body}</text>
-                <view className={wide ? 'CtaActions' : 'CtaActions CtaActionsNarrow'}>
-                  <view className="Btn BtnAmber" bindtap={() => setJoined(true)}>
-                    <view className="BtnShine" />
-                    <text className="BtnText BtnTextAmber T">{c.cta.button}</text>
-                    <text className="BtnArrow T">→</text>
-                  </view>
-                  <text className="CtaNote T">{c.cta.note}</text>
-                </view>
-                {joined ? (
-                  <view className="Toast" bindtap={() => setJoined(false)}>
-                    <text className="ToastText T">{c.cta.done}</text>
-                  </view>
-                ) : null}
               </view>
-
-              <view className={wide ? 'PosterWrap' : 'PosterWrap PosterWrapNarrow'}>
-                <view className={wide ? 'Poster' : 'Poster PosterNarrow'}>
-                  <image
-                    className={wide ? 'PosterImg' : 'PosterImg PosterImgNarrow'}
-                    src={poster}
-                    mode="aspectFill"
-                  />
-                </view>
-                <text className="PosterCaption T">{c.cta.posterCaption}</text>
+              <view
+                className={lang === 'en' ? 'LangBtn LangBtnOn' : 'LangBtn'}
+                bindtap={() => setLang('en')}
+              >
+                <text className={lang === 'en' ? 'LangText LangTextOn T' : 'LangText T'}>
+                  EN
+                </text>
               </view>
             </view>
           </view>
         </view>
 
-        {/* footer */}
-        <view className="Footer">
-          <view className="Marquee">
-            <view className="MarqueeTrack">
-              <text className="MarqueeText T">{c.footer.marquee.repeat(3)}</text>
-              <text className="MarqueeText T">{c.footer.marquee.repeat(3)}</text>
-            </view>
-          </view>
-          <view className={wide ? 'FooterInner' : 'FooterInner FooterInnerNarrow'}>
-            <view className="FooterLeft">
-              <text className="FooterBrand T">{lang === 'zh' ? '顺场 · CUE' : 'CUE · 顺场'}</text>
-              <text className="FooterTag T">{c.footer.tagline}</text>
-            </view>
-            <text className="FooterCopy T">{c.footer.copyright}</text>
+        <view
+          className="DeckStage"
+          bindtouchstart={onTouchStart}
+          bindtouchend={onTouchEnd}
+        >
+          <view
+            key={slide}
+            className={`SlideAnim ${dir === 'next' ? 'SlideInNext' : 'SlideInPrev'}`}
+          >
+            {renderSlide()}
           </view>
         </view>
-      </scroll-view>
-      {showTop ? (
-        <view className={wide ? 'ToTop' : 'ToTop ToTopNarrow'} bindtap={toTop}>
-          <text className="ToTopArrow T">↑</text>
+
+        <view className={wide ? 'DeckFoot' : 'DeckFoot DeckFootNarrow'}>
+          <text className="DeckCounter T">{`0${slide + 1} / 0${SLIDE_COUNT}`}</text>
+
+          <view className="DeckDots">
+            {Array.from({ length: SLIDE_COUNT }, (_, index) => (
+              <view
+                key={index}
+                className={index === slide ? 'DeckDot DeckDotOn' : 'DeckDot'}
+                bindtap={() => goSlide(index)}
+              >
+                <view className="DeckDotInner" />
+              </view>
+            ))}
+          </view>
+
+          <view className="DeckNav">
+            {wide ? <text className="DeckHint T">{c.deck.hint}</text> : null}
+            <view
+              className={slide === 0 ? 'DeckBtn DeckBtnOff' : 'DeckBtn'}
+              bindtap={prevSlide}
+            >
+              <text className="DeckBtnText T">←</text>
+            </view>
+            <view
+              className={slide === SLIDE_COUNT - 1 ? 'DeckBtn DeckBtnOff' : 'DeckBtn DeckBtnOn'}
+              bindtap={nextSlide}
+            >
+              <text
+                className={
+                  slide === SLIDE_COUNT - 1 ? 'DeckBtnText T' : 'DeckBtnText DeckBtnTextOn T'
+                }
+              >
+                →
+              </text>
+            </view>
+          </view>
         </view>
-      ) : null}
+      </view>
     </view>
   );
 }
