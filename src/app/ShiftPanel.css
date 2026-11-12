@@ -29,84 +29,30 @@
   transform: translateX(-50%);
 }
 
-/* 自定义玻璃：外层圆角 22，内层同心圆角 8（22 − 内边距 14） */
+/* 顺延单：不透明暗场纸面，硬边与顶部重线，不使用玻璃高光 */
 .ShiftGlass {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 560px;
   max-height: 56vh;
   overflow: hidden;
-  /* 玻璃底色：真实背景模糊之上叠加暖黑薄雾 */
-  background-color: rgba(26, 24, 17, 0.38);
-  border-width: 1px;
-  border-style: solid;
-  border-color: rgba(245, 242, 232, 0.24);
-  border-radius: 22px;
-  position: relative;
-  /* 原生端不支持 inset 取值，先给出仅外阴影的降级值 */
-  box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(245, 242, 232, 0.26),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
-    0 14px 34px -14px rgba(0, 0, 0, 0.72);
-  transform-origin: 50% 100%;
-  animation: ShiftMorph 440ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-/* 仅浏览器端追加；原生端不加，自动退化为半透明纯色 */
-.ShiftGlass--web {
-  max-width: 560px;
   margin-left: auto;
   margin-right: auto;
-  backdrop-filter: blur(26px) saturate(1.7) brightness(1.12);
-}
-
-/* Liquid Glass 高光：左上向下的柔和反光 */
-.ShiftSheen {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background-image: linear-gradient(
-    135deg,
-    rgba(245, 242, 232, 0.16) 0%,
-    rgba(245, 242, 232, 0.04) 38%,
-    rgba(245, 242, 232, 0) 62%
-  );
-  pointer-events: none;
+  background-color: var(--screen-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line);
+  border-top-width: 3px;
+  border-top-color: var(--bright);
+  border-radius: 0;
+  animation: scRiseIn 180ms ease-out both;
 }
 
 .ShiftInner {
   display: flex;
   flex-direction: column;
-  padding: 14px;
-  border-radius: 8px;
-  animation: ShiftInnerMorph 440ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes ShiftMorph {
-  from {
-    transform: translateY(30px) scale(0.88);
-    border-radius: 34px;
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0) scale(1);
-    border-radius: 22px;
-    opacity: 1;
-  }
-}
-
-@keyframes ShiftInnerMorph {
-  from {
-    border-radius: 20px;
-  }
-
-  to {
-    border-radius: 8px;
-  }
+  padding: 16px;
 }
 
 /* ---------- 标题行 ---------- */
@@ -161,8 +107,7 @@
   height: 44px;
   border-width: 1px;
   border-style: solid;
-  border-color: rgba(245, 242, 232, 0.16);
-  border-radius: 4px;
+  border-color: var(--screen-line);
 }
 
 .ShiftStepLabel {
@@ -200,7 +145,7 @@
   color: var(--fg-2);
 }
 
-/* 预览行 + 锁定结果的可滚动区，避免撑破玻璃面板 */
+/* 预览行 + 锁定结果的可滚动区，避免撑破顺延单 */
 .ShiftBody {
   display: flex;
   flex-direction: column;
@@ -213,7 +158,7 @@
   margin-top: 8px;
   border-top-width: 1px;
   border-top-style: solid;
-  border-top-color: rgba(245, 242, 232, 0.1);
+  border-top-color: var(--screen-line);
 }
 
 .ShiftRow {
@@ -224,7 +169,7 @@
   height: 24px;
   border-bottom-width: 1px;
   border-bottom-style: solid;
-  border-bottom-color: rgba(245, 242, 232, 0.1);
+  border-bottom-color: var(--screen-line);
 }
 
 .ShiftRowName {

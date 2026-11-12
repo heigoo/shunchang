@@ -10,7 +10,6 @@ import { buildShiftPreview } from './shiftPreview';
 import type { ShiftPreview } from './shiftPreview';
 
 const MINUS = '\u2212';
-const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 export interface ShiftPanelProps {
   sheet: Sheet;
@@ -88,9 +87,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
 
   const preview = buildShiftPreview(sheet, runtime, startMin, nowMin);
 
-  const glassClasses = ['ShiftGlass'];
-  if (isWeb) glassClasses.push('ShiftGlass--web');
-  if (closing) glassClasses.push('GlassOut');
+  const classes = closing ? 'ShiftGlass GlassOut' : 'ShiftGlass';
 
   return (
     <view
@@ -99,21 +96,15 @@ export function ShiftPanel(props: ShiftPanelProps) {
       catchtap={onCancel}
     >
       <view className="ShiftStage" flatten={false} catchtap={() => {}}>
-        <blur-view
-          className={glassClasses.join(' ')}
-          android-capture-target="runtime-capture"
-          blur-radius="40"
-          blur-sampling={4}
-          enable-auto-blur={true}
-          experimental-update-blur-radius={true}
+        <view
+          className={classes}
           flatten={false}
           catchtap={() => {}}
         >
-          <view className="ShiftSheen" />
           <view className="ShiftInner">
             <view className="ShiftHead">
               <text className="ShiftLabel">{t('顺延至')}</text>
-              <view className="ShiftCancel" catchtap={onCancel}>
+              <view className="ShiftCancel" bindtap={onCancel}>
                 <text className="ShiftCancelText">{t('取消')}</text>
               </view>
             </view>
@@ -121,7 +112,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
             <view className="ShiftTimeRow">
               <view
                 className="ShiftStep"
-                catchtap={() => {
+                bindtap={() => {
                   setStartMin((value) => value - 1);
                 }}
               >
@@ -130,7 +121,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
               <text className="ShiftClock">{formatClockDisplay(startMin)}</text>
               <view
                 className="ShiftStep"
-                catchtap={() => {
+                bindtap={() => {
                   setStartMin((value) => value + 1);
                 }}
               >
@@ -140,7 +131,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
 
             <view
               className="ShiftNow"
-              catchtap={() => {
+              bindtap={() => {
                 setStartMin(nowMin);
               }}
             >
@@ -207,7 +198,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
               </view>
             </view>
           </view>
-        </blur-view>
+        </view>
       </view>
     </view>
   );

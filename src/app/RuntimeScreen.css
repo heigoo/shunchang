@@ -150,9 +150,11 @@
 
 .RuntimeTitle {
   margin-top: 10px;
-  font-size: 32px;
-  font-weight: 750;
-  line-height: 42px;
+  font-family: var(--serif);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 44px;
+  letter-spacing: 0.02em;
   color: var(--bright);
 }
 
@@ -224,43 +226,70 @@
 .RuntimeNext {
   display: flex;
   flex-direction: column;
-  margin-top: 26px;
+  margin-top: 24px;
   padding-top: 14px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--screen-line);
 }
 
+.RuntimeNextHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .RuntimeNextRows {
   display: flex;
   flex-direction: column;
+  margin-top: 6px;
+  padding-left: 12px;
+  border-left-width: 2px;
+  border-left-style: solid;
+  border-left-color: var(--screen-line);
 }
 
 .RuntimeNextRow {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  height: 26px;
+  height: 30px;
 }
 
-.RuntimeNextLabel {
+.RuntimeNextCount,
+.RuntimeNextLabel,
+.RuntimeNextNo {
   font-family: var(--mono);
   font-size: 10px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   color: var(--dim);
 }
 
-.RuntimeNextValue {
-  max-width: 70%;
-  font-size: 15px;
-  color: var(--bright);
+.RuntimeNextNo {
+  width: 36px;
+  flex-shrink: 0;
 }
 
 .RuntimeNextTime {
+  width: 62px;
+  flex-shrink: 0;
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--bright);
+}
+
+.RuntimeNextValue {
+  flex: 1;
+  font-size: 14px;
+  text-align: right;
+  color: var(--bright);
+}
+
+.RuntimeNextEmpty {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--dim);
 }
 
 /* ---------- 同步条 ---------- */
@@ -393,8 +422,10 @@
 
 .DoneTitle {
   margin-top: 10px;
-  font-size: 34px;
-  font-weight: 750;
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--bright);
 }
 

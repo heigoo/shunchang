@@ -844,9 +844,11 @@ export function EditorScreen(props: EditorScreenProps) {
                 }}
               />
             </view>
-            <view className="EditorToolHint">
-              <text className="EditorHintText">{tText('自动保存')}</text>
-            </view>
+            {isWide ? (
+              <view className="EditorToolHint">
+                <text className="EditorHintText">{tText('自动保存')}</text>
+              </view>
+            ) : null}
           </view>
 
           {errors && errors.length > 0 ? (

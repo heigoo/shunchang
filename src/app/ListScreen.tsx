@@ -357,9 +357,11 @@ export function ListScreen(props: ListScreenProps) {
         <view className="ColSeg">
           <text className="CellSeg">{pad2(sheet.items.length)}</text>
         </view>
-        <view className="ColUpdated">
-          <text className="CellUpdated">{clockOf(sheet.updatedAt)}</text>
-        </view>
+        {isDesktop ? (
+          <view className="ColUpdated">
+            <text className="CellUpdated">{clockOf(sheet.updatedAt)}</text>
+          </view>
+        ) : null}
         <view className="ColAction">{renderActions(sheet)}</view>
       </view>
     );
@@ -397,6 +399,9 @@ export function ListScreen(props: ListScreenProps) {
     if (sheets.length === 0) {
       return (
         <view className="EmptyBlock">
+          <text className="EmptyCode">FORM 01 · BLANK</text>
+          <text className="EmptyStamp">{tText('草稿')}</text>
+          <view className="EmptyRule" />
           <text className="EmptyTitle">{tText('还没有手册')}</text>
           <text className="EmptyHint">
             {tText('从模板开始，或建一份空白手册。')}
@@ -443,9 +448,11 @@ export function ListScreen(props: ListScreenProps) {
           <view className="ColSeg">
             <text className="Th">{tText('环节')}</text>
           </view>
-          <view className="ColUpdated">
-            <text className="Th">{tText('更新时间')}</text>
-          </view>
+          {isDesktop ? (
+            <view className="ColUpdated">
+              <text className="Th">{tText('更新时间')}</text>
+            </view>
+          ) : null}
           <view className="ColAction">
             <text className="Th">{tText('操作')}</text>
           </view>
@@ -555,7 +562,11 @@ export function ListScreen(props: ListScreenProps) {
               );
             })}
           </view>
-          <Button label={tText('新建手册')} block={!isWide} onTap={openCreate} />
+          <Button
+            label={tText('新建手册')}
+            className="ListCreate"
+            onTap={openCreate}
+          />
         </view>
 
         {renderList()}

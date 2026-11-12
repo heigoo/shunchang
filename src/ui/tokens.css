@@ -33,8 +33,9 @@
   --row-h: 40px;
   --topbar-h: 34px;
 
-  /* 字体 */
+  /* 字体：标题用衬线，正文无衬线，数据等宽 */
   --sans: -apple-system, 'PingFang SC', 'HarmonyOS Sans', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
+  --serif: Georgia, 'Songti SC', 'Noto Serif CJK SC', 'Source Han Serif SC', 'Source Han Serif CN', STSong, SimSun, 'Times New Roman', serif;
   --mono: 'SF Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
@@ -105,6 +106,10 @@
 /* 工具类 */
 .mono {
   font-family: var(--mono);
+}
+
+.serif {
+  font-family: var(--serif);
 }
 
 .num {

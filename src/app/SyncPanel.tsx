@@ -5,7 +5,7 @@ import type { RuntimeState, Sheet } from '../domain/types';
 import { useT } from '../i18n';
 import { Button } from '../ui';
 import { QrCode } from './QrCode';
-import { buildShareUrl, isWeb } from './share';
+import { buildShareUrl } from './share';
 
 export interface SyncPanelProps {
   sheet: Sheet;
@@ -39,9 +39,7 @@ export function SyncPanel(props: SyncPanelProps) {
   const showQr = sheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
   const code = encodeShortCode(sheet.id, runtime);
 
-  const glassClasses = ['SyncGlass'];
-  if (isWeb()) glassClasses.push('SyncGlass--web');
-  if (closing) glassClasses.push('GlassOut');
+  const classes = closing ? 'SyncGlass GlassOut' : 'SyncGlass';
 
   return (
     <view
@@ -50,17 +48,11 @@ export function SyncPanel(props: SyncPanelProps) {
       catchtap={onClose}
     >
       <view className="SyncStage" flatten={false} catchtap={() => {}}>
-        <blur-view
-          className={glassClasses.join(' ')}
-          android-capture-target="runtime-capture"
-          blur-radius="40"
-          blur-sampling={4}
-          enable-auto-blur={true}
-          experimental-update-blur-radius={true}
+        <view
+          className={classes}
           flatten={false}
           catchtap={() => {}}
         >
-          <view className="SyncSheen" />
           <view className="SyncInner">
             <view className="SyncHead">
               <text className="SyncLabel">{t('同步凭据')}</text>
@@ -105,7 +97,7 @@ export function SyncPanel(props: SyncPanelProps) {
               />
             </view>
           </view>
-        </blur-view>
+        </view>
       </view>
     </view>
   );

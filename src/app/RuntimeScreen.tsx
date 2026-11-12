@@ -2,7 +2,7 @@ import './RuntimeScreen.css';
 
 import { runOnBackground, runOnMainThread, useEffect, useRef, useState } from '@lynx-js/react';
 
-import { formatClockDisplay, formatDuration } from '../domain/timeline';
+import { computeTimeline, formatClockDisplay, formatDuration } from '../domain/timeline';
 import { encodeShortCode } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
 import { useIsWide } from '../platform/viewport';
@@ -271,6 +271,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
   const view = buildRuntimeView(sheet, runtime);
   const finished = view.finished;
+  const timeline = computeTimeline(sheet, runtime.offsetMin);
+  const upcomingStart = Math.max(runtime.currentIndex + 1, 0);
+  const upcomingRows = timeline.rows.slice(upcomingStart, upcomingStart + 3);
+  const remaining = Math.max(sheet.items.length - upcomingStart, 0);
 
   const commit = (next: RuntimeState) => {
     saveRuntime(next);
@@ -392,7 +396,6 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const currentItem = view.currentItem;
   const currentRow = view.currentRow;
   const nextItem = view.nextItem;
-  const nextRow = view.nextRow;
 
   const secondsLeft =
     view.countdownTargetMin === null
@@ -498,26 +501,37 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
           ) : null}
 
           <view className="RuntimeNext">
-            {nextItem && nextRow ? (
+            <view className="RuntimeNextHead">
+              <text className="RuntimeNextLabel">{tText('下一环节')}</text>
+              <text className="RuntimeNextCount">
+                {remaining > 0
+                  ? `${tText('剩余')} ${pad3(remaining)}`
+                  : tText('最后环节')}
+              </text>
+            </view>
+            {upcomingRows.length > 0 ? (
               <view className="RuntimeNextRows">
-                <view className="RuntimeNextRow">
-                  <text className="RuntimeNextLabel">{tText('下一环节')}</text>
-                  <text className="RuntimeNextValue">
-                    {nextItem.name.length > 0 ? nextItem.name : tText('未命名环节')}
-                  </text>
-                </view>
-                <view className="RuntimeNextRow">
-                  <text className="RuntimeNextLabel">{tText('计划')}</text>
-                  <text className="RuntimeNextTime">
-                    {formatClockDisplay(nextRow.displayStart)}
-                  </text>
-                </view>
+                {upcomingRows.map((row) => {
+                  const item = sheet.items[row.index];
+                  return (
+                    <view className="RuntimeNextRow" key={item.id}>
+                      <text className="RuntimeNextNo">{pad3(row.index + 1)}</text>
+                      <text className="RuntimeNextTime">
+                        {formatClockDisplay(row.displayStart)}
+                      </text>
+                      <text className="RuntimeNextValue">
+                        {item.name.length > 0
+                          ? item.name
+                          : tText('未命名环节')}
+                      </text>
+                    </view>
+                  );
+                })}
               </view>
             ) : (
-              <view className="RuntimeNextRow">
-                <text className="RuntimeNextLabel">{tText('结束')}</text>
-                <text className="RuntimeNextValue">{tText('最后环节')}</text>
-              </view>
+              <text className="RuntimeNextEmpty">
+                {tText('已是最后一个环节')}
+              </text>
             )}
           </view>
         </view>

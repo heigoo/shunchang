@@ -87,8 +87,10 @@
 }
 
 .FollowSheetName {
-  font-size: 16px;
-  font-weight: 700;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--bright);
 }
 
@@ -140,9 +142,11 @@
 
 .FollowCurrentName {
   margin-top: 8px;
-  font-size: 24px;
-  font-weight: 750;
-  line-height: 32px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 34px;
+  letter-spacing: 0.02em;
   color: var(--bright);
 }
 
@@ -335,46 +339,115 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-left: 24px;
-  padding-right: 24px;
-  animation: scRiseIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  padding: 24px;
+  animation: scRiseIn 220ms ease-out both;
 }
 
-.FollowGuideLabel {
+/* 入场凭证：一张暗场票据，三条载入路径直接列在票面上 */
+.FollowPass {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  background-color: var(--screen-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line);
+  border-top-width: 3px;
+  border-top-color: var(--bright);
+}
+
+.FollowPassHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.FollowPassLabel,
+.FollowPassNo {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 9px;
+  letter-spacing: 0.16em;
   color: var(--dim);
 }
 
-.FollowGuideTitle {
-  margin-top: 12px;
-  font-size: 26px;
-  font-weight: 750;
+.FollowPassTitle {
+  margin-top: 14px;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 38px;
+  letter-spacing: 0.02em;
   color: var(--bright);
 }
 
-.FollowGuideText {
-  max-width: 300px;
-  margin-top: 10px;
+.FollowPassText {
+  margin-top: 8px;
   font-size: 13px;
   line-height: 20px;
   color: var(--dim);
 }
 
-.FollowGuideAction {
-  width: 100%;
-  margin-top: 24px;
+.FollowPassRule {
+  height: 1px;
+  margin-top: 18px;
+  margin-bottom: 2px;
+  background-color: var(--screen-line);
+}
+
+.FollowStep {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 40px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--screen-line);
+}
+
+.FollowStepNo {
+  width: 34px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+}
+
+.FollowStepText {
+  flex: 1;
+  font-size: 13px;
+  color: var(--bright);
+}
+
+.FollowStepArrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.FollowPassAction {
+  margin-top: 18px;
+}
+
+.FollowPassNote {
+  margin-top: 12px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--dim);
 }
 
 .FollowGuideBack {
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
-  margin-top: 8px;
+  margin-top: 14px;
+  padding-left: 12px;
   padding-right: 12px;
 }
 

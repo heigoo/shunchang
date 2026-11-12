@@ -126,13 +126,35 @@ export function FollowScreen(props: FollowScreenProps) {
       style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
     >
         <view className="FollowGuide">
-          <text className="FollowGuideLabel">{t('现场跟随')}</text>
-          <text className="FollowGuideTitle">{t('跟随现场')}</text>
-          <text className="FollowGuideText">
-            {t('扫描督导的二维码，或输入六位短码载入手册')}
-          </text>
-          <view className="FollowGuideAction">
-            <Button label={t('载入手册')} block onTap={openImport} />
+          <view className="FollowPass">
+            <view className="FollowPassHead">
+              <text className="FollowPassLabel">{t('现场跟随')}</text>
+              <text className="FollowPassNo">PASS 01</text>
+            </view>
+            <text className="FollowPassTitle">{t('跟随现场')}</text>
+            <text className="FollowPassText">
+              {t('扫描督导的二维码，或输入六位短码载入手册')}
+            </text>
+            <view className="FollowPassRule" />
+            <view className="FollowStep">
+              <text className="FollowStepNo">01</text>
+              <text className="FollowStepText">{t('扫码')}</text>
+              <text className="FollowStepArrow">→</text>
+            </view>
+            <view className="FollowStep">
+              <text className="FollowStepNo">02</text>
+              <text className="FollowStepText">{t('六位短码')}</text>
+              <text className="FollowStepArrow">→</text>
+            </view>
+            <view className="FollowStep">
+              <text className="FollowStepNo">03</text>
+              <text className="FollowStepText">{t('文件')}</text>
+              <text className="FollowStepArrow">→</text>
+            </view>
+            <view className="FollowPassAction">
+              <Button label={t('载入手册')} block onTap={openImport} />
+            </view>
+            <text className="FollowPassNote">{t('只读 · 不能推进环节')}</text>
           </view>
           <view className="FollowGuideBack" bindtap={exitFollow}>
             <text className="FollowGuideBackText">{t('返回手册列表')}</text>
