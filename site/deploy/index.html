@@ -96,6 +96,76 @@
           deckNav('index', Number(key) - 1);
         }
       });
+
+      // 章节深链 + 曝光埋点
+      var CHAPTERS = ['cover', 'problem', 'product', 'board', 'brand', 'name', 'start'];
+      function deckRoot() {
+        return view && view.shadowRoot;
+      }
+      function clickDot(index) {
+        var root = deckRoot();
+        if (!root) return false;
+        var dots = root.querySelectorAll('.DeckDot');
+        if (dots[index]) {
+          dots[index].click();
+          return true;
+        }
+        return false;
+      }
+      function activeSlide() {
+        var root = deckRoot();
+        if (!root) return -1;
+        var dots = root.querySelectorAll('.DeckDot');
+        for (var i = 0; i < dots.length; i += 1) {
+          if (String(dots[i].className).indexOf('DeckDotOn') >= 0) return i;
+        }
+        return -1;
+      }
+      function applyHash() {
+        var name = (location.hash || '').replace('#', '');
+        var index = CHAPTERS.indexOf(name);
+        if (index >= 0) clickDot(index);
+      }
+      function track(event, data) {
+        var payload = { event: event };
+        if (data) {
+          for (var key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) payload[key] = data[key];
+          }
+        }
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(payload);
+        window.dispatchEvent(new CustomEvent('deck:track', { detail: payload }));
+      }
+      var hashWait = setInterval(function () {
+        var root = deckRoot();
+        if (root && root.querySelectorAll('.DeckDot').length) {
+          clearInterval(hashWait);
+          applyHash();
+        }
+      }, 300);
+      window.addEventListener('hashchange', applyHash);
+      var lastSlide = -1;
+      setInterval(function () {
+        var index = activeSlide();
+        if (index < 0 || index === lastSlide) return;
+        lastSlide = index;
+        if (CHAPTERS[index] && location.hash !== '#' + CHAPTERS[index]) {
+          history.replaceState(null, '', '#' + CHAPTERS[index]);
+        }
+        track('deck_slide_view', { slide: index + 1, chapter: CHAPTERS[index] });
+      }, 450);
+      var clickWait = setInterval(function () {
+        var root = deckRoot();
+        if (!root) return;
+        clearInterval(clickWait);
+        root.addEventListener('click', function (event) {
+          var target = event.target;
+          if (!target || !target.closest) return;
+          if (target.closest('.DeckCta')) track('deck_cta_click', { source: 'persistent' });
+          else if (target.closest('.CtaCopy .Btn')) track('deck_cta_click', { source: 'final' });
+        }, true);
+      }, 500);
     })();
   </script>
 </body>

@@ -615,6 +615,17 @@ export function App() {
           )}
 
           <view className="DeckBarRight">
+            <view
+              className="DeckCta"
+              bindtap={() =>
+                slide === SLIDE_COUNT - 1 ? setJoined(true) : goSlide(SLIDE_COUNT - 1)
+              }
+            >
+              <text className="DeckCtaText T">
+                {wide ? c.cta.button : lang === 'zh' ? '开始' : 'Start'}
+              </text>
+              <text className="DeckCtaArrow T">→</text>
+            </view>
             <view className="Lang">
               <view
                 className={lang === 'zh' ? 'LangBtn LangBtnOn' : 'LangBtn'}
@@ -731,6 +742,10 @@ export function App() {
                   {index === slide ? <text className="DeckMenuNow T">●</text> : null}
                 </view>
               ))}
+            </view>
+            <view className="DeckMenuSkip" bindtap={() => goSlide(SLIDE_COUNT - 1)}>
+              <text className="DeckMenuSkipText T">{c.deck.skip}</text>
+              <text className="DeckMenuSkipArrow T">→</text>
             </view>
             <text className="DeckMenuHint T">{c.deck.menuHint}</text>
           </view>

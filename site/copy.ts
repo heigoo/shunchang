@@ -72,6 +72,7 @@ export interface Copy {
     hint: string;
     menu: string;
     menuHint: string;
+    skip: string;
     chapters: string[];
   };
 }
@@ -203,7 +204,8 @@ const ZH: Copy = {
     hint: '滚轮 / ← → 逐步推进 · 每一步只做一件事',
     menu: '目录',
     menuHint: '点击直达任意章节 · 也可用 ← → 或数字键',
-    chapters: ['封面', '问题', '产品', '执行台', '标记', '名字', '开始'],
+    skip: '跳过介绍 · 直接开始',
+    chapters: ['首页', '痛点', '功能', '现场示例', '品牌', '理念', '开始'],
   },
 };
 
@@ -334,7 +336,8 @@ const EN: Copy = {
     hint: 'SCROLL OR ← → TO ADVANCE · ONE THING AT A TIME',
     menu: 'INDEX',
     menuHint: 'JUMP TO ANY CHAPTER · USE ← → OR NUMBER KEYS',
-    chapters: ['Cover', 'Problem', 'Product', 'Live board', 'The mark', 'The name', 'Start'],
+    skip: 'SKIP INTRO · START NOW',
+    chapters: ['Home', 'Pain points', 'Features', 'Live demo', 'Brand', 'Why Cue', 'Start'],
   },
 };
 
