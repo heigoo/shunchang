@@ -23,16 +23,17 @@ export function reportViewportWidth(width: number): void {
 function readGlobalWidth(): number | null {
   try {
     const global = globalThis as any;
-    const props = global.lynx?.__globalProps;
-    if (props && typeof props.siteWidth === 'number' && props.siteWidth > 0) {
-      return props.siteWidth;
-    }
-    if (typeof global.innerWidth === 'number' && global.innerWidth > 0) {
-      return global.innerWidth;
-    }
     const win = global.window;
     if (win && typeof win.innerWidth === 'number' && win.innerWidth > 0) {
       return win.innerWidth;
+    }
+    // Web Worker 没有 window；仅在有 WorkerGlobalScope 时使用全局 innerWidth。
+    if (
+      typeof global.WorkerGlobalScope !== 'undefined' &&
+      typeof global.innerWidth === 'number' &&
+      global.innerWidth > 0
+    ) {
+      return global.innerWidth;
     }
   } catch {
     // Accessing window may throw in restricted runtimes.
@@ -47,7 +48,19 @@ function readNativeWidth(): number | null {
       return null;
     }
     const info = lynx.getSystemInfoSync();
-    if (info && typeof info.screenWidth === 'number' && info.screenWidth > 0) {
+    if (!info) {
+      return null;
+    }
+    // pixelWidth 是物理像素，必须除以 pixelRatio 才能与 CSS 断点比较。
+    if (
+      typeof info.pixelWidth === 'number' &&
+      info.pixelWidth > 0 &&
+      typeof info.pixelRatio === 'number' &&
+      info.pixelRatio > 0
+    ) {
+      return info.pixelWidth / info.pixelRatio;
+    }
+    if (typeof info.screenWidth === 'number' && info.screenWidth > 0) {
       return info.screenWidth;
     }
   } catch {
@@ -118,12 +131,6 @@ export function useIsWide(breakpoint = 1024): boolean {
     });
 
     let removeResize: (() => void) | null = null;
-    const propsTimer = setInterval(() => {
-      const next = readGlobalWidth();
-      if (next !== null) {
-        applyWidth(next);
-      }
-    }, 800);
 
     try {
       const win = (globalThis as any).window;
@@ -144,7 +151,6 @@ export function useIsWide(breakpoint = 1024): boolean {
 
     return () => {
       cancelled = true;
-      clearInterval(propsTimer);
       timers.forEach((timer) => clearTimeout(timer));
       widthListeners.delete(applyWidth);
       removeResize?.();

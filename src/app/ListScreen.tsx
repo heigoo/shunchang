@@ -476,11 +476,13 @@ export function ListScreen(props: ListScreenProps) {
           {xishi ? <text className="ListBrandSeal">{tText('喜事')}</text> : null}
         </view>
         <view className="ListHeaderRight">
-          <text className="ListMeta">
-            {xishi
-              ? tText('喜事现场 · 手册总览')
-              : tText('现场调度 · 手册总览')}
-          </text>
+          {isWide ? (
+            <text className="ListMeta">
+              {xishi
+                ? tText('喜事现场 · 手册总览')
+                : tText('现场调度 · 手册总览')}
+            </text>
+          ) : null}
           <view
             className="ListLoad"
             bindtap={() => {

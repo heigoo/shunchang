@@ -76,11 +76,6 @@
   margin-right: 12px;
 }
 
-/* 手机宽度隐藏装饰性概览，给品牌与载入/跟随留足空间 */
-.ListScreen--narrow .ListMeta {
-  display: none;
-}
-
 .ListLoad {
   display: flex;
   flex-direction: row;
