@@ -757,7 +757,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 24px;
+  top: 112px;
   z-index: 900;
   display: flex;
   flex-direction: row;

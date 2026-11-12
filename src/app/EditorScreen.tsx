@@ -356,13 +356,14 @@ export function EditorScreen(props: EditorScreenProps) {
     }
     const index = pendingDelete.index;
     rememberUndo('已删除环节', sheet);
-    apply(removeItem(sheet, index));
-    setDeleteOpen(false);
+    // 先收起展开详情与确认面板，避免删除后输入框重新抢焦点弹出键盘。
     setExpanded((previous) => {
       if (previous === null) return null;
       if (previous === index) return null;
       return previous > index ? previous - 1 : previous;
     });
+    setDeleteOpen(false);
+    apply(removeItem(sheet, index));
   };
 
   const handlePublish = () => {
@@ -517,6 +518,7 @@ export function EditorScreen(props: EditorScreenProps) {
             <view
               className="ActBtn"
               bindtap={() => {
+                setExpanded(null);
                 setPendingDelete({ index, name: item.name });
                 setDeleteOpen(true);
               }}
@@ -665,6 +667,7 @@ export function EditorScreen(props: EditorScreenProps) {
               <view
                 className="CardAction"
                 bindtap={() => {
+                  setExpanded(null);
                   setPendingDelete({ index, name: item.name });
                   setDeleteOpen(true);
                 }}
@@ -881,7 +884,7 @@ export function EditorScreen(props: EditorScreenProps) {
             <text className="EditorPanelTitle">
               {`删除环节「${pendingDelete.name}」？`}
             </text>
-            <text className="EditorPanelBody">删除后不可撤销。</text>
+            <text className="EditorPanelBody">删除后可在 5 秒内撤销。</text>
             <view className="EditorPanelActions">
               <view className="EditorPanelAction">
                 <Button
