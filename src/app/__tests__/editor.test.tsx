@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render } from '@lynx-js/react/testing-library';
+import { fireEvent, render } from '@lynx-js/react/testing-library';
 import { beforeEach, expect, test } from '@rstest/core';
 
 import type { Sheet } from '../../domain/types';
@@ -85,4 +85,29 @@ test('renders the sheet name, numbering and computed plan times', async () => {
   expect(await findByText(/08:00/)).toBeInTheDocument();
   expect(await findByText(/09:00/)).toBeInTheDocument();
   expect(await findByText(/09:30/)).toBeInTheDocument();
+});
+
+test('restores a deleted item with undo', async () => {
+  saveSheet(makeSheet());
+
+  const { container, findByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={() => {}}
+      onPrint={() => {}}
+    />,
+  );
+
+  expect(container.querySelectorAll('.Row').length).toBe(3);
+
+  // 宽屏每行三个操作：上移、下移、删除。
+  const acts = container.querySelectorAll('.ActBtn');
+  fireEvent.tap(acts[2]!);
+
+  fireEvent.tap(await findByText('删除'));
+  expect(container.querySelectorAll('.Row').length).toBe(2);
+
+  fireEvent.tap(await findByText('撤销'));
+  expect(container.querySelectorAll('.Row').length).toBe(3);
 });
