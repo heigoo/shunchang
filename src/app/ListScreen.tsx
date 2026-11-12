@@ -12,6 +12,7 @@ import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
 import { createEmptySheet } from '../domain/types';
 import { t, getLang, useT } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
 import {
   BREAKPOINT_DESKTOP,
   BREAKPOINT_TABLET,
@@ -136,6 +137,7 @@ export function ListScreen(props: ListScreenProps) {
   const xishi = theme === 'xishi';
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const renameRef = useRef<any>(null);
   const isWide = useIsWide(BREAKPOINT_TABLET);
   const isDesktop = useIsWide(BREAKPOINT_DESKTOP);
 
@@ -153,6 +155,16 @@ export function ListScreen(props: ListScreenProps) {
       setPendingDelete(null);
     }
   }, [deletePresence.mounted]);
+
+  // 桌面端原生输入框不会绘制 default-value，打开面板后主动同步一次名称。
+  useEffect(() => {
+    if (!morePresence.mounted || !isDesktopRuntime()) {
+      return;
+    }
+    renameRef.current
+      ?.invoke({ method: 'setValue', params: { value: renameText } })
+      .exec();
+  }, [morePresence.mounted, moreSheet?.id]);
 
   // 返回键优先关闭当前打开的浮层。
   useEffect(() => {
@@ -605,6 +617,7 @@ export function ListScreen(props: ListScreenProps) {
             <view className="SheetRename">
               <text className="SheetRenameLabel">{tText('重命名')}</text>
               <input
+                ref={renameRef}
                 className="SheetRenameInput"
                 default-value={displayName(moreSheet)}
                 placeholder={tText('输入手册名称')}

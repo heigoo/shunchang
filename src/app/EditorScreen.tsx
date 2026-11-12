@@ -7,6 +7,7 @@ import type { Item, Sheet, SheetStatus } from '../domain/types';
 import type { SheetError } from '../domain/validate';
 import { findPlanConflicts } from '../domain/validate';
 import { t, useT } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
 import {
   BREAKPOINT_DESKTOP,
   BREAKPOINT_TABLET,
@@ -70,39 +71,70 @@ interface DraftInputProps {
 function DraftInput(props: DraftInputProps) {
   const { value, onInput, onCommit } = props;
   const [text, setText] = useState(value);
+  const inputRef = useRef<any>(null);
+  const focusedRef = useRef(false);
+  const syncedRef = useRef<string | null>(null);
 
   useEffect(() => {
     setText(value);
+    // 桌面端原生输入框不会绘制 value / default-value 初始值，需要主动调用
+    // setValue 同步；用户正在输入时不打断光标。
+    if (!isDesktopRuntime() || focusedRef.current) {
+      return;
+    }
+    if (syncedRef.current === value) {
+      return;
+    }
+    syncedRef.current = value;
+    inputRef.current
+      ?.invoke({ method: 'setValue', params: { value } })
+      .exec();
   }, [value]);
+
+  const syncNative = (next: string) => {
+    if (!isDesktopRuntime()) {
+      return;
+    }
+    syncedRef.current = next;
+    inputRef.current
+      ?.invoke({ method: 'setValue', params: { value: next } })
+      .exec();
+  };
 
   const read = (event: any): string => {
     const detail = event && event.detail ? event.detail : null;
     return detail && typeof detail.value === 'string' ? detail.value : '';
   };
 
-  // Web 读取受控 value，原生端读取 default-value；同时下发以兼容两端。
-  const controlled: { value: string; 'default-value': string } = {
-    value: text,
-    'default-value': text,
-  };
+  // Web 读取受控 value，原生端读取 default-value；桌面端两者同时下发会只显示
+  // placeholder，因此桌面端只保留 value。
+  const controlled: { value: string; 'default-value'?: string } = isDesktopRuntime()
+    ? { value: text }
+    : { value: text, 'default-value': text };
 
   return (
     <input
       {...controlled}
+      ref={inputRef}
       className={props.className}
       placeholder={props.placeholder}
       maxlength={props.maxlength}
       type={props.type}
+      bindfocus={() => {
+        focusedRef.current = true;
+      }}
       bindinput={(event) => {
         const next = read(event);
         setText(next);
         onInput?.(next);
       }}
       bindblur={(event) => {
+        focusedRef.current = false;
         const next = read(event);
         const accepted = onCommit ? onCommit(next) : true;
         if (!accepted) {
           setText(value);
+          syncNative(value);
         }
       }}
     />
