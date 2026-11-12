@@ -4,6 +4,7 @@ import { useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
 import { useT } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
 import {
   BREAKPOINT_PRINT_WIDE,
   BREAKPOINT_TABLET,
@@ -11,11 +12,14 @@ import {
 } from '../platform/viewport';
 import { getRuntime, getSheet } from '../store/repository';
 import { Button } from '../ui';
+import { desktopOpenPrintHtml } from './desktopBridge';
 import { QrCode } from './QrCode';
 import { buildShareUrl, isWeb } from './share';
+import { buildPrintHtml } from './printHtml';
 import {
   buildPrintRows,
   paginateRows,
+  printFileName,
   printSummary,
 } from './printOps';
 import type { PrintPage } from './printOps';
@@ -60,8 +64,12 @@ export function PrintScreen(props: PrintScreenProps) {
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
   const [printedAt] = useState(() => Date.now());
+  const [printStatus, setPrintStatus] = useState<'idle' | 'done' | 'failed'>(
+    'idle',
+  );
   const compact = !useIsWide(BREAKPOINT_TABLET);
   const widePage = useIsWide(BREAKPOINT_PRINT_WIDE);
+  const desktop = isDesktopRuntime();
 
   if (!sheet) {
     return (
@@ -87,13 +95,23 @@ export function PrintScreen(props: PrintScreenProps) {
   const pages = paginateRows(rows);
   const summary = printSummary(sheet, runtime);
   const url = buildShareUrl(encodePayload(sheet, runtime ?? undefined));
-  const showQr = sheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
+  const showQr =
+    !desktop && sheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
   const stamp = stampText(printedAt);
 
   const handlePrint = () => {
     if (isWeb()) {
       void webPrint(PRINT_STYLE_TEXT);
     }
+  };
+
+  const handleDesktopPrint = () => {
+    const html = buildPrintHtml(sheet, runtime, printedAt);
+    void desktopOpenPrintHtml(`${printFileName(sheet)}.html`, html).then(
+      (ok) => {
+        setPrintStatus(ok ? 'done' : 'failed');
+      },
+    );
   };
 
   const renderPage = (page: PrintPage) => (
@@ -112,7 +130,7 @@ export function PrintScreen(props: PrintScreenProps) {
           <text className="PrintDate">{summary.date}</text>
         </view>
         <view className="PrintHeadAside">
-          {showQr ? (
+          {desktop ? null : showQr ? (
             <view className="PrintQrBox">
               <QrCode value={url} size={compact ? 56 : 96} />
             </view>
@@ -223,9 +241,20 @@ export function PrintScreen(props: PrintScreenProps) {
         <view className="PrintActionsBack">
           <Button label={t('← 返回')} kind="tertiary" onTap={onBack} />
         </view>
+        {printStatus === 'idle' ? null : (
+          <text className="PrintActionsStatus">
+            {printStatus === 'done'
+              ? t('已生成打印页，请在浏览器中打印')
+              : t('打印文件导出失败')}
+          </text>
+        )}
         {isWeb() ? (
           <view className="PrintActionsPrint">
             <Button label={t('打印')} onTap={handlePrint} />
+          </view>
+        ) : desktop ? (
+          <view className="PrintActionsPrint">
+            <Button label={t('导出并打印')} onTap={handleDesktopPrint} />
           </view>
         ) : (
           <text className="PrintActionsHint">

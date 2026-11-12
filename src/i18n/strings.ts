@@ -216,6 +216,12 @@ export const EN: Record<string, string> = {
   '横屏查看更清晰 · 打印请在浏览器打开':
     'Landscape is clearer · Open in a browser to print',
   请在浏览器中打开以打印: 'Open in a browser to print',
+  导出并打印: 'Export & print',
+  '已生成打印页，请在浏览器中打印':
+    'Print page created; print it in your browser',
+  打印文件导出失败: 'Failed to export the print file',
+  '桌面版请用文件或六位短码分发':
+    'On desktop, use a file or the 6-character code',
   页脚: 'Footer',
   页码: 'Page',
 

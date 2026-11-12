@@ -4,7 +4,7 @@ import {
   isDesktopRuntime,
   resetDesktopRuntimeForTest,
 } from '../../platform/desktop';
-import { callDesktopBridge } from '../desktopBridge';
+import { callDesktopBridge, desktopOpenPrintHtml } from '../desktopBridge';
 import {
   buildShareUrl,
   buildShortUrl,
@@ -162,6 +162,33 @@ describe('desktop file bridge', () => {
     pickJsonFile(onFailed);
     await flush();
     expect(onFailed).not.toHaveBeenCalled();
+  });
+
+  it('opens the print HTML through the desktop bridge', async () => {
+    const call = rstest.fn(
+      (_method: string, _params: unknown, callback: (result: unknown) => void) => {
+        callback({ ok: true, path: 'C:/tmp/print.html' });
+      },
+    );
+    installDesktop(call);
+
+    await expect(
+      desktopOpenPrintHtml('流程表.html', '<html></html>'),
+    ).resolves.toBe(true);
+    expect(call).toHaveBeenCalledWith(
+      'shunchang.openPrintHtml',
+      { filename: '流程表.html', html: '<html></html>' },
+      expect.any(Function),
+    );
+  });
+
+  it('reports failure when opening the print HTML fails', async () => {
+    installDesktop((_method, _params, callback) => {
+      callback({ ok: false, error: 'open failed' });
+    });
+    await expect(
+      desktopOpenPrintHtml('流程表.html', '<html></html>'),
+    ).resolves.toBe(false);
   });
 
   it('returns null without a bridge or after a timeout', async () => {

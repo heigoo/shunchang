@@ -12,6 +12,12 @@ export interface DesktopSaveJsonResult {
   error?: string;
 }
 
+export interface DesktopOpenPrintResult {
+  ok?: boolean;
+  path?: string;
+  error?: string;
+}
+
 interface BridgeCaller {
   call(
     method: string,
@@ -108,4 +114,17 @@ export async function desktopSaveJson(
     { filename, text },
   );
   return !!result && result.canceled === false && !result.error;
+}
+
+/** 让桌面壳把打印 HTML 写入临时文件并用系统浏览器打开。 */
+export async function desktopOpenPrintHtml(
+  filename: string,
+  html: string,
+): Promise<boolean> {
+  const result = await callDesktopBridge<DesktopOpenPrintResult>(
+    'shunchang.openPrintHtml',
+    { filename, html },
+    15000,
+  );
+  return !!result && result.ok === true;
 }
