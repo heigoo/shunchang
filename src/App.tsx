@@ -24,6 +24,7 @@ import type { SafeInsets } from './app/systemBars';
 import { webSyncLocation, installMainThreadBridge } from './app/webBridge';
 import type { WebLocationSnapshot } from './app/webBridge';
 import { hydrateLang, useT } from './i18n';
+import { isDesktopRuntime } from './platform/desktop';
 import { reportViewportWidth } from './platform/viewport';
 import {
   consumeStorageError,
@@ -310,9 +311,14 @@ export function App() {
 
   const changeTheme = (next: AppTheme) => {
     setThemeState(next);
+    // 桌面端只改配色，不触碰桌面图标，因此不需要重启。
+    const desktop = isDesktopRuntime();
     // 先等主题写入原生存储，再由原生切换桌面图标并从新入口重启，
     // 避免新实例读到旧主题。
     void setThemeAsync(next).then(() => {
+      if (desktop) {
+        return;
+      }
       applyLauncherTheme(next);
     });
   };

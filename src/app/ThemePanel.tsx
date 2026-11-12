@@ -1,6 +1,7 @@
 import './ThemePanel.css';
 
 import { getLang, setLang, useT } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
 import type { AppTheme } from '../store/repository';
 
 export interface ThemePanelProps {
@@ -58,6 +59,7 @@ export function ThemePanel(props: ThemePanelProps) {
   const { theme, closing = false, onSelect, onClose } = props;
   const t = useT();
   const lang = getLang();
+  const desktop = isDesktopRuntime();
 
   return (
     <view className={closing ? 'Overlay OverlayOut' : 'Overlay'} bindtap={onClose}>
@@ -69,7 +71,9 @@ export function ThemePanel(props: ThemePanelProps) {
           <view className="PanelHeaderText">
             <text className="PanelTitle">{t('外观与语言')}</text>
             <text className="PanelSubtitle">
-              {t('切换后自动重启并更换桌面图标')}
+              {desktop
+                ? t('切换仅影响界面配色，应用不会重启')
+                : t('切换后自动重启并更换桌面图标')}
             </text>
           </view>
           <view className="PanelClose" bindtap={onClose}>
@@ -152,7 +156,9 @@ export function ThemePanel(props: ThemePanelProps) {
 
         <view className="ThemeNote">
           <text className="ThemeNoteText">
-            {t('桌面图标会在切换后自动更新，部分机型需几秒生效。')}
+            {desktop
+              ? t('桌面图标在安装包中固定，运行时不更换')
+              : t('桌面图标会在切换后自动更新，部分机型需几秒生效。')}
           </text>
         </view>
       </view>

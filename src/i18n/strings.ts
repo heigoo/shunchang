@@ -277,8 +277,12 @@ export const EN: Record<string, string> = {
   '朱红喜帖 · 金线压边': 'Vermilion invitation · Gold edging',
   切换后自动重启并更换桌面图标:
     'Restarts the app and updates the launcher icon',
+  '切换仅影响界面配色，应用不会重启':
+    'Only the app colors change; the app will not restart',
   '桌面图标会在切换后自动更新，部分机型需几秒生效。':
     'The launcher icon updates after switching; it may take a few seconds on some devices.',
+  '桌面图标在安装包中固定，运行时不更换':
+    'The launcher icon is fixed in the installer and does not change at runtime',
   界面语言: 'Language',
   语言切换即时生效: 'Language changes take effect immediately',
   外观与语言: 'Appearance & language',
