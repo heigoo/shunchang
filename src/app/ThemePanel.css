@@ -63,6 +63,64 @@
   color: var(--ink);
 }
 
+.ThemeLang {
+  padding: 16px 20px 18px 20px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+}
+
+.ThemeLangHead {
+  display: flex;
+  flex-direction: column;
+}
+
+.ThemeLangTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ThemeLangHint {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.ThemeLangOptions {
+  display: flex;
+  flex-direction: row;
+  margin-top: 12px;
+  gap: 10px;
+}
+
+.LangOption {
+  flex: 1;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--rule);
+  background-color: var(--paper);
+}
+
+.LangOption--active {
+  border-color: var(--ink);
+  background-color: var(--paper-2);
+}
+
+.theme-xishi .LangOption--active {
+  border-color: var(--xishi-red);
+}
+
+.LangOptionText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
 .ThemeNote {
   padding: 12px 20px 16px 20px;
   border-top-width: 1px;

@@ -6,6 +6,7 @@ import {
 } from '../domain/codec';
 import type { ShortPayload, SheetPayload } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { t } from '../i18n';
 import {
   getRuntime,
   getSheet,
@@ -39,7 +40,7 @@ const MESSAGES: Record<ImportError, string> = {
 };
 
 export function importErrorMessage(error: ImportError): string {
-  return MESSAGES[error] ?? MESSAGES['bad-format'];
+  return t(MESSAGES[error] ?? MESSAGES['bad-format']);
 }
 
 function baseRuntime(sheetId: string): RuntimeState {

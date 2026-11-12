@@ -1,4 +1,5 @@
 import type { RuntimeState, Sheet } from '../domain/types';
+import { t } from '../i18n';
 
 import { storage } from './storage';
 
@@ -122,10 +123,13 @@ export function deleteSheet(id: string): { ok: boolean; reason?: string } {
   const sheets = readSheets();
   const index = sheets.findIndex((sheet) => sheet.id === id);
   if (index < 0) {
-    return { ok: false, reason: '手册不存在' };
+    return { ok: false, reason: t('手册不存在') };
   }
   if (sheets[index].status === 'running') {
-    return { ok: false, reason: '执行中的手册不能删除，请先结束执行' };
+    return {
+      ok: false,
+      reason: t('执行中的手册不能删除，请先结束执行'),
+    };
   }
 
   sheets.splice(index, 1);
@@ -143,7 +147,7 @@ export function duplicateSheet(id: string): Sheet | null {
   const copy: Sheet = {
     ...source,
     id: createId(),
-    name: `${source.name}（副本）`,
+    name: `${source.name}${t('（副本）')}`,
     items: source.items.map((item) => ({ ...item, id: createId() })),
     status: 'draft',
     version: 1,
@@ -287,7 +291,7 @@ export function setLastView(view: LastView): void {
 export function consumeStorageError(): string | null {
   const error = lastError;
   lastError = null;
-  return error;
+  return error ? t(error) : null;
 }
 
 export async function hydrateStorage(): Promise<void> {
@@ -295,7 +299,13 @@ export async function hydrateStorage(): Promise<void> {
     return;
   }
 
-  await storage.hydrate([SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY, THEME_KEY]);
+  await storage.hydrate([
+    SHEETS_KEY,
+    ROLE_KEY,
+    LAST_VIEW_KEY,
+    THEME_KEY,
+    'shunchang.lang',
+  ]);
 
   const sheetIds = readSheets().map((sheet) => sheet.id);
   if (sheetIds.length > 0) {

@@ -185,6 +185,45 @@ function clearHashMainThread(): void {
   }
 }
 
+function readLanguageMainThread(): string | null {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const localStorage = host ? host.localStorage : null;
+    if (!localStorage) {
+      return null;
+    }
+    return localStorage.getItem('shunchang.lang');
+  } catch {
+    return null;
+  }
+}
+
+function writeLanguageMainThread(lang: string): void {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const localStorage = host ? host.localStorage : null;
+    if (localStorage) {
+      localStorage.setItem('shunchang.lang', lang);
+    }
+  } catch {
+    // 语言偏好写入失败时保留内存值即可。
+  }
+}
+
 function pickJsonMainThread(): void {
   'main thread';
   try {
@@ -300,4 +339,21 @@ export async function webSyncLocation(): Promise<WebLocationSnapshot | null> {
 
 export function webLocationSnapshot(): WebLocationSnapshot | null {
   return cachedLocation;
+}
+
+export async function webReadLanguage(): Promise<string | null> {
+  try {
+    const value = await runOnMainThread(readLanguageMainThread)();
+    return typeof value === 'string' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function webWriteLanguage(lang: string): void {
+  try {
+    void runOnMainThread(writeLanguageMainThread)(lang).catch(() => undefined);
+  } catch {
+    // The bridge is a web-only enhancement.
+  }
 }

@@ -2,6 +2,7 @@ import './SyncPanel.css';
 
 import { encodePayload, encodeShortCode } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { useT } from '../i18n';
 import { Button } from '../ui';
 import { QrCode } from './QrCode';
 import { buildShareUrl, isWeb } from './share';
@@ -31,6 +32,7 @@ function formatCode(code: string): string {
 
 export function SyncPanel(props: SyncPanelProps) {
   const { sheet, runtime, closing = false, onClose } = props;
+  const t = useT();
 
   const payload = encodePayload(sheet, runtime);
   const url = buildShareUrl(payload);
@@ -61,7 +63,7 @@ export function SyncPanel(props: SyncPanelProps) {
           <view className="SyncSheen" />
           <view className="SyncInner">
             <view className="SyncHead">
-              <text className="SyncLabel">同步凭据</text>
+              <text className="SyncLabel">{t('同步凭据')}</text>
             </view>
 
             {showQr ? (
@@ -73,7 +75,7 @@ export function SyncPanel(props: SyncPanelProps) {
             ) : (
               <view className="SyncFallback">
                 <text className="SyncFallbackText">
-                  环节较多，请让对方先导入文件，再用短码同步
+                  {t('环节较多，请让对方先导入文件，再用短码同步')}
                 </text>
               </view>
             )}
@@ -81,15 +83,26 @@ export function SyncPanel(props: SyncPanelProps) {
             <view className="SyncCodeBlock">
               <text className="SyncCode">{formatCode(code)}</text>
             </view>
-            <text className="SyncCodeHint">可口述给已持有同一手册的人</text>
+            <text className="SyncCodeHint">
+              {t('可口述给已持有同一手册的人')}
+            </text>
 
             <view className="SyncMeta">
-              <text className="SyncMetaVersion">{`当前为第 ${runtime.execVersion} 版`}</text>
-              <text className="SyncMetaTime">{`同步于 ${clockOf(Date.now())}`}</text>
+              <text className="SyncMetaVersion">
+                {t('当前为第 {n} 版', { n: runtime.execVersion })}
+              </text>
+              <text className="SyncMetaTime">
+                {t('同步于 {time}', { time: clockOf(Date.now()) })}
+              </text>
             </view>
 
             <view className="SyncActions">
-              <Button label="关闭" kind="tertiary" block onTap={onClose} />
+              <Button
+                label={t('关闭')}
+                kind="tertiary"
+                block
+                onTap={onClose}
+              />
             </view>
           </view>
         </blur-view>

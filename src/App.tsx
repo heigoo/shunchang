@@ -23,6 +23,7 @@ import {
 import type { SafeInsets } from './app/systemBars';
 import { webSyncLocation, installMainThreadBridge } from './app/webBridge';
 import type { WebLocationSnapshot } from './app/webBridge';
+import { hydrateLang, useT } from './i18n';
 import { reportViewportWidth } from './platform/viewport';
 import {
   consumeStorageError,
@@ -101,12 +102,13 @@ interface PlaceholderProps {
 function PlaceholderScreen(props: PlaceholderProps) {
   const { title, subtitle, dark = false, onBack } = props;
   const classes = dark ? 'Placeholder theme-dark' : 'Placeholder theme-light';
+  const t = useT();
 
   return (
     <view className={classes}>
       <view className="PlaceholderHeader">
-        <text className="PlaceholderBrand">顺场</text>
-        <text className="PlaceholderMeta">现场调度 · 占位页</text>
+        <text className="PlaceholderBrand">{t('顺场')}</text>
+        <text className="PlaceholderMeta">{t('现场调度 · 占位页')}</text>
       </view>
 
       <view className="PlaceholderRule" />
@@ -114,17 +116,20 @@ function PlaceholderScreen(props: PlaceholderProps) {
       <view className="PlaceholderBody">
         <text className="PlaceholderTitle">{title}</text>
         <text className="PlaceholderSubtitle">{subtitle}</text>
-        <text className="PlaceholderHint">此页面将在后续任务中接入</text>
+        <text className="PlaceholderHint">
+          {t('此页面将在后续任务中接入')}
+        </text>
       </view>
 
       <view className="PlaceholderFooter">
-        <Button label="返回手册列表" kind="tertiary" onTap={onBack} />
+        <Button label={t('返回手册列表')} kind="tertiary" onTap={onBack} />
       </view>
     </view>
   );
 }
 
 export function App() {
+  const t = useT();
   const [hydrated, setHydrated] = useState(false);
   const [route, setRoute] = useState<Route>({ view: 'list' });
   const [notice, setNotice] = useState<string | null>(null);
@@ -191,6 +196,7 @@ export function App() {
     void (async () => {
       // 原生端存储是异步的，先把数据读入缓存；首页会以 key 重挂载读取新数据。
       await hydrateStorage();
+      await hydrateLang();
       if (cancelled) {
         return;
       }
@@ -335,7 +341,7 @@ export function App() {
     );
   } else {
     const sheet = route.sheetId ? getSheet(route.sheetId) : null;
-    const subtitle = sheet ? sheet.name || '未命名手册' : '未选择手册';
+    const subtitle = sheet ? sheet.name || t('未命名手册') : t('未选择手册');
     const back = () => {
       navigate('list');
     };
@@ -356,7 +362,7 @@ export function App() {
             }}
           />
         ) : (
-          <PlaceholderScreen title="编排台" subtitle={subtitle} onBack={back} />
+          <PlaceholderScreen title={t('编排台')} subtitle={subtitle} onBack={back} />
         );
         break;
       case 'runtime':
@@ -374,7 +380,7 @@ export function App() {
           />
         ) : (
           <PlaceholderScreen
-            title="执行台"
+            title={t('执行台')}
             subtitle={subtitle}
             dark
             onBack={back}
@@ -404,7 +410,7 @@ export function App() {
             }}
           />
         ) : (
-          <PlaceholderScreen title="打印" subtitle={subtitle} onBack={back} />
+          <PlaceholderScreen title={t('打印')} subtitle={subtitle} onBack={back} />
         );
         break;
       default:

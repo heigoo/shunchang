@@ -1,5 +1,6 @@
 import './ThemePanel.css';
 
+import { getLang, setLang, useT } from '../i18n';
 import type { AppTheme } from '../store/repository';
 
 export interface ThemePanelProps {
@@ -55,6 +56,8 @@ const OPTIONS: ThemeOption[] = [
 
 export function ThemePanel(props: ThemePanelProps) {
   const { theme, closing = false, onSelect, onClose } = props;
+  const t = useT();
+  const lang = getLang();
 
   return (
     <view className={closing ? 'Overlay OverlayOut' : 'Overlay'} bindtap={onClose}>
@@ -64,11 +67,13 @@ export function ThemePanel(props: ThemePanelProps) {
       >
         <view className="PanelHeader">
           <view className="PanelHeaderText">
-            <text className="PanelTitle">外观主题</text>
-            <text className="PanelSubtitle">切换后自动重启并更换桌面图标</text>
+            <text className="PanelTitle">{t('外观与语言')}</text>
+            <text className="PanelSubtitle">
+              {t('切换后自动重启并更换桌面图标')}
+            </text>
           </view>
           <view className="PanelClose" bindtap={onClose}>
-            <text className="PanelCloseText">取消</text>
+            <text className="PanelCloseText">{t('取消')}</text>
           </view>
         </view>
 
@@ -96,8 +101,8 @@ export function ThemePanel(props: ThemePanelProps) {
                 }}
               />
               <view className="ThemeOptionMain">
-                <text className="ThemeOptionName">{option.name}</text>
-                <text className="ThemeOptionTagline">{option.tagline}</text>
+                <text className="ThemeOptionName">{t(option.name)}</text>
+                <text className="ThemeOptionTagline">{t(option.tagline)}</text>
               </view>
               <text
                 className={
@@ -106,15 +111,48 @@ export function ThemePanel(props: ThemePanelProps) {
                     : 'ThemeOptionState'
                 }
               >
-                {active ? '当前' : '切换'}
+                {active ? t('当前') : t('切换')}
               </text>
             </view>
           );
         })}
 
+        <view className="ThemeLang">
+          <view className="ThemeLangHead">
+            <text className="ThemeLangTitle">{t('界面语言')}</text>
+            <text className="ThemeLangHint">{t('语言切换即时生效')}</text>
+          </view>
+          <view className="ThemeLangOptions">
+            <view
+              className={
+                lang === 'zh'
+                  ? 'LangOption LangOption--active'
+                  : 'LangOption'
+              }
+              bindtap={() => {
+                setLang('zh');
+              }}
+            >
+              <text className="LangOptionText">中文</text>
+            </view>
+            <view
+              className={
+                lang === 'en'
+                  ? 'LangOption LangOption--active'
+                  : 'LangOption'
+              }
+              bindtap={() => {
+                setLang('en');
+              }}
+            >
+              <text className="LangOptionText">English</text>
+            </view>
+          </view>
+        </view>
+
         <view className="ThemeNote">
           <text className="ThemeNoteText">
-            桌面图标会在切换后自动更新，部分机型需几秒生效。
+            {t('桌面图标会在切换后自动更新，部分机型需几秒生效。')}
           </text>
         </view>
       </view>

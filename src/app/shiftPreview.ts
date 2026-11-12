@@ -4,6 +4,7 @@ import {
   offsetAfterShift,
 } from '../domain/timeline';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { t } from '../i18n';
 
 export interface ShiftPreviewLock {
   index: number;
@@ -41,7 +42,7 @@ const MAX_ROWS = 4;
 
 function itemName(sheet: Sheet, itemId: string): string {
   const item = sheet.items.find((entry) => entry.id === itemId);
-  return item && item.name.length > 0 ? item.name : '未命名环节';
+  return item && item.name.length > 0 ? item.name : t('未命名环节');
 }
 
 export function buildShiftPreview(
@@ -72,7 +73,7 @@ export function buildShiftPreview(
   }
 
   const nextItem = sheet.items[nextIndex];
-  const nextName = nextItem.name.length > 0 ? nextItem.name : '未命名环节';
+  const nextName = nextItem.name.length > 0 ? nextItem.name : t('未命名环节');
 
   if (nextItem.locked === true || nextItem.lockAt !== null) {
     return {

@@ -3,6 +3,7 @@ import './ImportPanel.css';
 import { useState } from '@lynx-js/react';
 
 import { setRole } from '../store/repository';
+import { useT } from '../i18n';
 import { Button } from '../ui';
 import type { ImportResult } from './importFlow';
 import {
@@ -39,6 +40,7 @@ function extractPayload(text: string): string {
 
 export function ImportPanel(props: ImportPanelProps) {
   const { closing = false, onClose, onImported } = props;
+  const t = useT();
 
   const [linkText, setLinkText] = useState('');
   const [codeText, setCodeText] = useState('');
@@ -84,13 +86,13 @@ export function ImportPanel(props: ImportPanelProps) {
       >
         <view className="ImportHead">
           <view className="ImportHeadText">
-            <text className="ImportTitle">载入手册</text>
+            <text className="ImportTitle">{t('载入手册')}</text>
             <text className="ImportSubtitle">
-              扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件
+              {t('扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件')}
             </text>
           </view>
           <view className="ImportClose" bindtap={onClose}>
-            <text className="ImportCloseText">取消</text>
+            <text className="ImportCloseText">{t('取消')}</text>
           </view>
         </view>
 
@@ -101,25 +103,25 @@ export function ImportPanel(props: ImportPanelProps) {
         ) : null}
 
         <view className="ImportSection">
-          <text className="ImportLabel">链接 / 载荷</text>
+          <text className="ImportLabel">{t('链接 / 载荷')}</text>
           <textarea
             className="ImportTextarea"
-            placeholder="粘贴分享链接或载荷"
+            placeholder={t('粘贴分享链接或载荷')}
             maxlength={4000}
             bindinput={(event) => {
               setLinkText(inputValue(event));
             }}
           />
           <view className="ImportAction">
-            <Button label="载入链接" block onTap={handleLink} />
+            <Button label={t('载入链接')} block onTap={handleLink} />
           </view>
         </view>
 
         <view className="ImportSection">
-          <text className="ImportLabel">六位短码</text>
+          <text className="ImportLabel">{t('六位短码')}</text>
           <input
             className="ImportInput"
-            placeholder="输入六位短码"
+            placeholder={t('输入六位短码')}
             maxlength={8}
             bindinput={(event) => {
               setCodeText(inputValue(event));
@@ -127,7 +129,7 @@ export function ImportPanel(props: ImportPanelProps) {
           />
           <view className="ImportAction">
             <Button
-              label="同步状态"
+              label={t('同步状态')}
               kind="secondary"
               block
               onTap={handleCode}
@@ -137,10 +139,10 @@ export function ImportPanel(props: ImportPanelProps) {
 
         {web ? (
           <view className="ImportSection">
-            <text className="ImportLabel">文件</text>
+            <text className="ImportLabel">{t('文件')}</text>
             <view className="ImportAction">
               <Button
-                label="选择文件"
+                label={t('选择文件')}
                 kind="tertiary"
                 block
                 onTap={handleFile}

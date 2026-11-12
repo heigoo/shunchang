@@ -76,12 +76,18 @@
   margin-right: 12px;
 }
 
+/* 手机宽度隐藏装饰性概览，给品牌与载入/跟随留足空间 */
+.ListScreen--narrow .ListMeta {
+  display: none;
+}
+
 .ListLoad {
   display: flex;
   flex-direction: row;
   align-items: center;
   height: 44px;
   padding-left: 8px;
+  flex-shrink: 0;
   padding-right: 8px;
   margin-right: 4px;
 }
@@ -97,6 +103,7 @@
   align-items: center;
   height: 44px;
   padding-left: 14px;
+  flex-shrink: 0;
   padding-right: 6px;
   border-left-width: 1px;
   border-left-style: solid;
@@ -567,6 +574,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex-shrink: 0;
   height: 44px;
   margin-top: -10px;
   margin-right: -8px;
@@ -577,6 +585,7 @@
 .PanelCloseText {
   font-size: 13px;
   color: var(--ink-3);
+  white-space: nowrap;
 }
 
 .PanelOption {

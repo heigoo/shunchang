@@ -1,5 +1,6 @@
 import { encodeFile } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { t } from '../i18n';
 import { webDownload, webLocationSnapshot, webPickJsonFile } from './webBridge';
 
 function pad2(value: number): string {
@@ -13,7 +14,7 @@ function dateStamp(now: number): string {
 
 function safeFileName(name: string): string {
   const trimmed = name.trim();
-  const base = trimmed.length > 0 ? trimmed : '未命名手册';
+  const base = trimmed.length > 0 ? trimmed : t('未命名手册');
   return base.replace(/[\\/:*?"<>|]/g, '_');
 }
 
@@ -88,7 +89,7 @@ export async function exportSheetFile(
   sheet: Sheet,
   runtime?: RuntimeState,
 ): Promise<boolean> {
-  const filename = `${safeFileName(sheet.name)}_流程表_${dateStamp(Date.now())}.json`;
+  const filename = `${safeFileName(sheet.name)}_${t('流程表')}_${dateStamp(Date.now())}.json`;
   return downloadTextFile(filename, encodeFile(sheet, runtime));
 }
 

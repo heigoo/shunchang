@@ -5,6 +5,7 @@ import {
   formatDuration,
 } from '../domain/timeline';
 import type { Item, RuntimeState, Sheet } from '../domain/types';
+import { t } from '../i18n';
 
 export interface PrintRow {
   no: string;
@@ -34,7 +35,9 @@ function lockLabelOf(item: Item): string {
   if (item.locked !== true && item.lockAt === null) {
     return '';
   }
-  return item.lockAt === null ? '锁定 待填' : `锁定 ${formatClock(item.lockAt)}`;
+  return item.lockAt === null
+    ? t('锁定 待填')
+    : t('锁定 {time}', { time: formatClock(item.lockAt) });
 }
 
 export function buildPrintRows(
@@ -53,9 +56,9 @@ export function buildPrintRows(
       time: formatClockDisplay(displayStart),
       duration:
         effectiveMin === item.durationMin
-          ? `${effectiveMin} 分`
-          : `${item.durationMin}→${effectiveMin} 分`,
-      name: item.name.trim().length > 0 ? item.name : '未命名环节',
+          ? t('{n} 分', { n: effectiveMin })
+          : t('{a}→{b} 分', { a: item.durationMin, b: effectiveMin }),
+      name: item.name.trim().length > 0 ? item.name : t('未命名环节'),
       owner: item.owner,
       note: item.note,
       lockLabel: lockLabelOf(item),
@@ -95,23 +98,25 @@ export function printSummary(
   const offsetMin = runtime ? runtime.offsetMin : 0;
   const offsetLabel =
     offsetMin > 0
-      ? `已顺延 ${offsetMin} 分钟`
+      ? t('已顺延 {n} 分钟', { n: offsetMin })
       : offsetMin < 0
-        ? `提前 ${Math.abs(offsetMin)} 分钟`
-        : '未偏移';
+        ? t('提前 {n} 分钟', { n: Math.abs(offsetMin) })
+        : t('未偏移');
   const totalPlanMin = computeTimeline(sheet, offsetMin).totalPlanMin;
 
   return {
-    title: sheet.name.trim().length > 0 ? sheet.name : '未命名手册',
+    title: sheet.name.trim().length > 0 ? sheet.name : t('未命名手册'),
     date: sheet.date,
     version: String(sheet.version),
     offsetLabel,
-    totalLabel: `计划 ${formatDuration(totalPlanMin)}`,
+    totalLabel: t('计划 {duration}', {
+      duration: formatDuration(totalPlanMin),
+    }),
   };
 }
 
 export function printFileName(sheet: Sheet): string {
-  const name = sheet.name.trim().length > 0 ? sheet.name : '未命名手册';
+  const name = sheet.name.trim().length > 0 ? sheet.name : t('未命名手册');
   const stamp = sheet.date.replace(/[^0-9]/g, '');
-  return `${name}_流程表_${stamp}`;
+  return `${name}_${t('流程表')}_${stamp}`;
 }

@@ -4,6 +4,7 @@ import { useState } from '@lynx-js/react';
 
 import { formatClockDisplay } from '../domain/timeline';
 import type { RuntimeState, Sheet } from '../domain/types';
+import { useT } from '../i18n';
 import { Badge, Button } from '../ui';
 import { buildShiftPreview } from './shiftPreview';
 import type { ShiftPreview } from './shiftPreview';
@@ -29,6 +30,7 @@ function signedText(value: number): string {
 
 function LockBlock(props: { preview: ShiftPreview }) {
   const { preview } = props;
+  const t = useT();
   if (preview.locks.length === 0) {
     return null;
   }
@@ -37,29 +39,41 @@ function LockBlock(props: { preview: ShiftPreview }) {
     <view className="ShiftLocks">
       {preview.hasConflict ? (
         <view className="ShiftLockBadge">
-          <Badge kind="reverse" label="无法吸收" />
+          <Badge kind="reverse" label={t('无法吸收')} />
         </view>
       ) : null}
       {preview.locks.map((lock) => (
         <view className="ShiftLock" key={`lock-${lock.index}`}>
           {lock.state === 'conflict' ? (
-            <text className="ShiftLockText">{`${lock.name} · 仍超出 ${lock.diffMin} 分钟`}</text>
+            <text className="ShiftLockText">
+              {t('{name} · 仍超出 {n} 分钟', {
+                name: lock.name,
+                n: lock.diffMin,
+              })}
+            </text>
           ) : null}
           {lock.state === 'absorb' ? (
             <view className="ShiftLockGroup">
-              <text className="ShiftLockText">{`已吸收 ${lock.diffMin} 分钟`}</text>
+              <text className="ShiftLockText">
+                {t('已吸收 {n} 分钟', { n: lock.diffMin })}
+              </text>
               {lock.compressed.map((entry) => (
                 <text
                   className="ShiftLockSub"
                   key={`${lock.index}-${entry.name}-${entry.lostMin}`}
                 >
-                  {`${entry.name} · 压缩 ${entry.lostMin} 分钟`}
+                  {t('{name} · 压缩 {n} 分钟', {
+                    name: entry.name,
+                    n: entry.lostMin,
+                  })}
                 </text>
               ))}
             </view>
           ) : null}
           {lock.state === 'wait' ? (
-            <text className="ShiftLockText">{`等待 ${lock.waitMin} 分钟`}</text>
+            <text className="ShiftLockText">
+              {t('等待 {n} 分钟', { n: lock.waitMin })}
+            </text>
           ) : null}
         </view>
       ))}
@@ -69,6 +83,7 @@ function LockBlock(props: { preview: ShiftPreview }) {
 
 export function ShiftPanel(props: ShiftPanelProps) {
   const { sheet, runtime, nowMin, closing = false, onCancel, onConfirm } = props;
+  const t = useT();
   const [startMin, setStartMin] = useState(() => nowMin);
 
   const preview = buildShiftPreview(sheet, runtime, startMin, nowMin);
@@ -97,9 +112,9 @@ export function ShiftPanel(props: ShiftPanelProps) {
           <view className="ShiftSheen" />
           <view className="ShiftInner">
             <view className="ShiftHead">
-              <text className="ShiftLabel">顺延至</text>
+              <text className="ShiftLabel">{t('顺延至')}</text>
               <view className="ShiftCancel" catchtap={onCancel}>
-                <text className="ShiftCancelText">取消</text>
+                <text className="ShiftCancelText">{t('取消')}</text>
               </view>
             </view>
 
@@ -129,11 +144,14 @@ export function ShiftPanel(props: ShiftPanelProps) {
                 setStartMin(nowMin);
               }}
             >
-              <text className="ShiftNowText">当前时刻</text>
+              <text className="ShiftNowText">{t('当前时刻')}</text>
             </view>
 
             <text className="ShiftOffset">
-              {`整体偏移 ${signedText(preview.baseOffsetMin)} → ${signedText(preview.nextOffsetMin)}`}
+              {t('整体偏移 {from} → {to}', {
+                from: signedText(preview.baseOffsetMin),
+                to: signedText(preview.nextOffsetMin),
+              })}
             </text>
 
             <scroll-view className="ShiftBody" scroll-orientation="vertical">
@@ -141,7 +159,9 @@ export function ShiftPanel(props: ShiftPanelProps) {
                 <view className="ShiftRows">
                   {preview.rows.map((row) => (
                     <view className="ShiftRow" key={`row-${row.index}`}>
-                      <text className="ShiftRowName">{`下一环节 · ${row.name}`}</text>
+                      <text className="ShiftRowName">
+                        {t('下一环节 · {name}', { name: row.name })}
+                      </text>
                       <text className="ShiftRowTime">{row.time}</text>
                     </view>
                   ))}
@@ -152,22 +172,29 @@ export function ShiftPanel(props: ShiftPanelProps) {
             </scroll-view>
 
             {preview.earlierThanNow ? (
-              <text className="ShiftNote">该时间早于当前时刻</text>
+              <text className="ShiftNote">{t('该时间早于当前时刻')}</text>
             ) : null}
             {preview.reason === 'last' ? (
-              <text className="ShiftNote">已是最后一个环节</text>
+              <text className="ShiftNote">{t('已是最后一个环节')}</text>
             ) : null}
             {preview.reason === 'locked' ? (
-              <text className="ShiftNote">下一环节为锁定时刻，不可顺延</text>
+              <text className="ShiftNote">
+                {t('下一环节为锁定时刻，不可顺延')}
+              </text>
             ) : null}
 
             <view className="ShiftActions">
               <view className="ShiftActionCancel">
-                <Button label="取消" kind="tertiary" block onTap={onCancel} />
+                <Button
+                  label={t('取消')}
+                  kind="tertiary"
+                  block
+                  onTap={onCancel}
+                />
               </view>
               <view className="ShiftActionConfirm">
                 <Button
-                  label="确认顺延"
+                  label={t('确认顺延')}
                   block
                   disabled={!preview.ok}
                   onTap={() => {

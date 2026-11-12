@@ -277,12 +277,14 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .PrintActionsPrint {
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .PrintActionsHint {

@@ -6,6 +6,7 @@ import { computeTimeline, formatClock, formatDuration } from '../domain/timeline
 import type { Item, Sheet, SheetStatus } from '../domain/types';
 import type { SheetError } from '../domain/validate';
 import { findPlanConflicts } from '../domain/validate';
+import { t, useT } from '../i18n';
 import {
   BREAKPOINT_DESKTOP,
   BREAKPOINT_TABLET,
@@ -120,9 +121,9 @@ function todayKey(): string {
 
 function errorLine(error: SheetError): string {
   if (typeof error.index === 'number') {
-    return `${pad3(error.index + 1)} ${error.message}`;
+    return `${pad3(error.index + 1)} ${t(error.message)}`;
   }
-  return error.message;
+  return t(error.message);
 }
 
 function durationText(item: Item): string {
@@ -130,7 +131,9 @@ function durationText(item: Item): string {
 }
 
 function lockText(item: Item): string {
-  return item.lockAt === null ? '锁定 待填' : `锁定 ${formatClock(item.lockAt)}`;
+  return item.lockAt === null
+    ? t('锁定 待填')
+    : t('锁定 {time}', { time: formatClock(item.lockAt) });
 }
 
 export function EditorScreen(props: EditorScreenProps) {
@@ -161,6 +164,7 @@ export function EditorScreen(props: EditorScreenProps) {
   const [undo, setUndo] = useState<string | null>(null);
   const isWide = useIsWide(BREAKPOINT_TABLET);
   const isDesktop = useIsWide(BREAKPOINT_DESKTOP);
+  const tText = useT();
 
   const undoSheet = useRef<Sheet | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -255,9 +259,13 @@ export function EditorScreen(props: EditorScreenProps) {
         style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
       >
         <view className="EditorMissing">
-          <text className="EditorMissingTitle">手册不存在</text>
+          <text className="EditorMissingTitle">{tText('手册不存在')}</text>
           <view className="EditorMissingAction">
-            <Button label="返回手册列表" kind="tertiary" onTap={onBack} />
+            <Button
+              label={tText('返回手册列表')}
+              kind="tertiary"
+              onTap={onBack}
+            />
           </view>
         </view>
       </view>
@@ -350,7 +358,7 @@ export function EditorScreen(props: EditorScreenProps) {
     if (next === sheet) {
       return;
     }
-    rememberUndo('已按时排序', sheet);
+    rememberUndo(tText('已按时排序'), sheet);
     apply(next);
     setExpanded(null);
   };
@@ -360,7 +368,7 @@ export function EditorScreen(props: EditorScreenProps) {
       return;
     }
     const index = pendingDelete.index;
-    rememberUndo('已删除环节', sheet);
+    rememberUndo(tText('已删除环节'), sheet);
     // 先收起展开详情与确认面板，避免删除后输入框重新抢焦点弹出键盘。
     setExpanded((previous) => {
       if (previous === null) return null;
@@ -394,9 +402,9 @@ export function EditorScreen(props: EditorScreenProps) {
               setLockEdit(index);
             }}
           >
-            <text className="LockBtnText">锁定</text>
+            <text className="LockBtnText">{tText('锁定')}</text>
           </view>
-          {conflicted ? <Badge kind="stamp" label="冲突" /> : null}
+          {conflicted ? <Badge kind="stamp" label={tText('冲突')} /> : null}
         </view>
       );
     }
@@ -428,11 +436,11 @@ export function EditorScreen(props: EditorScreenProps) {
                 handleToggleLock(index);
               }}
             >
-              <text className="LockOffText">解锁</text>
+              <text className="LockOffText">{tText('解锁')}</text>
             </view>
           </view>
         ) : null}
-        {conflicted ? <Badge kind="stamp" label="冲突" /> : null}
+        {conflicted ? <Badge kind="stamp" label={tText('冲突')} /> : null}
       </view>
     );
   };
@@ -462,7 +470,7 @@ export function EditorScreen(props: EditorScreenProps) {
             <DraftInput
               className="CellInput"
               maxlength={20}
-              placeholder="环节名称"
+              placeholder={tText('环节名称')}
               value={item.name}
               onInput={(text) => {
                 handleField(index, 'name', text);
@@ -532,7 +540,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
           </view>
         </view>
-        {error ? <text className="RowError">{error}</text> : null}
+        {error ? <text className="RowError">{tText(error)}</text> : null}
       </view>
     );
   };
@@ -556,10 +564,13 @@ export function EditorScreen(props: EditorScreenProps) {
         >
           <text className="CardNo">{pad3(index + 1)}</text>
           <text className="CardName">
-            {item.name.length > 0 ? item.name : '未命名环节'}
+            {item.name.length > 0 ? item.name : tText('未命名环节')}
           </text>
           <text className="CardMeta">
-            {`${item.durationMin} 分钟 · ${formatClock(row.planStart)}`}
+            {tText('{n} 分钟 · {time}', {
+              n: item.durationMin,
+              time: formatClock(row.planStart),
+            })}
           </text>
           <text className="CardToggle">{open ? '∧' : '∨'}</text>
         </view>
@@ -567,11 +578,11 @@ export function EditorScreen(props: EditorScreenProps) {
         {open ? (
           <view className="CardBody">
             <view className="Field">
-              <text className="FieldLabel">名称</text>
+              <text className="FieldLabel">{tText('名称')}</text>
               <DraftInput
                 className="FieldInput"
                 maxlength={20}
-                placeholder="环节名称"
+                placeholder={tText('环节名称')}
                 value={item.name}
                 onInput={(text) => {
                   handleField(index, 'name', text);
@@ -579,7 +590,7 @@ export function EditorScreen(props: EditorScreenProps) {
               />
             </view>
             <view className="Field">
-              <text className="FieldLabel">时长</text>
+              <text className="FieldLabel">{tText('时长')}</text>
               <DraftInput
                 className="FieldInput FieldInput--mono"
                 type="number"
@@ -587,10 +598,10 @@ export function EditorScreen(props: EditorScreenProps) {
                 value={durationText(item)}
                 onCommit={(text) => commitDuration(index, item, text)}
               />
-              <text className="FieldUnit">分钟</text>
+              <text className="FieldUnit">{tText('分钟')}</text>
             </view>
             <view className="Field">
-              <text className="FieldLabel">负责人</text>
+              <text className="FieldLabel">{tText('负责人')}</text>
               <DraftInput
                 className="FieldInput"
                 maxlength={20}
@@ -602,7 +613,7 @@ export function EditorScreen(props: EditorScreenProps) {
               />
             </view>
             <view className="Field">
-              <text className="FieldLabel">备注</text>
+              <text className="FieldLabel">{tText('备注')}</text>
               <DraftInput
                 className="FieldInput"
                 maxlength={200}
@@ -614,7 +625,7 @@ export function EditorScreen(props: EditorScreenProps) {
               />
             </view>
             <view className="Field">
-              <text className="FieldLabel">锁定</text>
+              <text className="FieldLabel">{tText('锁定')}</text>
               {item.locked === true ? (
                 <view className="CardLockGroup">
                   <Badge kind="stamp" label={lockText(item)} />
@@ -631,7 +642,7 @@ export function EditorScreen(props: EditorScreenProps) {
                       handleToggleLock(index);
                     }}
                   >
-                    <text className="LockOffText">解除</text>
+                    <text className="LockOffText">{tText('解除')}</text>
                   </view>
                 </view>
               ) : (
@@ -641,12 +652,12 @@ export function EditorScreen(props: EditorScreenProps) {
                     handleToggleLock(index);
                   }}
                 >
-                  <text className="LockBtnText">锁定</text>
+                  <text className="LockBtnText">{tText('锁定')}</text>
                 </view>
               )}
             </view>
 
-            {error ? <text className="CardError">{error}</text> : null}
+            {error ? <text className="CardError">{tText(error)}</text> : null}
 
             <view className="CardActions">
               <view
@@ -655,7 +666,7 @@ export function EditorScreen(props: EditorScreenProps) {
                   handleMove(index, -1);
                 }}
               >
-                <text className="CardActionText">上移</text>
+                <text className="CardActionText">{tText('上移')}</text>
               </view>
               <view
                 className={
@@ -667,7 +678,7 @@ export function EditorScreen(props: EditorScreenProps) {
                   handleMove(index, 1);
                 }}
               >
-                <text className="CardActionText">下移</text>
+                <text className="CardActionText">{tText('下移')}</text>
               </view>
               <view
                 className="CardAction"
@@ -677,7 +688,7 @@ export function EditorScreen(props: EditorScreenProps) {
                   setDeleteOpen(true);
                 }}
               >
-                <text className="CardActionText">删除</text>
+                <text className="CardActionText">{tText('删除')}</text>
               </view>
             </view>
           </view>
@@ -691,7 +702,9 @@ export function EditorScreen(props: EditorScreenProps) {
       className={
         isWide && !isDesktop
           ? 'Editor Editor--medium theme-light'
-          : 'Editor theme-light'
+          : isWide
+            ? 'Editor theme-light'
+            : 'Editor Editor--narrow theme-light'
       }
       style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
     >
@@ -699,12 +712,12 @@ export function EditorScreen(props: EditorScreenProps) {
         <view className="EditorHeaderInner">
           <view className="EditorHeadRow">
             <view className="EditorBack" bindtap={onBack}>
-              <text className="EditorBackText">← 手册</text>
+              <text className="EditorBackText">{tText('← 手册')}</text>
             </view>
             <DraftInput
               className="EditorName"
               maxlength={40}
-              placeholder="未命名手册"
+              placeholder={tText('未命名手册')}
               value={sheet.name || ''}
               onInput={(text) => {
                 handleName(text);
@@ -712,7 +725,7 @@ export function EditorScreen(props: EditorScreenProps) {
             />
             <view className="EditorPublish">
               <Button
-                label="发布"
+                label={tText('发布')}
                 className="EditorPublishBtn"
                 onTap={handlePublish}
               />
@@ -721,11 +734,11 @@ export function EditorScreen(props: EditorScreenProps) {
 
           <view className="EditorMeta">
             <view className="MetaItem">
-              <text className="MetaLabel">日期</text>
+              <text className="MetaLabel">{tText('日期')}</text>
               <text className="MetaValue">{sheet.date}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaLabel">开始</text>
+              <text className="MetaLabel">{tText('开始')}</text>
               <DraftInput
                 className="StartInput"
                 maxlength={5}
@@ -735,39 +748,46 @@ export function EditorScreen(props: EditorScreenProps) {
               />
             </view>
             <view className="MetaItem">
-              <text className="MetaLabel">总时长</text>
+              <text className="MetaLabel">{tText('总时长')}</text>
               <text className="MetaValue">{formatDuration(timeline.totalPlanMin)}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaLabel">环节</text>
+              <text className="MetaLabel">{tText('环节')}</text>
               <text className="MetaValue">{`${pad2(sheet.items.length)} / ${MAX_ITEMS}`}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaValue">{`第 ${sheet.version} 版`}</text>
+              <text className="MetaValue">
+                {tText('第 {n} 版', { n: sheet.version })}
+              </text>
             </view>
             <view className="MetaBadge">
-              <Badge kind="outline" label={STATUS_LABEL[sheet.status]} />
+              <Badge kind="outline" label={tText(STATUS_LABEL[sheet.status])} />
             </view>
             {sheet.dirty ? (
               <view className="MetaBadge">
-                <Badge kind="reverse" label="有未发布的修改" />
+                <Badge kind="reverse" label={tText('有未发布的修改')} />
               </view>
             ) : null}
             {conflicts.length > 0 ? (
               <view className="MetaBadge">
-                <Badge kind="stamp" label={`锁定冲突 ${conflicts.length}`} />
+                <Badge
+                  kind="stamp"
+                  label={tText('锁定冲突 {n}', { n: conflicts.length })}
+                />
               </view>
             ) : null}
           </view>
 
           {startError ? (
-            <text className="EditorInlineError">时间格式应为 14:00</text>
+            <text className="EditorInlineError">
+              {tText('时间格式应为 14:00')}
+            </text>
           ) : null}
 
           <view className="EditorTools">
             <view className="EditorToolBtn">
               <Button
-                label="按时排序"
+                label={tText('按时排序')}
                 kind="tertiary"
                 className="EditorSmallBtn"
                 onTap={handleSort}
@@ -775,7 +795,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
             <view className="EditorToolBtn">
               <Button
-                label="添加环节"
+                label={tText('添加环节')}
                 kind="tertiary"
                 className="EditorSmallBtn"
                 disabled={atLimit}
@@ -784,7 +804,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
             <view className="EditorToolBtn">
               <Button
-                label="打印"
+                label={tText('打印')}
                 kind="tertiary"
                 className="EditorSmallBtn"
                 onTap={() => {
@@ -793,7 +813,7 @@ export function EditorScreen(props: EditorScreenProps) {
               />
             </view>
             <view className="EditorToolHint">
-              <text className="EditorHintText">自动保存</text>
+              <text className="EditorHintText">{tText('自动保存')}</text>
             </view>
           </view>
 
@@ -812,7 +832,7 @@ export function EditorScreen(props: EditorScreenProps) {
                   setErrors(null);
                 }}
               >
-                <text className="ErrorCloseText">关闭</text>
+                <text className="ErrorCloseText">{tText('关闭')}</text>
               </view>
             </view>
           ) : null}
@@ -825,28 +845,28 @@ export function EditorScreen(props: EditorScreenProps) {
           <view className={isDesktop ? 'EditorTable' : 'EditorTable EditorTable--medium'}>
             <view className="TableHead">
               <view className="ColNo">
-                <text className="Th">序号</text>
+                <text className="Th">{tText('序号')}</text>
               </view>
               <view className="ColTime">
-                <text className="Th">时间</text>
+                <text className="Th">{tText('时间')}</text>
               </view>
               <view className="ColSegName">
-                <text className="Th">环节</text>
+                <text className="Th">{tText('环节')}</text>
               </view>
               <view className="ColDur">
-                <text className="Th">时长</text>
+                <text className="Th">{tText('时长')}</text>
               </view>
               <view className="ColOwner">
-                <text className="Th">负责人</text>
+                <text className="Th">{tText('负责人')}</text>
               </view>
               <view className="ColNote">
-                <text className="Th">备注</text>
+                <text className="Th">{tText('备注')}</text>
               </view>
               <view className="ColLock">
-                <text className="Th">锁定</text>
+                <text className="Th">{tText('锁定')}</text>
               </view>
               <view className="ColAct">
-                <text className="Th">操作</text>
+                <text className="Th">{tText('操作')}</text>
               </view>
             </view>
             {sheet.items.map((item, index) => renderRow(item, index))}
@@ -865,10 +885,12 @@ export function EditorScreen(props: EditorScreenProps) {
               handleAdd();
             }}
           >
-            <text className="EditorAddText">+ 添加环节</text>
+            <text className="EditorAddText">{tText('+ 添加环节')}</text>
           </view>
           {atLimit ? (
-            <text className="EditorAddHint">已达单份手册上限 60 个环节</text>
+            <text className="EditorAddHint">
+              {tText('已达单份手册上限 60 个环节')}
+            </text>
           ) : null}
         </view>
       </view>
@@ -891,13 +913,17 @@ export function EditorScreen(props: EditorScreenProps) {
           >
             <view className="EditorPanelRule" />
             <text className="EditorPanelTitle">
-              {`删除环节「${pendingDelete.name}」？`}
+              {tText('删除环节「{name}」？', {
+                name: pendingDelete.name,
+              })}
             </text>
-            <text className="EditorPanelBody">删除后可在 5 秒内撤销。</text>
+            <text className="EditorPanelBody">
+              {tText('删除后可在 5 秒内撤销。')}
+            </text>
             <view className="EditorPanelActions">
               <view className="EditorPanelAction">
                 <Button
-                  label="取消"
+                  label={tText('取消')}
                   kind="tertiary"
                   onTap={() => {
                     setDeleteOpen(false);
@@ -905,7 +931,11 @@ export function EditorScreen(props: EditorScreenProps) {
                 />
               </view>
               <view className="EditorPanelAction">
-                <Button label="删除" kind="secondary" onTap={handleDelete} />
+                <Button
+                  label={tText('删除')}
+                  kind="secondary"
+                  onTap={handleDelete}
+                />
               </view>
             </view>
           </view>
@@ -928,7 +958,7 @@ export function EditorScreen(props: EditorScreenProps) {
           <view className="EditorUndoBody">
             <text className="EditorUndoText">{undo}</text>
             <view className="EditorUndoBtn" bindtap={handleUndo}>
-              <text className="EditorUndoBtnText">撤销</text>
+              <text className="EditorUndoBtnText">{tText('撤销')}</text>
             </view>
           </view>
         </view>

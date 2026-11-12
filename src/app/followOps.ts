@@ -1,4 +1,5 @@
 import type { RuntimeState, Sheet } from '../domain/types';
+import { t } from '../i18n';
 
 export interface SyncTrail {
   /** "同步于 12:41"；lastSyncAt=0 → "尚未同步" */
@@ -29,11 +30,13 @@ export function buildSyncTrail(
   runtime: RuntimeState | null,
   now: number,
 ): SyncTrail {
-  const versionLabel = `第 ${runtime ? runtime.execVersion : 1} 版`;
+  const versionLabel = t('第 {n} 版', {
+    n: runtime ? runtime.execVersion : 1,
+  });
 
   if (!runtime || runtime.lastSyncAt === 0) {
     return {
-      absolute: '尚未同步',
+      absolute: t('尚未同步'),
       relative: '',
       stale: true,
       versionLabel,
@@ -48,12 +51,12 @@ export function buildSyncTrail(
   if (elapsed >= 0) {
     relative =
       elapsed < MINUTE_MS
-        ? '刚刚'
-        : `${Math.floor(elapsed / MINUTE_MS)} 分钟前`;
+        ? t('刚刚')
+        : t('{n} 分钟前', { n: Math.floor(elapsed / MINUTE_MS) });
   }
 
   return {
-    absolute: `同步于 ${clockOf(lastSyncAt)}`,
+    absolute: t('同步于 {time}', { time: clockOf(lastSyncAt) }),
     relative,
     stale,
     versionLabel,

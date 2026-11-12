@@ -79,7 +79,7 @@ test('switches to the xishi theme from the theme panel', async () => {
   );
 
   fireEvent.tap(await findByText('墨金'));
-  expect(await findByText('外观主题')).toBeInTheDocument();
+  expect(await findByText('外观与语言')).toBeInTheDocument();
 
   const options = container.querySelectorAll('.ThemeOption');
   expect(options.length).toBe(2);

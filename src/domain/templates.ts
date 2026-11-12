@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { Item, Sheet } from './types';
 
 export interface TemplateItem {
@@ -115,9 +116,9 @@ export function createSheetFromTemplate(
     const locked = entry.locked === true;
     const next: Item = {
       id: createId(),
-      name: entry.name,
+      name: t(entry.name),
       durationMin: entry.durationMin,
-      owner: entry.owner,
+      owner: t(entry.owner),
       note: entry.note,
       lockAt: locked ? cursor : null,
     };
@@ -130,7 +131,7 @@ export function createSheetFromTemplate(
 
   return {
     id: createId(),
-    name: `${template.name}流程`,
+    name: t('{name}流程', { name: t(template.name) }),
     date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
     startMin: template.startMin,
     items,

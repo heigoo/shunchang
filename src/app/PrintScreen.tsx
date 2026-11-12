@@ -3,6 +3,7 @@ import './PrintScreen.css';
 import { useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
+import { useT } from '../i18n';
 import {
   BREAKPOINT_PRINT_WIDE,
   BREAKPOINT_TABLET,
@@ -54,6 +55,7 @@ function stampText(ms: number): string {
 
 export function PrintScreen(props: PrintScreenProps) {
   const { sheetId, onBack, safeTop = 0, safeBottom = 0 } = props;
+  const t = useT();
 
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
@@ -68,9 +70,13 @@ export function PrintScreen(props: PrintScreenProps) {
       style={{ paddingTop: safeTop, paddingBottom: 88 + safeBottom }}
     >
         <view className="PrintMissing">
-          <text className="PrintMissingTitle">手册不存在</text>
+          <text className="PrintMissingTitle">{t('手册不存在')}</text>
           <view className="PrintMissingAction">
-            <Button label="返回手册列表" kind="tertiary" onTap={onBack} />
+            <Button
+              label={t('返回手册列表')}
+              kind="tertiary"
+              onTap={onBack}
+            />
           </view>
         </view>
       </view>
@@ -112,41 +118,49 @@ export function PrintScreen(props: PrintScreenProps) {
             </view>
           ) : (
             <view className="PrintQrFallback">
-              <text className="PrintQrFallbackText">环节较多</text>
-              <text className="PrintQrFallbackText">请用文件分发</text>
+              <text className="PrintQrFallbackText">{t('环节较多')}</text>
+              <text className="PrintQrFallbackText">{t('请用文件分发')}</text>
             </view>
           )}
           <text className="PrintSheetNo">
-            {`第 ${page.pageNo} / ${page.pageTotal} 张 · 第 ${summary.version} 版`}
+            {t('第 {a} / {b} 张 · 第 {v} 版', {
+              a: page.pageNo,
+              b: page.pageTotal,
+              v: summary.version,
+            })}
           </text>
         </view>
       </view>
 
       <view className="PrintMetaRow">
         <text className="PrintMetaText">
-          {`${summary.offsetLabel} · ${summary.totalLabel} · 导出于 ${stamp}`}
+          {t('{offset} · {total} · 导出于 {time}', {
+            offset: summary.offsetLabel,
+            total: summary.totalLabel,
+            time: stamp,
+          })}
         </text>
       </view>
 
       <view className="PrintTable">
         <view className="PrintTableHead">
           <view className="PrintColNo">
-            <text className="PrintTh">序号</text>
+            <text className="PrintTh">{t('序号')}</text>
           </view>
           <view className="PrintColTime">
-            <text className="PrintTh">时间</text>
+            <text className="PrintTh">{t('时间')}</text>
           </view>
           <view className="PrintColDur">
-            <text className="PrintTh">时长</text>
+            <text className="PrintTh">{t('时长')}</text>
           </view>
           <view className="PrintColSeg">
-            <text className="PrintTh">环节</text>
+            <text className="PrintTh">{t('环节')}</text>
           </view>
           <view className="PrintColOwner">
-            <text className="PrintTh">负责人</text>
+            <text className="PrintTh">{t('负责人')}</text>
           </view>
           <view className="PrintColNote">
-            <text className="PrintTh">备注</text>
+            <text className="PrintTh">{t('备注')}</text>
           </view>
         </view>
 
@@ -182,8 +196,12 @@ export function PrintScreen(props: PrintScreenProps) {
       </view>
 
       <view className="PrintFoot">
-        <text className="PrintFootText">{`打印于 ${stamp} · 顺场`}</text>
-        <text className="PrintFootText">{`第 ${page.pageNo} / ${page.pageTotal} 页`}</text>
+        <text className="PrintFootText">
+          {t('打印于 {time} · 顺场', { time: stamp })}
+        </text>
+        <text className="PrintFootText">
+          {t('第 {a} / {b} 页', { a: page.pageNo, b: page.pageTotal })}
+        </text>
       </view>
     </view>
   );
@@ -203,15 +221,17 @@ export function PrintScreen(props: PrintScreenProps) {
 
       <view className="PrintActions">
         <view className="PrintActionsBack">
-          <Button label="← 返回" kind="tertiary" onTap={onBack} />
+          <Button label={t('← 返回')} kind="tertiary" onTap={onBack} />
         </view>
         {isWeb() ? (
           <view className="PrintActionsPrint">
-            <Button label="打印" onTap={handlePrint} />
+            <Button label={t('打印')} onTap={handlePrint} />
           </view>
         ) : (
           <text className="PrintActionsHint">
-            {compact ? '横屏查看更清晰 · 打印请在浏览器打开' : '请在浏览器中打开以打印'}
+            {compact
+              ? t('横屏查看更清晰 · 打印请在浏览器打开')
+              : t('请在浏览器中打开以打印')}
           </text>
         )}
       </view>

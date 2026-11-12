@@ -11,6 +11,7 @@ import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
 import { createEmptySheet } from '../domain/types';
+import { t, getLang, useT } from '../i18n';
 import {
   BREAKPOINT_DESKTOP,
   BREAKPOINT_TABLET,
@@ -74,15 +75,29 @@ function clockOf(timestamp: number): string {
 }
 
 function displayName(sheet: Sheet): string {
-  return sheet.name.length > 0 ? sheet.name : '未命名手册';
+  return sheet.name.length > 0 ? sheet.name : t('未命名手册');
 }
 
 function totalMinutes(sheet: Sheet): number {
   return sheet.items.reduce((sum, item) => sum + item.durationMin, 0);
 }
 
+function segmentCountText(count: number): string {
+  if (getLang() === 'en') {
+    return `${count} ${count === 1 ? 'segment' : 'segments'}`;
+  }
+  return t('{n} 环节', { n: count });
+}
+
+function sheetCountText(count: number): string {
+  if (getLang() === 'en') {
+    return `${count} ${count === 1 ? 'sheet' : 'sheets'}`;
+  }
+  return t('共 {n} 份', { n: pad2(count) });
+}
+
 function createOptionMeta(count: number, minutes: number): string {
-  return `${count} 环节 · ${formatDuration(minutes)}`;
+  return `${segmentCountText(count)} · ${formatDuration(minutes)}`;
 }
 
 export function ListScreen(props: ListScreenProps) {
@@ -111,6 +126,7 @@ export function ListScreen(props: ListScreenProps) {
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const tText = useT();
 
   const createPresence = usePresence(createOpen);
   const importPresence = usePresence(importOpen);
@@ -217,7 +233,7 @@ export function ListScreen(props: ListScreenProps) {
       return;
     }
     reload();
-    showToast('已复制为新手册');
+    showToast(tText('已复制为新手册'));
   };
 
   const openMore = (sheet: Sheet) => {
@@ -241,13 +257,13 @@ export function ListScreen(props: ListScreenProps) {
     }
     const name = renameText.trim();
     if (name.length === 0) {
-      showToast('手册名称不能为空');
+      showToast(tText('手册名称不能为空'));
       return;
     }
     saveSheet({ ...moreSheet, name });
     setMoreOpen(false);
     reload();
-    showToast('已保存名称');
+    showToast(tText('已保存名称'));
   };
 
   const exportBackup = () => {
@@ -257,7 +273,7 @@ export function ListScreen(props: ListScreenProps) {
     void exportSheetFile(moreSheet, getRuntime(moreSheet.id) ?? undefined).then(
       (ok) => {
         setMoreOpen(false);
-        showToast(ok ? '已导出备份' : '请在 Web 端导出备份');
+        showToast(ok ? tText('已导出备份') : tText('请在 Web 端导出备份'));
       },
     );
   };
@@ -279,7 +295,7 @@ export function ListScreen(props: ListScreenProps) {
     }
     const result = deleteSheet(pendingDelete.id);
     if (!result.ok) {
-      setDeleteError(result.reason ?? '删除失败');
+      setDeleteError(result.reason ?? tText('删除失败'));
       return;
     }
     setDeleteError(null);
@@ -288,7 +304,7 @@ export function ListScreen(props: ListScreenProps) {
   };
 
   const renderStatus = (sheet: Sheet) => (
-    <Badge kind="outline" label={STATUS_LABEL[sheet.status]} />
+    <Badge kind="outline" label={tText(STATUS_LABEL[sheet.status])} />
   );
 
   const renderActions = (sheet: Sheet) => (
@@ -299,7 +315,7 @@ export function ListScreen(props: ListScreenProps) {
           openMore(sheet);
         }}
       >
-        <text className="RowActionText">更多</text>
+        <text className="RowActionText">{tText('更多')}</text>
       </view>
     </view>
   );
@@ -355,7 +371,9 @@ export function ListScreen(props: ListScreenProps) {
             {renderStatus(sheet)}
           </view>
           <text className="NarrowMeta">
-            {`${pad3(index + 1)} · ${monthDay(sheet.date)} · ${sheet.items.length} 环节`}
+            {`${pad3(index + 1)} · ${monthDay(sheet.date)} · ${segmentCountText(
+              sheet.items.length,
+            )}`}
           </text>
         </view>
         {renderActions(sheet)}
@@ -367,10 +385,12 @@ export function ListScreen(props: ListScreenProps) {
     if (sheets.length === 0) {
       return (
         <view className="EmptyBlock">
-          <text className="EmptyTitle">还没有手册</text>
-          <text className="EmptyHint">从模板开始，或建一份空白手册。</text>
+          <text className="EmptyTitle">{tText('还没有手册')}</text>
+          <text className="EmptyHint">
+            {tText('从模板开始，或建一份空白手册。')}
+          </text>
           <view className="EmptyAction">
-            <Button label="新建手册" onTap={openCreate} />
+            <Button label={tText('新建手册')} onTap={openCreate} />
           </view>
         </view>
       );
@@ -379,8 +399,8 @@ export function ListScreen(props: ListScreenProps) {
     if (visible.length === 0) {
       return (
         <view className="EmptyBlock">
-          <text className="EmptyTitle">没有匹配的手册</text>
-          <text className="EmptyHint">换个关键词或状态再试。</text>
+          <text className="EmptyTitle">{tText('没有匹配的手册')}</text>
+          <text className="EmptyHint">{tText('换个关键词或状态再试。')}</text>
         </view>
       );
     }
@@ -397,25 +417,25 @@ export function ListScreen(props: ListScreenProps) {
       <view className={isDesktop ? 'Table' : 'Table Table--medium'}>
         <view className="ListTableHead">
           <view className="ColNo">
-            <text className="Th">序号</text>
+            <text className="Th">{tText('序号')}</text>
           </view>
           <view className="ColDate">
-            <text className="Th">日期</text>
+            <text className="Th">{tText('日期')}</text>
           </view>
           <view className="ColName">
-            <text className="Th">名称</text>
+            <text className="Th">{tText('名称')}</text>
           </view>
           <view className="ColStatus">
-            <text className="Th">状态</text>
+            <text className="Th">{tText('状态')}</text>
           </view>
           <view className="ColSeg">
-            <text className="Th">环节</text>
+            <text className="Th">{tText('环节')}</text>
           </view>
           <view className="ColUpdated">
-            <text className="Th">更新</text>
+            <text className="Th">{tText('更新时间')}</text>
           </view>
           <view className="ColAction">
-            <text className="Th">操作</text>
+            <text className="Th">{tText('操作')}</text>
           </view>
         </view>
         {visible.map((sheet, index) => renderWideRow(sheet, index))}
@@ -425,23 +445,29 @@ export function ListScreen(props: ListScreenProps) {
 
   return (
     <view
-      className="ListScreen theme-light"
+      className={
+        isWide
+          ? 'ListScreen theme-light'
+          : 'ListScreen ListScreen--narrow theme-light'
+      }
       style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
     >
       {notice ? (
         <view className="ListNotice">
-          <text className="ListNoticeText">{notice}</text>
+          <text className="ListNoticeText">{tText(notice)}</text>
         </view>
       ) : null}
 
       <view className="ListHeader">
         <view className="ListBrandRow">
-          <text className="ListBrand">顺场</text>
-          {xishi ? <text className="ListBrandSeal">喜事</text> : null}
+          <text className="ListBrand">{tText('顺场')}</text>
+          {xishi ? <text className="ListBrandSeal">{tText('喜事')}</text> : null}
         </view>
         <view className="ListHeaderRight">
           <text className="ListMeta">
-            {xishi ? '喜事现场 · 手册总览' : '现场调度 · 手册总览'}
+            {xishi
+              ? tText('喜事现场 · 手册总览')
+              : tText('现场调度 · 手册总览')}
           </text>
           <view
             className="ListLoad"
@@ -449,10 +475,10 @@ export function ListScreen(props: ListScreenProps) {
               setImportOpen(true);
             }}
           >
-            <text className="ListLoadText">载入</text>
+            <text className="ListLoadText">{tText('载入')}</text>
           </view>
           <view className="ListFollow" bindtap={onOpenFollow}>
-            <text className="ListFollowText">跟随</text>
+            <text className="ListFollowText">{tText('跟随')}</text>
           </view>
         </view>
       </view>
@@ -462,7 +488,7 @@ export function ListScreen(props: ListScreenProps) {
       <scroll-view className="ListScroll" scroll-orientation="vertical">
         <view className="ListMain">
         <view className="ListTitleRow">
-          <text className="ListTitle">现场手册</text>
+          <text className="ListTitle">{tText('现场手册')}</text>
           <view className="ListTitleRight">
             {toast ? <text className="ListToast">{toast}</text> : null}
             <view
@@ -474,9 +500,11 @@ export function ListScreen(props: ListScreenProps) {
               <view
                 className={xishi ? 'ListThemeDot ListThemeDot--xishi' : 'ListThemeDot'}
               />
-              <text className="ListThemeText">{xishi ? '喜事' : '墨金'}</text>
+              <text className="ListThemeText">
+                {xishi ? tText('喜事') : tText('墨金')}
+              </text>
             </view>
-            <text className="ListCount">{`共 ${pad2(sheets.length)} 份`}</text>
+            <text className="ListCount">{sheetCountText(sheets.length)}</text>
           </view>
         </view>
 
@@ -491,7 +519,7 @@ export function ListScreen(props: ListScreenProps) {
         >
           <input
             className="ListSearch"
-            placeholder="搜索手册名称"
+            placeholder={tText('搜索手册名称')}
             bindinput={handleInput}
           />
           <view className="ListFilters">
@@ -508,19 +536,21 @@ export function ListScreen(props: ListScreenProps) {
                     setStatus(option.value);
                   }}
                 >
-                  <text className="FilterText">{option.label}</text>
+                  <text className="FilterText">{tText(option.label)}</text>
                 </view>
               );
             })}
           </view>
-          <Button label="新建手册" block={!isWide} onTap={openCreate} />
+          <Button label={tText('新建手册')} block={!isWide} onTap={openCreate} />
         </view>
 
         {renderList()}
       </view>
 
       <view className="ListFooter">
-        <text className="ListFooterText">第 1 / 1 页 · 数据保存在本设备</text>
+        <text className="ListFooterText">
+          {tText('第 {a} / {b} 页 · 数据保存在本设备', { a: 1, b: 1 })}
+        </text>
       </view>
       </scroll-view>
 
@@ -564,23 +594,28 @@ export function ListScreen(props: ListScreenProps) {
           >
             <view className="PanelHeader">
               <view className="PanelHeaderText">
-                <text className="PanelTitle">手册操作</text>
+                <text className="PanelTitle">{tText('手册操作')}</text>
                 <text className="PanelSubtitle">{displayName(moreSheet)}</text>
               </view>
               <view className="PanelClose" bindtap={closeMore}>
-                <text className="PanelCloseText">取消</text>
+                <text className="PanelCloseText">{tText('取消')}</text>
               </view>
             </view>
 
             <view className="SheetRename">
-              <text className="SheetRenameLabel">重命名</text>
+              <text className="SheetRenameLabel">{tText('重命名')}</text>
               <input
                 className="SheetRenameInput"
                 default-value={displayName(moreSheet)}
-                placeholder="输入手册名称"
+                placeholder={tText('输入手册名称')}
                 bindinput={handleRenameInput}
               />
-              <Button label="保存名称" kind="secondary" block onTap={saveRename} />
+              <Button
+                label={tText('保存名称')}
+                kind="secondary"
+                block
+                onTap={saveRename}
+              />
             </view>
 
             <view
@@ -590,11 +625,11 @@ export function ListScreen(props: ListScreenProps) {
                 handleDuplicate(moreSheet.id);
               }}
             >
-              <text className="PanelOptionName">复制为新手册</text>
+              <text className="PanelOptionName">{tText('复制为新手册')}</text>
               <text className="PanelOptionArrow">→</text>
             </view>
             <view className="PanelOption" bindtap={exportBackup}>
-              <text className="PanelOptionName">导出备份</text>
+              <text className="PanelOptionName">{tText('导出备份')}</text>
               <text className="PanelOptionArrow">→</text>
             </view>
             <view
@@ -605,7 +640,7 @@ export function ListScreen(props: ListScreenProps) {
                 openDelete(target);
               }}
             >
-              <text className="PanelOptionName">删除手册</text>
+              <text className="PanelOptionName">{tText('删除手册')}</text>
               <text className="PanelOptionArrow">→</text>
             </view>
           </view>
@@ -623,11 +658,11 @@ export function ListScreen(props: ListScreenProps) {
           >
             <view className="PanelHeader">
               <view className="PanelHeaderText">
-                <text className="PanelTitle">新建手册</text>
-                <text className="PanelSubtitle">选择起点</text>
+                <text className="PanelTitle">{tText('新建手册')}</text>
+                <text className="PanelSubtitle">{tText('选择起点')}</text>
               </view>
               <view className="PanelClose" bindtap={closeCreate}>
-                <text className="PanelCloseText">取消</text>
+                <text className="PanelCloseText">{tText('取消')}</text>
               </view>
             </view>
 
@@ -641,7 +676,7 @@ export function ListScreen(props: ListScreenProps) {
                   createFrom('blank');
                 }}
               >
-                <text className="PanelOptionName">空白手册</text>
+                <text className="PanelOptionName">{tText('空白手册')}</text>
                 <view className="PanelOptionMeta">
                   <text className="PanelOptionMetaText">
                     {createOptionMeta(1, 30)}
@@ -664,8 +699,10 @@ export function ListScreen(props: ListScreenProps) {
                     }}
                   >
                     <view className="PanelOptionLabel">
-                      <text className="PanelOptionName">{template.name}</text>
-                      <text className="PanelOptionTagline">{template.tagline}</text>
+                      <text className="PanelOptionName">{tText(template.name)}</text>
+                      <text className="PanelOptionTagline">
+                        {tText(template.tagline)}
+                      </text>
                     </view>
                     <view className="PanelOptionMeta">
                       <text className="PanelOptionMetaText">
@@ -695,22 +732,32 @@ export function ListScreen(props: ListScreenProps) {
             catchtap={() => {}}
           >
             <view className="PanelHeader">
-              <text className="PanelTitle">删除手册</text>
+              <text className="PanelTitle">{tText('删除手册')}</text>
             </view>
             <view className="PanelBody">
               <text className="PanelBodyText">
-                {`「${displayName(pendingDelete)}」删除后不可恢复。`}
+                {tText('「{name}」删除后不可恢复。', {
+                  name: displayName(pendingDelete),
+                })}
               </text>
               {deleteError ? (
-                <text className="PanelError">{deleteError}</text>
+                <text className="PanelError">{tText(deleteError)}</text>
               ) : null}
             </view>
             <view className="PanelActions">
               <view className="PanelAction">
-                <Button label="取消" kind="tertiary" onTap={closeDelete} />
+                <Button
+                  label={tText('取消')}
+                  kind="tertiary"
+                  onTap={closeDelete}
+                />
               </view>
               <view className="PanelAction">
-                <Button label="删除" kind="secondary" onTap={confirmDelete} />
+                <Button
+                  label={tText('删除')}
+                  kind="secondary"
+                  onTap={confirmDelete}
+                />
               </view>
             </view>
           </view>

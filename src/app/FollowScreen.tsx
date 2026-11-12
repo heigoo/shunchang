@@ -9,6 +9,7 @@ import {
 } from '../domain/timeline';
 import type { Item, RuntimeState, Sheet } from '../domain/types';
 import { getRuntime, getSheet, setRole } from '../store/repository';
+import { useT } from '../i18n';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
 import { buildSyncTrail, itemState, ownerOptions } from './followOps';
@@ -56,6 +57,7 @@ function rowSubText(item: Item): string {
 
 export function FollowScreen(props: FollowScreenProps) {
   const { sheetId, onBack, safeTop = 0, safeBottom = 0 } = props;
+  const t = useT();
 
   const [activeId, setActiveId] = useState<string | undefined>(sheetId);
   const [sheet, setSheet] = useState<Sheet | null>(() =>
@@ -124,16 +126,16 @@ export function FollowScreen(props: FollowScreenProps) {
       style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
     >
         <view className="FollowGuide">
-          <text className="FollowGuideLabel">现场跟随</text>
-          <text className="FollowGuideTitle">跟随现场</text>
+          <text className="FollowGuideLabel">{t('现场跟随')}</text>
+          <text className="FollowGuideTitle">{t('跟随现场')}</text>
           <text className="FollowGuideText">
-            扫描督导的二维码，或输入六位短码载入手册
+            {t('扫描督导的二维码，或输入六位短码载入手册')}
           </text>
           <view className="FollowGuideAction">
-            <Button label="载入手册" block onTap={openImport} />
+            <Button label={t('载入手册')} block onTap={openImport} />
           </view>
           <view className="FollowGuideBack" bindtap={exitFollow}>
-            <text className="FollowGuideBackText">返回手册列表</text>
+            <text className="FollowGuideBackText">{t('返回手册列表')}</text>
           </view>
         </view>
 
@@ -159,9 +161,10 @@ export function FollowScreen(props: FollowScreenProps) {
   const currentRow = currentIndex >= 0 ? timeline.rows[currentIndex] : null;
   const ended = runtime !== null && runtime.currentIndex >= total;
 
-  const segLabel = `环节 ${
-    currentIndex >= 0 ? pad3(currentIndex + 1) : '—'
-  } / ${pad3(total)}`;
+  const segLabel = t('环节 {a} / {b}', {
+    a: currentIndex >= 0 ? pad3(currentIndex + 1) : '—',
+    b: pad3(total),
+  });
 
   const syncText = `${trail.absolute} · ${trail.versionLabel}${
     trail.relative.length > 0 ? ` · ${trail.relative}` : ''
@@ -205,12 +208,14 @@ export function FollowScreen(props: FollowScreenProps) {
         <view className="FollowSyncRow">
           <text className="FollowSyncText">{syncText}</text>
           <view className="FollowSyncAction" bindtap={openImport}>
-            <text className="FollowSyncActionText">更新</text>
+            <text className="FollowSyncActionText">{t('更新')}</text>
           </view>
         </view>
         {trail.stale ? (
           <view className="FollowSyncHint">
-            <text className="FollowSyncHintText">可能已过期，请向督导确认</text>
+            <text className="FollowSyncHintText">
+              {t('可能已过期，请向督导确认')}
+            </text>
           </view>
         ) : null}
       </view>
@@ -218,7 +223,7 @@ export function FollowScreen(props: FollowScreenProps) {
       <view className="FollowHead">
         <view className="FollowHeadMain">
           <text className="FollowSheetName">
-            {sheet.name.length > 0 ? sheet.name : '未命名手册'}
+            {sheet.name.length > 0 ? sheet.name : t('未命名手册')}
           </text>
           <text className="FollowSheetMeta">
             {`${sheet.date} · ${formatDuration(timeline.totalPlanMin)}`}
@@ -230,7 +235,7 @@ export function FollowScreen(props: FollowScreenProps) {
           </view>
           {timeline.hasConflict ? (
             <view className="FollowHeadBadge">
-              <Badge kind="outline" label="锁定冲突" />
+              <Badge kind="outline" label={t('锁定冲突')} />
             </view>
           ) : null}
         </view>
@@ -242,21 +247,23 @@ export function FollowScreen(props: FollowScreenProps) {
         {currentItem && currentRow ? (
           <view className="FollowCurrentBody">
             <text className="FollowCurrentName">
-              {currentItem.name.length > 0 ? currentItem.name : '未命名环节'}
+              {currentItem.name.length > 0 ? currentItem.name : t('未命名环节')}
             </text>
             <text className="FollowCurrentMeta">{currentMeta}</text>
             {currentItem.lockAt !== null ? (
               <view className="FollowCurrentLock">
                 <Badge
                   kind="stamp"
-                  label={`锁定 ${formatClockDisplay(currentItem.lockAt)}`}
+                  label={t('锁定 {time}', {
+                    time: formatClockDisplay(currentItem.lockAt),
+                  })}
                 />
               </view>
             ) : null}
           </view>
         ) : (
           <text className="FollowCurrentName">
-            {ended ? '已全部结束' : '尚未开始'}
+            {ended ? t('已全部结束') : t('尚未开始')}
           </text>
         )}
       </view>
@@ -278,7 +285,7 @@ export function FollowScreen(props: FollowScreenProps) {
                   : 'FollowChipText'
               }
             >
-              全部
+              {t('全部')}
             </text>
           </view>
           {owners.map((owner) => {
@@ -329,18 +336,22 @@ export function FollowScreen(props: FollowScreenProps) {
               <view className="FollowRowMain">
                 <view className="FollowRowTitleLine">
                   <text className="FollowRowName">
-                    {entry.item.name.length > 0 ? entry.item.name : '未命名环节'}
+                    {entry.item.name.length > 0
+                      ? entry.item.name
+                      : t('未命名环节')}
                   </text>
                   {entry.item.lockAt !== null ? (
                     <text className="FollowRowLock">
-                      {`[锁定 ${formatClockDisplay(entry.item.lockAt)}]`}
+                      {t('[锁定 {time}]', {
+                        time: formatClockDisplay(entry.item.lockAt),
+                      })}
                     </text>
                   ) : null}
                 </view>
                 <text className="FollowRowSub">{rowSubText(entry.item)}</text>
               </view>
               <text className={statusClasses.join(' ')}>
-                {STATUS_LABEL[entry.state]}
+                {t(STATUS_LABEL[entry.state])}
               </text>
             </view>
           );
@@ -348,9 +359,9 @@ export function FollowScreen(props: FollowScreenProps) {
       </scroll-view>
 
       <view className="FollowFooter">
-        <text className="FollowFooterNote">只读 · 不能推进环节</text>
+        <text className="FollowFooterNote">{t('只读 · 不能推进环节')}</text>
         <view className="FollowFooterAction" bindtap={exitFollow}>
-          <text className="FollowFooterActionText">退出跟随</text>
+          <text className="FollowFooterActionText">{t('退出跟随')}</text>
         </view>
       </view>
 

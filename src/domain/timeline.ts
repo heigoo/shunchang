@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { Sheet } from './types';
 
 export type LockState = 'wait' | 'absorb' | 'conflict';
@@ -200,7 +201,7 @@ function pad2(value: number): string {
 function clockParts(min: number): { prefix: string; hour: number; minute: number } {
   const dayOffset = Math.floor(min / 1440);
   const inDay = ((min % 1440) + 1440) % 1440;
-  const prefix = dayOffset >= 1 ? '次日 ' : dayOffset <= -1 ? '前日 ' : '';
+  const prefix = dayOffset >= 1 ? t('次日 ') : dayOffset <= -1 ? t('前日 ') : '';
   return {
     prefix,
     hour: Math.floor(inDay / 60),
@@ -221,11 +222,11 @@ export function formatClockDisplay(min: number): string {
 export function formatDuration(totalMin: number): string {
   const total = Math.max(0, Math.round(totalMin));
   if (total < 60) {
-    return `${total} 分钟`;
+    return t('{n} 分钟', { n: total });
   }
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
-  return `${hours} 小时 ${pad2(minutes)} 分钟`;
+  return t('{h} 小时 {m} 分钟', { h: hours, m: pad2(minutes) });
 }
 
 export function parseClock(text: string): number | null {

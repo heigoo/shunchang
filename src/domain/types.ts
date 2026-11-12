@@ -1,5 +1,7 @@
 export type SheetStatus = 'draft' | 'published' | 'running' | 'done';
 
+import { t } from '../i18n';
+
 export interface Item {
   id: string;
   name: string;
@@ -49,7 +51,7 @@ function pad2(value: number): string {
 export function createEmptyItem(): Item {
   return {
     id: createId(),
-    name: '新环节',
+    name: t('新环节'),
     durationMin: 30,
     owner: '',
     note: '',
@@ -61,7 +63,7 @@ export function createEmptySheet(now: number): Sheet {
   const date = new Date(now);
   return {
     id: createId(),
-    name: '未命名手册',
+    name: t('未命名手册'),
     date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
     startMin: date.getHours() * 60,
     items: [createEmptyItem()],

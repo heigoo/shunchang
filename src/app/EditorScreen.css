@@ -52,6 +52,7 @@
   align-items: center;
   height: 44px;
   padding-right: 12px;
+  flex-shrink: 0;
 }
 
 .EditorBackText {
@@ -75,6 +76,7 @@
 
 .EditorPublish {
   margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .Btn.EditorPublishBtn {
@@ -173,6 +175,10 @@
   justify-content: flex-end;
 }
 
+.Editor--narrow .EditorToolHint {
+  display: none;
+}
+
 .EditorHintText {
   font-family: var(--mono);
   font-size: 10px;
@@ -257,11 +263,11 @@
 }
 
 .EditorTable--medium .ColDur {
-  width: 56px;
+  width: 68px;
 }
 
 .EditorTable--medium .ColOwner {
-  width: 84px;
+  width: 92px;
 }
 
 .EditorTable--medium .ColLock {
@@ -309,11 +315,11 @@
 }
 
 .ColDur {
-  width: 64px;
+  width: 84px;
 }
 
 .ColOwner {
-  width: 96px;
+  width: 112px;
   padding-right: 12px;
 }
 
