@@ -12,7 +12,7 @@ import {
   importPayloadText,
   importShortCodeText,
 } from './importFlow';
-import { isWeb, pickJsonFile } from './share';
+import { canUseNativeFiles, pickJsonFile } from './share';
 
 export interface ImportPanelProps {
   closing?: boolean;
@@ -46,7 +46,7 @@ export function ImportPanel(props: ImportPanelProps) {
   const [codeText, setCodeText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const web = isWeb();
+  const canPickFile = canUseNativeFiles();
 
   const handleResult = (result: ImportResult) => {
     if (!result.ok) {
@@ -137,7 +137,7 @@ export function ImportPanel(props: ImportPanelProps) {
           </view>
         </view>
 
-        {web ? (
+        {canPickFile ? (
           <view className="ImportSection">
             <text className="ImportLabel">{t('文件')}</text>
             <view className="ImportAction">

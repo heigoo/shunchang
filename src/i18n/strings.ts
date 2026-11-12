@@ -231,6 +231,7 @@ export const EN: Record<string, string> = {
     'Provided after the run starts, to sync devices that already have the sheet',
   '文件含完整备注，适合环节较多或无法扫码时':
     'Includes full notes; use when there are many segments or scanning is not possible',
+  使用文件或六位短码分发: 'Share with a file or the 6-character code',
   导出文件: 'Export file',
   扫码: 'Scan',
   文件: 'File',

@@ -3,9 +3,15 @@ import './PublishPanel.css';
 import { encodePayload } from '../domain/codec';
 import type { Sheet } from '../domain/types';
 import { useT } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
 import { Button } from '../ui';
 import { QrCode } from './QrCode';
-import { buildShareUrl, exportSheetFile, isWeb } from './share';
+import {
+  buildShareUrl,
+  canUseNativeFiles,
+  exportSheetFile,
+  isWeb,
+} from './share';
 
 export interface PublishPanelProps {
   sheet: Sheet;
@@ -25,6 +31,8 @@ export function PublishPanel(props: PublishPanelProps) {
   const url = buildShareUrl(payload);
   const showQr = sheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
   const web = isWeb();
+  const desktop = isDesktopRuntime();
+  const canExportFile = canUseNativeFiles();
 
   return (
     <view className={closing ? 'PublishOverlay OverlayOut' : 'PublishOverlay'}>
@@ -37,12 +45,14 @@ export function PublishPanel(props: PublishPanelProps) {
             {t('已发布 · 第 {n} 版', { n: sheet.version })}
           </text>
           <text className="PublishSubtitle">
-            {t('扫码即用 · 接收方打开后进入跟随视图')}
+            {desktop
+              ? t('使用文件或六位短码分发')
+              : t('扫码即用 · 接收方打开后进入跟随视图')}
           </text>
         </view>
 
         <view className="PublishBody">
-          {showQr ? (
+          {desktop ? null : showQr ? (
             <view className="PublishQrWrap">
               <view className="PublishQrBox">
                 <QrCode value={url} size={180} />
@@ -66,7 +76,7 @@ export function PublishPanel(props: PublishPanelProps) {
             </text>
           </view>
 
-          {web ? (
+          {canExportFile ? (
             <view className="PublishExport">
               <Button
                 label={t('导出备份')}
@@ -76,9 +86,11 @@ export function PublishPanel(props: PublishPanelProps) {
                   void exportSheetFile(sheet);
                 }}
               />
-              <text className="PublishExportHint">
-                {t('文件含完整备注，适合环节较多或无法扫码时')}
-              </text>
+              {web ? (
+                <text className="PublishExportHint">
+                  {t('文件含完整备注，适合环节较多或无法扫码时')}
+                </text>
+              ) : null}
             </view>
           ) : null}
         </view>

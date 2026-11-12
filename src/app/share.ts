@@ -1,6 +1,8 @@
 import { encodeFile } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
 import { t } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
+import { desktopPickJson, desktopSaveJson } from './desktopBridge';
 import { webDownload, webLocationSnapshot, webPickJsonFile } from './webBridge';
 
 function pad2(value: number): string {
@@ -26,6 +28,10 @@ export function isWeb(): boolean {
   } catch {
     return false;
   }
+}
+
+export function canUseNativeFiles(): boolean {
+  return isWeb() || isDesktopRuntime();
 }
 
 export function webLocation(): {
@@ -79,6 +85,9 @@ export async function downloadTextFile(
   text: string,
   mime: string = 'application/json',
 ): Promise<boolean> {
+  if (isDesktopRuntime()) {
+    return desktopSaveJson(filename, text);
+  }
   if (!isWeb()) {
     return false;
   }
@@ -94,6 +103,14 @@ export async function exportSheetFile(
 }
 
 export function pickJsonFile(onText: (text: string) => void): void {
+  if (isDesktopRuntime()) {
+    void desktopPickJson().then((text) => {
+      if (typeof text === 'string') {
+        onText(text);
+      }
+    });
+    return;
+  }
   if (!isWeb()) {
     return;
   }
