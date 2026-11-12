@@ -3,6 +3,18 @@ import { useEffect, useState } from '@lynx-js/react';
 // 0 表示「尚未测量」，首帧按窄屏渲染，避免在手机上先闪一版宽屏布局。
 const FALLBACK_WIDTH = 0;
 
+// Web 端运行在 Worker 中，读不到 window.innerWidth；由根节点 layoutchange 上报真实宽度。
+let latestWidth = 0;
+const widthListeners = new Set<(width: number) => void>();
+
+export function reportViewportWidth(width: number): void {
+  if (!(width > 0) || width === latestWidth) {
+    return;
+  }
+  latestWidth = width;
+  widthListeners.forEach((listener) => listener(width));
+}
+
 function readGlobalWidth(): number | null {
   try {
     const global = globalThis as any;
@@ -70,7 +82,9 @@ function measureRootWidth(onWidth: (width: number) => void): void {
 }
 
 export function useIsWide(breakpoint = 1024): boolean {
-  const [width, setWidth] = useState<number>(() => getViewportWidth());
+  const [width, setWidth] = useState<number>(() =>
+    latestWidth > 0 ? latestWidth : getViewportWidth(),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -80,28 +94,35 @@ export function useIsWide(breakpoint = 1024): boolean {
       }
     };
 
+    widthListeners.add(applyWidth);
+    if (latestWidth > 0) {
+      applyWidth(latestWidth);
+    }
     measureRootWidth(applyWidth);
 
+    let removeResize: (() => void) | null = null;
     try {
       const win = (globalThis as any).window;
-      if (!win || typeof win.addEventListener !== 'function') {
-        return undefined;
+      if (win && typeof win.addEventListener === 'function') {
+        const handleResize = () => {
+          applyWidth(getViewportWidth());
+        };
+        win.addEventListener('resize', handleResize);
+        removeResize = () => {
+          if (typeof win.removeEventListener === 'function') {
+            win.removeEventListener('resize', handleResize);
+          }
+        };
       }
-      const handleResize = () => {
-        applyWidth(getViewportWidth());
-      };
-      win.addEventListener('resize', handleResize);
-      return () => {
-        cancelled = true;
-        if (typeof win.removeEventListener === 'function') {
-          win.removeEventListener('resize', handleResize);
-        }
-      };
     } catch {
-      return () => {
-        cancelled = true;
-      };
+      // Web Worker 或受限运行时没有 window，忽略即可。
     }
+
+    return () => {
+      cancelled = true;
+      widthListeners.delete(applyWidth);
+      removeResize?.();
+    };
   }, []);
 
   return width >= breakpoint;

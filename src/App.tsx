@@ -23,6 +23,7 @@ import {
 import type { SafeInsets } from './app/systemBars';
 import { webSyncLocation, installMainThreadBridge } from './app/webBridge';
 import type { WebLocationSnapshot } from './app/webBridge';
+import { reportViewportWidth } from './platform/viewport';
 import {
   consumeStorageError,
   getLastView,
@@ -434,7 +435,15 @@ export function App() {
         style={{ display: 'none' }}
         main-thread:ref={installMainThreadBridge}
       />
-      <view className={backdropClasses.join(' ')}>
+      <view
+        className={backdropClasses.join(' ')}
+        bindlayoutchange={(event: any) => {
+          const width = event?.detail?.width;
+          if (typeof width === 'number') {
+            reportViewportWidth(width);
+          }
+        }}
+      >
         <view className={stackClasses.join(' ')}>{content}</view>
         {!booted ? (
           <SplashScreen
