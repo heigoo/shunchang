@@ -403,10 +403,14 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 40px;
+  height: 44px;
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--screen-line);
+}
+
+.FollowStep:active {
+  background-color: var(--screen-2);
 }
 
 .FollowStepNo {

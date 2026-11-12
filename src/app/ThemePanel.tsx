@@ -21,12 +21,12 @@ const OPTIONS: ThemeOption[] = [
   {
     id: 'default',
     name: '墨金',
-    tagline: '纸面调度 · 沉稳现场',
+    tagline: '纸面调度 · 沉稳',
   },
   {
     id: 'xishi',
     name: '喜事',
-    tagline: '朱红喜帖 · 金线压边',
+    tagline: '朱红喜帖 · 金边',
   },
 ];
 
@@ -109,7 +109,13 @@ export function ThemePanel(props: ThemePanelProps) {
             <text className="ThemeLangTitle">{t('界面语言')}</text>
             <text className="ThemeLangHint">{t('语言切换即时生效')}</text>
           </view>
-          <view className="ThemeLangOptions">
+          <view
+            className={
+              desktop
+                ? 'ThemeLangOptions'
+                : 'ThemeLangOptions ThemeLangOptions--stacked'
+            }
+          >
             <view
               className={
                 lang === 'zh'
@@ -130,7 +136,7 @@ export function ThemePanel(props: ThemePanelProps) {
                 中文
               </text>
             </view>
-            <text className="LangDivider">/</text>
+            {desktop ? <text className="LangDivider">/</text> : null}
             <view
               className={
                 lang === 'en'

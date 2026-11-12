@@ -11,14 +11,30 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   padding: 24px;
   background-color: var(--scrim);
   animation: scFadeIn 180ms ease-out both;
 }
 
+.ImportScroll {
+  width: 100%;
+  height: 100%;
+}
+
+.ImportStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100%;
+}
+
 .ImportPanel {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   width: 100%;
   max-width: 440px;
   background-color: var(--paper);
@@ -45,8 +61,10 @@
 }
 
 .ImportTitle {
-  font-size: 16px;
+  font-family: var(--serif);
+  font-size: 18px;
   font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--ink);
 }
 
@@ -97,7 +115,7 @@
 
 .ImportLabel {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: var(--ink-3);
 }

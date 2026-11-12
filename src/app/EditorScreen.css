@@ -674,6 +674,10 @@
   opacity: 0.3;
 }
 
+.CardAction--danger .CardActionText {
+  color: var(--vermilion);
+}
+
 /* ---------- 底部添加 ---------- */
 
 .EditorFooter {

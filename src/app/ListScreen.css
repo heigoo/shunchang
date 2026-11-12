@@ -254,6 +254,15 @@
   flex-shrink: 0;
 }
 
+.ListCreate--xishi {
+  background-color: var(--xishi-red);
+  border-color: var(--xishi-red);
+}
+
+.ListCreate--xishi .BtnLabel {
+  color: #FFF8EF;
+}
+
 .ListToolbar--narrow .ListCreate {
   align-self: flex-start;
   margin-top: 12px;
@@ -540,7 +549,7 @@
 
 .ListFooterText {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
 }
@@ -647,6 +656,24 @@
   flex: 1;
   flex-direction: column;
   padding-right: 12px;
+}
+
+.PanelOption--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.PanelOption--stacked .PanelOptionLabel {
+  padding-right: 0;
+}
+
+.PanelOption--stacked .PanelOptionMeta {
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.PanelOption--stacked .PanelOptionArrow {
+  margin-left: 0;
 }
 
 .PanelOptionName {

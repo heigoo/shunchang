@@ -407,7 +407,11 @@ export function ListScreen(props: ListScreenProps) {
             {tText('从模板开始，或建一份空白手册。')}
           </text>
           <view className="EmptyAction">
-            <Button label={tText('新建手册')} onTap={openCreate} />
+            <Button
+              label={tText('新建手册')}
+              className={xishi ? 'ListCreate ListCreate--xishi' : 'ListCreate'}
+              onTap={openCreate}
+            />
           </view>
         </view>
       );
@@ -565,7 +569,7 @@ export function ListScreen(props: ListScreenProps) {
           </view>
           <Button
             label={tText('新建手册')}
-            className="ListCreate"
+            className={xishi ? 'ListCreate ListCreate--xishi' : 'ListCreate'}
             onTap={openCreate}
           />
         </view>
@@ -583,6 +587,7 @@ export function ListScreen(props: ListScreenProps) {
       {importPresence.mounted ? (
         <ImportPanel
           closing={importPresence.closing}
+          safeTop={safeTop}
           onClose={() => {
             setImportOpen(false);
           }}
@@ -720,7 +725,9 @@ export function ListScreen(props: ListScreenProps) {
                 return (
                   <view
                     key={template.id}
-                    className="PanelOption"
+                    className={
+                      isWide ? 'PanelOption' : 'PanelOption PanelOption--stacked'
+                    }
                     bindtap={() => {
                       createFrom(template.id);
                     }}

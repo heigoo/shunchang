@@ -191,13 +191,15 @@ export const EN: Record<string, string> = {
   载入手册: 'Load sheet',
   '扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件':
     'Scan to load automatically; data stays on this device. Use a link, short code, or file to move across devices',
-  '链接 / 载荷': 'Link / payload',
+  '扫码自动载入；数据保存在本设备，跨端请用链接 / 短码':
+    'Scan to load automatically; data stays on this device. Use a link or short code across devices',
   锁定冲突: 'Lock conflict',
   已全部结束: 'All done',
   尚未开始: 'Not started yet',
   尚未同步: 'Not synced yet',
   刚刚: 'Just now',
   '同步码 {code}': 'Sync code {code}',
+  '偏移 {value}': 'Offset {value}',
   现场跟随: 'Live follow',
   跟随现场: 'Follow on site',
   '扫描督导的二维码，或输入六位短码载入手册':
@@ -242,12 +244,12 @@ export const EN: Record<string, string> = {
   导出文件: 'Export file',
   扫码: 'Scan',
   文件: 'File',
-  '分享链接 / 载荷': 'Share link / payload',
   六位短码: '6-character code',
-  粘贴分享链接或载荷: 'Paste a share link or payload',
+  '分享链接 / 备份内容': 'Share link / backup text',
+  粘贴分享链接或备份内容: 'Paste a share link or backup text',
   载入链接: 'Load link',
   输入六位短码: 'Enter the 6-character code',
-  同步状态: 'Sync status',
+  用短码载入: 'Load with code',
   选择文件: 'Choose file',
   确认顺延: 'Confirm shift',
   '{name} · 仍超出 {n} 分钟': '{name} · still over by {n} min',
@@ -274,8 +276,8 @@ export const EN: Record<string, string> = {
 
   // 主题 / 语言
   外观主题: 'Appearance',
-  '纸面调度 · 沉稳现场': 'Paper schedule · Steady on-site',
-  '朱红喜帖 · 金线压边': 'Vermilion invitation · Gold edging',
+  '纸面调度 · 沉稳': 'Paper schedule · Steady',
+  '朱红喜帖 · 金边': 'Vermilion invitation · Gold',
   切换后自动重启并更换桌面图标:
     'Restarts the app and updates the launcher icon',
   '切换仅影响界面配色，应用不会重启':

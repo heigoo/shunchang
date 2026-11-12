@@ -261,7 +261,7 @@
 .RuntimeNextLabel,
 .RuntimeNextNo {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--dim);
 }
@@ -320,6 +320,12 @@
 .RuntimeSyncBtnText {
   font-size: 13px;
   color: var(--bright);
+}
+
+.RuntimeSyncChevron {
+  margin-left: 6px;
+  font-size: 16px;
+  color: var(--dim);
 }
 
 /* ---------- 底部操作条 ---------- */

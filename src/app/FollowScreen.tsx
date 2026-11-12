@@ -15,6 +15,7 @@ import { registerBackHandler } from './backBus';
 import { buildSyncTrail, itemState, ownerOptions } from './followOps';
 import type { ItemState } from './followOps';
 import { ImportPanel } from './ImportPanel';
+import { canUseNativeFiles } from './share';
 
 export interface FollowScreenProps {
   sheetId?: string;
@@ -72,6 +73,7 @@ export function FollowScreen(props: FollowScreenProps) {
   const [tick, setTick] = useState(0);
 
   const importPresence = usePresence(importOpen);
+  const canPickFile = canUseNativeFiles();
 
   useEffect(() => {
     if (!importOpen) {
@@ -136,21 +138,23 @@ export function FollowScreen(props: FollowScreenProps) {
               {t('扫描督导的二维码，或输入六位短码载入手册')}
             </text>
             <view className="FollowPassRule" />
-            <view className="FollowStep">
+            <view className="FollowStep" bindtap={openImport}>
               <text className="FollowStepNo">01</text>
               <text className="FollowStepText">{t('扫码')}</text>
               <text className="FollowStepArrow">→</text>
             </view>
-            <view className="FollowStep">
+            <view className="FollowStep" bindtap={openImport}>
               <text className="FollowStepNo">02</text>
               <text className="FollowStepText">{t('六位短码')}</text>
               <text className="FollowStepArrow">→</text>
             </view>
-            <view className="FollowStep">
-              <text className="FollowStepNo">03</text>
-              <text className="FollowStepText">{t('文件')}</text>
-              <text className="FollowStepArrow">→</text>
-            </view>
+            {canPickFile ? (
+              <view className="FollowStep" bindtap={openImport}>
+                <text className="FollowStepNo">03</text>
+                <text className="FollowStepText">{t('文件')}</text>
+                <text className="FollowStepArrow">→</text>
+              </view>
+            ) : null}
             <view className="FollowPassAction">
               <Button label={t('载入手册')} block onTap={openImport} />
             </view>
@@ -164,6 +168,7 @@ export function FollowScreen(props: FollowScreenProps) {
         {importPresence.mounted ? (
           <ImportPanel
             closing={importPresence.closing}
+            safeTop={safeTop}
             onClose={closeImport}
             onImported={handleImported}
           />

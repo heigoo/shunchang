@@ -142,6 +142,7 @@ export function App() {
 
   const routeRef = useRef<Route>(route);
   routeRef.current = route;
+  const printOriginRef = useRef<Route>({ view: 'list' });
   const navigateRef = useRef<(view: AppView, sheetId?: string) => void>(() => {});
   const lastBackAtRef = useRef(0);
   const transitionSeqRef = useRef(0);
@@ -242,15 +243,20 @@ export function App() {
     };
   }, []);
 
-  const navigate = (view: AppView, sheetId?: string) => {
+  const navigate = (
+    view: AppView,
+    sheetId?: string,
+    dirOverride?: 'forward' | 'back',
+  ) => {
     const previous = routeRef.current;
     if (previous.view === view && previous.sheetId === sheetId) {
       return;
     }
 
     const next: Route = sheetId ? { view, sheetId } : { view };
-    // 进入列表是返回，其余都是进入下一层；据此决定转场方向。
-    const dir: 'forward' | 'back' = view === 'list' ? 'back' : 'forward';
+    // 进入列表是返回，其余都是进入下一层；打印返回来源页时显式指定方向。
+    const dir: 'forward' | 'back' =
+      dirOverride ?? (view === 'list' ? 'back' : 'forward');
 
     // 跟随是一次性会话：离开跟随视图就恢复督导身份，避免点任何手册都只能只读。
     if (view === 'list' && previous.view === 'follow') {
@@ -309,6 +315,11 @@ export function App() {
     navigate(sheet.status === 'running' ? 'runtime' : 'editor', id);
   };
 
+  const openPrint = (id: string) => {
+    printOriginRef.current = routeRef.current;
+    navigate('print', id);
+  };
+
   const changeTheme = (next: AppTheme) => {
     setThemeState(next);
     // 桌面端只改配色，不触碰桌面图标，因此不需要重启。
@@ -363,9 +374,7 @@ export function App() {
             onStartRuntime={(id) => {
               navigate('runtime', id);
             }}
-            onPrint={(id) => {
-              navigate('print', id);
-            }}
+            onPrint={openPrint}
           />
         ) : (
           <PlaceholderScreen title={t('编排台')} subtitle={subtitle} onBack={back} />
@@ -380,9 +389,7 @@ export function App() {
             onBack={() => {
               navigate('list');
             }}
-            onPrint={(id) => {
-              navigate('print', id);
-            }}
+            onPrint={openPrint}
           />
         ) : (
           <PlaceholderScreen
@@ -412,7 +419,16 @@ export function App() {
             safeTop={insets.top}
             safeBottom={insets.bottom}
             onBack={() => {
-              navigate('list');
+              const origin = printOriginRef.current;
+              const canReturn =
+                (origin.view === 'editor' || origin.view === 'runtime') &&
+                origin.sheetId !== undefined &&
+                getSheet(origin.sheetId) !== null;
+              if (canReturn) {
+                navigate(origin.view, origin.sheetId, 'back');
+                return;
+              }
+              navigate('list', undefined, 'back');
             }}
           />
         ) : (

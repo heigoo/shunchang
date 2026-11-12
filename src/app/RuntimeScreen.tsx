@@ -439,7 +439,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 <Badge kind="reverse" label={tText('无法吸收')} />
               </view>
             ) : null}
-            <Badge kind="outline" label={offsetText(runtime.offsetMin)} />
+            <Badge
+              kind="outline"
+              label={tText('偏移 {value}', {
+                value: offsetText(runtime.offsetMin),
+              })}
+            />
             <view
               className="RuntimeEndBtn"
               bindtap={() => {
@@ -488,7 +493,9 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                   {countdown.sign === 'over' ? tText('已超时') : tText('剩余')}
                 </text>
               </view>
-              <text className="RuntimeCaption">{caption}</text>
+              {view.countdownIsLock ? (
+                <text className="RuntimeCaption">{caption}</text>
+              ) : null}
               {overMin > 0 ? (
                 <view className="RuntimeDelay">
                   <Badge
@@ -557,6 +564,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               <text className="RuntimeSyncBtnText">
                 {tText('同步码 {code}', { code: syncCodeText })}
               </text>
+              <text className="RuntimeSyncChevron">›</text>
             </view>
           </view>
         )}
@@ -615,8 +623,8 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <view
               className={
                 endPresence.closing
-                  ? 'Panel Panel--confirm PanelOut'
-                  : 'Panel Panel--confirm'
+                  ? 'Panel Panel--confirm PanelOut theme-light'
+                  : 'Panel Panel--confirm theme-light'
               }
               catchtap={() => {}}
             >

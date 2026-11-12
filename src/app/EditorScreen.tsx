@@ -713,7 +713,7 @@ export function EditorScreen(props: EditorScreenProps) {
                 <text className="CardActionText">{tText('下移')}</text>
               </view>
               <view
-                className="CardAction"
+                className="CardAction CardAction--danger"
                 bindtap={() => {
                   setExpanded(null);
                   setPendingDelete({ index, name: item.name });

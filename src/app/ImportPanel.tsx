@@ -1,6 +1,6 @@
 import './ImportPanel.css';
 
-import { useState } from '@lynx-js/react';
+import { useLynxGlobalEventListener, useState } from '@lynx-js/react';
 
 import { setRole } from '../store/repository';
 import { useT } from '../i18n';
@@ -16,6 +16,7 @@ import { canUseNativeFiles, pickJsonFile } from './share';
 
 export interface ImportPanelProps {
   closing?: boolean;
+  safeTop?: number;
   onClose(): void;
   onImported(sheetId: string): void;
 }
@@ -23,6 +24,14 @@ export interface ImportPanelProps {
 function inputValue(event: any): string {
   const detail = event && event.detail ? event.detail : null;
   return detail && typeof detail.value === 'string' ? detail.value : '';
+}
+
+function imeBottomOf(payload: any): number {
+  const first = Array.isArray(payload) ? payload[0] : payload;
+  const data =
+    first && typeof first === 'object' && first.data ? first.data : first;
+  const bottom = data && typeof data.bottom === 'number' ? data.bottom : 0;
+  return Math.max(0, Math.round(bottom));
 }
 
 function extractPayload(text: string): string {
@@ -39,14 +48,19 @@ function extractPayload(text: string): string {
 }
 
 export function ImportPanel(props: ImportPanelProps) {
-  const { closing = false, onClose, onImported } = props;
+  const { closing = false, safeTop = 0, onClose, onImported } = props;
   const t = useT();
 
   const [linkText, setLinkText] = useState('');
   const [codeText, setCodeText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [imeBottom, setImeBottom] = useState(0);
 
   const canPickFile = canUseNativeFiles();
+
+  useLynxGlobalEventListener('shunchang:ime', (value: any) => {
+    setImeBottom(imeBottomOf(value));
+  });
 
   const handleResult = (result: ImportResult) => {
     if (!result.ok) {
@@ -76,81 +90,100 @@ export function ImportPanel(props: ImportPanelProps) {
   return (
     <view
       className={closing ? 'ImportOverlay OverlayOut' : 'ImportOverlay'}
-      bindtap={() => {
-        onClose();
-      }}
+      style={{ paddingTop: 24 + safeTop, paddingBottom: 24 + imeBottom }}
     >
-      <view
-        className={closing ? 'ImportPanel PanelOut' : 'ImportPanel'}
-        catchtap={() => {}}
-      >
-        <view className="ImportHead">
-          <view className="ImportHeadText">
-            <text className="ImportTitle">{t('载入手册')}</text>
-            <text className="ImportSubtitle">
-              {t('扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件')}
-            </text>
-          </view>
-          <view className="ImportClose" bindtap={onClose}>
-            <text className="ImportCloseText">{t('取消')}</text>
-          </view>
-        </view>
-
-        {error ? (
-          <view className="ImportError">
-            <text className="ImportErrorText">{error}</text>
-          </view>
-        ) : null}
-
-        <view className="ImportSection">
-          <text className="ImportLabel">{t('链接 / 载荷')}</text>
-          <textarea
-            className="ImportTextarea"
-            placeholder={t('粘贴分享链接或载荷')}
-            maxlength={4000}
-            bindinput={(event) => {
-              setLinkText(inputValue(event));
-            }}
-          />
-          <view className="ImportAction">
-            <Button label={t('载入链接')} block onTap={handleLink} />
-          </view>
-        </view>
-
-        <view className="ImportSection">
-          <text className="ImportLabel">{t('六位短码')}</text>
-          <input
-            className="ImportInput"
-            placeholder={t('输入六位短码')}
-            maxlength={8}
-            bindinput={(event) => {
-              setCodeText(inputValue(event));
-            }}
-          />
-          <view className="ImportAction">
-            <Button
-              label={t('同步状态')}
-              kind="secondary"
-              block
-              onTap={handleCode}
-            />
-          </view>
-        </view>
-
-        {canPickFile ? (
-          <view className="ImportSection">
-            <text className="ImportLabel">{t('文件')}</text>
-            <view className="ImportAction">
-              <Button
-                label={t('选择文件')}
-                kind="tertiary"
-                block
-                onTap={handleFile}
-              />
+      <scroll-view className="ImportScroll" scroll-orientation="vertical">
+        <view
+          className="ImportStage"
+          bindtap={() => {
+            onClose();
+          }}
+        >
+          <view
+            className={
+              closing
+                ? 'ImportPanel PanelOut theme-light'
+                : 'ImportPanel theme-light'
+            }
+            catchtap={() => {}}
+          >
+            <view className="ImportHead">
+              <view className="ImportHeadText">
+                <text className="ImportTitle">{t('载入手册')}</text>
+                <text className="ImportSubtitle">
+                  {canPickFile
+                    ? t('扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件')
+                    : t('扫码自动载入；数据保存在本设备，跨端请用链接 / 短码')}
+                </text>
+              </view>
+              <view className="ImportClose" bindtap={onClose}>
+                <text className="ImportCloseText">{t('取消')}</text>
+              </view>
             </view>
+
+            {error ? (
+              <view className="ImportError">
+                <text className="ImportErrorText">{error}</text>
+              </view>
+            ) : null}
+
+            <view className="ImportSection">
+              <text className="ImportLabel">{t('分享链接 / 备份内容')}</text>
+              <textarea
+                className="ImportTextarea"
+                placeholder={t('粘贴分享链接或备份内容')}
+                maxlength={4000}
+                bindinput={(event) => {
+                  setLinkText(inputValue(event));
+                }}
+              />
+              <view className="ImportAction">
+                <Button
+                  label={t('载入链接')}
+                  block
+                  disabled={linkText.trim().length === 0}
+                  onTap={handleLink}
+                />
+              </view>
+            </view>
+
+            <view className="ImportSection">
+              <text className="ImportLabel">{t('六位短码')}</text>
+              <input
+                className="ImportInput"
+                placeholder={t('输入六位短码')}
+                maxlength={8}
+                bindinput={(event) => {
+                  setCodeText(inputValue(event));
+                }}
+              />
+              <view className="ImportAction">
+                <Button
+                  label={t('用短码载入')}
+                  kind="secondary"
+                  block
+                  disabled={codeText.trim().length === 0}
+                  onTap={handleCode}
+                />
+              </view>
+            </view>
+
+            {canPickFile ? (
+              <view className="ImportSection">
+                <text className="ImportLabel">{t('文件')}</text>
+                <view className="ImportAction">
+                  <Button
+                    label={t('选择文件')}
+                    kind="tertiary"
+                    block
+                    onTap={handleFile}
+                  />
+                </view>
+              </view>
+            ) : null}
           </view>
-        ) : null}
-      </view>
+        </view>
+      </scroll-view>
     </view>
   );
 }
