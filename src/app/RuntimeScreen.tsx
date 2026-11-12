@@ -208,6 +208,9 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
   const wideActions =
     mainWidth !== null ? mainWidth >= NARROW_ACTIONS_WIDTH : isWideActions;
+  const runtimeClass = wideActions
+    ? 'Runtime Runtime--wide theme-dark'
+    : 'Runtime theme-dark';
 
   const holdTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const shiftToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -247,7 +250,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   if (!sheet || !runtime) {
     return (
       <view
-        className="Runtime theme-dark"
+        className={runtimeClass}
         style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
       >
         <view className="RuntimeMissing">
@@ -334,7 +337,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     return (
       <view className="RuntimeViewport">
         <view
-        className="Runtime theme-dark"
+        className={runtimeClass}
         style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
       >
           <view className="DoneBody">
@@ -406,7 +409,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   return (
     <view className="RuntimeViewport" id="runtime-capture" flatten={false}>
       <view
-        className="Runtime theme-dark"
+        className={runtimeClass}
         style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
       >
         <view className="RuntimeCapture">

@@ -3,7 +3,11 @@ import './PrintScreen.css';
 import { useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
-import { useIsWide } from '../platform/viewport';
+import {
+  BREAKPOINT_PRINT_WIDE,
+  BREAKPOINT_TABLET,
+  useIsWide,
+} from '../platform/viewport';
 import { getRuntime, getSheet } from '../store/repository';
 import { Button } from '../ui';
 import { QrCode } from './QrCode';
@@ -54,7 +58,8 @@ export function PrintScreen(props: PrintScreenProps) {
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
   const [printedAt] = useState(() => Date.now());
-  const compact = !useIsWide(900);
+  const compact = !useIsWide(BREAKPOINT_TABLET);
+  const widePage = useIsWide(BREAKPOINT_PRINT_WIDE);
 
   if (!sheet) {
     return (
@@ -185,7 +190,13 @@ export function PrintScreen(props: PrintScreenProps) {
 
   return (
     <view
-      className={compact ? 'PrintScreen PrintScreen--compact' : 'PrintScreen'}
+      className={
+        compact
+          ? 'PrintScreen PrintScreen--compact'
+          : widePage
+            ? 'PrintScreen'
+            : 'PrintScreen PrintScreen--medium'
+      }
       style={{ paddingTop: safeTop, paddingBottom: 88 + safeBottom }}
     >
       <view className="PrintPages">{pages.map(renderPage)}</view>

@@ -3,6 +3,11 @@ import { useEffect, useState } from '@lynx-js/react';
 // 0 表示「尚未测量」，首帧按窄屏渲染，避免在手机上先闪一版宽屏布局。
 const FALLBACK_WIDTH = 0;
 
+// 折叠屏展开 / 平板竖屏起用宽屏排布；桌面与平板横屏用完整宽屏列。
+export const BREAKPOINT_TABLET = 700;
+export const BREAKPOINT_DESKTOP = 1024;
+export const BREAKPOINT_PRINT_WIDE = 1170;
+
 // Web 端运行在 Worker 中，读不到 window.innerWidth；由根节点 layoutchange 上报真实宽度。
 let latestWidth = 0;
 const widthListeners = new Set<(width: number) => void>();

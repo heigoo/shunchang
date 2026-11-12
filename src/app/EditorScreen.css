@@ -237,6 +237,41 @@
   padding: 10px 16px 32px 16px;
 }
 
+/* 折叠屏展开 / 平板：保留全部列，压缩固定列宽 */
+.Editor--medium .EditorHeader {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.Editor--medium .EditorBody {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.EditorTable--medium .ColNo {
+  width: 40px;
+}
+
+.EditorTable--medium .ColTime {
+  width: 64px;
+}
+
+.EditorTable--medium .ColDur {
+  width: 56px;
+}
+
+.EditorTable--medium .ColOwner {
+  width: 84px;
+}
+
+.EditorTable--medium .ColLock {
+  width: 104px;
+}
+
+.EditorTable--medium .ColAct {
+  width: 116px;
+}
+
 .EditorTable {
   display: flex;
   flex-direction: column;

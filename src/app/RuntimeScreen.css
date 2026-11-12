@@ -21,6 +21,11 @@
   position: relative;
 }
 
+/* 折叠屏展开 / 平板：放宽信息屏，避免两侧留白过多 */
+.Runtime--wide {
+  max-width: 720px;
+}
+
 /* 玻璃浮层的模糊捕获范围：只包含背景内容，不包含浮层本身 */
 .RuntimeCapture {
   display: flex;

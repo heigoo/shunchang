@@ -6,7 +6,11 @@ import { computeTimeline, formatClock, formatDuration } from '../domain/timeline
 import type { Item, Sheet, SheetStatus } from '../domain/types';
 import type { SheetError } from '../domain/validate';
 import { findPlanConflicts } from '../domain/validate';
-import { useIsWide } from '../platform/viewport';
+import {
+  BREAKPOINT_DESKTOP,
+  BREAKPOINT_TABLET,
+  useIsWide,
+} from '../platform/viewport';
 import { getSheet, saveSheet } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
@@ -155,7 +159,8 @@ export function EditorScreen(props: EditorScreenProps) {
   const [published, setPublished] = useState<{ version: number } | null>(null);
   const [nowMin, setNowMin] = useState<number>(currentMinuteOfDay);
   const [undo, setUndo] = useState<string | null>(null);
-  const isWide = useIsWide();
+  const isWide = useIsWide(BREAKPOINT_TABLET);
+  const isDesktop = useIsWide(BREAKPOINT_DESKTOP);
 
   const undoSheet = useRef<Sheet | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -683,7 +688,11 @@ export function EditorScreen(props: EditorScreenProps) {
 
   return (
     <view
-      className="Editor theme-light"
+      className={
+        isWide && !isDesktop
+          ? 'Editor Editor--medium theme-light'
+          : 'Editor theme-light'
+      }
       style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
     >
       <view className="EditorHeader">
@@ -813,7 +822,7 @@ export function EditorScreen(props: EditorScreenProps) {
       <scroll-view className="EditorScroll" scroll-orientation="vertical">
       <view className={isWide ? 'EditorBody' : 'EditorBody EditorBody--narrow'}>
         {isWide ? (
-          <view className="EditorTable">
+          <view className={isDesktop ? 'EditorTable' : 'EditorTable EditorTable--medium'}>
             <view className="TableHead">
               <view className="ColNo">
                 <text className="Th">序号</text>

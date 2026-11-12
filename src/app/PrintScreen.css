@@ -313,6 +313,18 @@
   margin-top: 18px;
 }
 
+/* ---------- 折叠屏展开 / 平板：铺满可用宽度，保留备注列 ---------- */
+
+.PrintScreen--medium .PrintPages {
+  padding: 16px;
+}
+
+.PrintScreen--medium .PrintPage {
+  width: 100%;
+  min-height: 0;
+  padding: 24px;
+}
+
 /* ---------- 手机 / 窄屏：按宽度重排，避免只看得到右侧两列 ---------- */
 
 .PrintScreen--compact .PrintPages {

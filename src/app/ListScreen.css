@@ -217,6 +217,25 @@
   align-items: stretch;
 }
 
+/* 折叠屏展开 / 平板：收紧搜索与筛选，避免筛选文字换行 */
+.ListToolbar--medium .ListSearch {
+  width: 220px;
+}
+
+.ListToolbar--medium .ListFilters {
+  margin-left: 12px;
+}
+
+.ListToolbar--medium .FilterItem {
+  flex-shrink: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.ListToolbar--medium .FilterText {
+  font-size: 12px;
+}
+
 .ListToolbar--narrow .ListSearch {
   width: 100%;
 }
@@ -312,6 +331,15 @@
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+}
+
+/* 折叠屏展开 / 平板：隐藏更新时间列，给名称留出宽度 */
+.Table--medium .ColNo {
+  width: 48px;
+}
+
+.Table--medium .ColUpdated {
+  display: none;
 }
 
 .ListRow {

@@ -11,7 +11,11 @@ import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
 import { createEmptySheet } from '../domain/types';
-import { useIsWide } from '../platform/viewport';
+import {
+  BREAKPOINT_DESKTOP,
+  BREAKPOINT_TABLET,
+  useIsWide,
+} from '../platform/viewport';
 import {
   deleteSheet,
   duplicateSheet,
@@ -116,7 +120,8 @@ export function ListScreen(props: ListScreenProps) {
   const xishi = theme === 'xishi';
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isWide = useIsWide();
+  const isWide = useIsWide(BREAKPOINT_TABLET);
+  const isDesktop = useIsWide(BREAKPOINT_DESKTOP);
 
   useEffect(() => {
     return () => {
@@ -389,7 +394,7 @@ export function ListScreen(props: ListScreenProps) {
     }
 
     return (
-      <view className="Table">
+      <view className={isDesktop ? 'Table' : 'Table Table--medium'}>
         <view className="ListTableHead">
           <view className="ColNo">
             <text className="Th">序号</text>
@@ -477,7 +482,11 @@ export function ListScreen(props: ListScreenProps) {
 
         <view
           className={
-            isWide ? 'ListToolbar' : 'ListToolbar ListToolbar--narrow'
+            isDesktop
+              ? 'ListToolbar'
+              : isWide
+                ? 'ListToolbar ListToolbar--medium'
+                : 'ListToolbar ListToolbar--narrow'
           }
         >
           <input
