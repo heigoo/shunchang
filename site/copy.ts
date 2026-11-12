@@ -66,7 +66,14 @@ export interface Copy {
     posterCaption: string;
   };
   footer: { tagline: string; copyright: string; marquee: string };
-  deck: { prev: string; next: string; hint: string };
+  deck: {
+    prev: string;
+    next: string;
+    hint: string;
+    menu: string;
+    menuHint: string;
+    chapters: string[];
+  };
 }
 
 const ZH: Copy = {
@@ -193,7 +200,10 @@ const ZH: Copy = {
   deck: {
     prev: '上一步',
     next: '下一步',
-    hint: '逐步推进 · 每一步只做一件事',
+    hint: '滚轮 / ← → 逐步推进 · 每一步只做一件事',
+    menu: '目录',
+    menuHint: '点击直达任意章节 · 也可用 ← → 或数字键',
+    chapters: ['封面', '问题', '产品', '执行台', '标记', '名字', '开始'],
   },
 };
 
@@ -321,7 +331,10 @@ const EN: Copy = {
   deck: {
     prev: 'PREV',
     next: 'NEXT',
-    hint: 'STEP BY STEP · ONE THING AT A TIME',
+    hint: 'SCROLL OR ← → TO ADVANCE · ONE THING AT A TIME',
+    menu: 'INDEX',
+    menuHint: 'JUMP TO ANY CHAPTER · USE ← → OR NUMBER KEYS',
+    chapters: ['Cover', 'Problem', 'Product', 'Live board', 'The mark', 'The name', 'Start'],
   },
 };
 

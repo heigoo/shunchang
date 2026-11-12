@@ -108,13 +108,16 @@ export function App() {
   const [doneRows, setDoneRows] = useState<Record<number, boolean>>({});
   const [fwKey, setFwKey] = useState(0);
   const [markTap, setMarkTap] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const touchStart = useRef({ x: 0, y: 0 });
   const wide = useIsWide(1000);
+  const railWide = useIsWide(1340);
   const c = COPY[lang];
 
   const goSlide = useCallback(
     (target: number) => {
       const next = Math.max(0, Math.min(SLIDE_COUNT - 1, target));
+      setMenuOpen(false);
       if (next === slide) return;
       setDir(next > slide ? 'next' : 'prev');
       setSlide(next);
@@ -588,6 +591,29 @@ export function App() {
             <text className="WordmarkAlt T">{lang === 'zh' ? 'CUE' : '顺场'}</text>
           </view>
 
+          {wide ? (
+            <view className="DeckTopNav">
+              {c.deck.chapters.map((label, index) => (
+                <view
+                  key={label}
+                  className={index === slide ? 'DeckNavItem DeckNavItemOn' : 'DeckNavItem'}
+                  bindtap={() => goSlide(index)}
+                >
+                  <text className="DeckNavNo T">{`0${index + 1}`}</text>
+                  <text className="DeckNavLabel T">{label}</text>
+                </view>
+              ))}
+            </view>
+          ) : (
+            <view className="DeckMenuBtn" bindtap={() => setMenuOpen(true)}>
+              <text className="DeckMenuBtnText T">{c.deck.menu}</text>
+              <view className="DeckMenuBtnBars">
+                <view className="DeckMenuBtnBar" />
+                <view className="DeckMenuBtnBar" />
+              </view>
+            </view>
+          )}
+
           <view className="DeckBarRight">
             <view className="Lang">
               <view
@@ -615,13 +641,37 @@ export function App() {
           bindtouchstart={onTouchStart}
           bindtouchend={onTouchEnd}
         >
+          <view className="DeckProgress">
+            <view
+              className="DeckProgressFill"
+              style={{ width: `${((slide + 1) / SLIDE_COUNT) * 100}%` }}
+            />
+          </view>
           <view
             key={slide}
             className={`SlideAnim ${dir === 'next' ? 'SlideInNext' : 'SlideInPrev'}`}
           >
             {renderSlide()}
           </view>
+          <text key={`ghost-${slide}`} className={wide ? 'SlideGhost T' : 'SlideGhost SlideGhostNarrow T'}>
+            {`0${slide + 1}`}
+          </text>
         </view>
+
+        {railWide ? (
+          <view className="DeckRail">
+            {c.deck.chapters.map((label, index) => (
+              <view
+                key={label}
+                className={index === slide ? 'RailItem RailItemOn' : 'RailItem'}
+                bindtap={() => goSlide(index)}
+              >
+                <text className="RailLabel T">{label}</text>
+                <view className="RailLine" />
+              </view>
+            ))}
+          </view>
+        ) : null}
 
         <view className={wide ? 'DeckFoot' : 'DeckFoot DeckFootNarrow'}>
           <text className="DeckCounter T">{`0${slide + 1} / 0${SLIDE_COUNT}`}</text>
@@ -660,6 +710,31 @@ export function App() {
             </view>
           </view>
         </view>
+
+        {menuOpen ? (
+          <view className="DeckMenu">
+            <view className="DeckMenuHead">
+              <text className="DeckMenuTitle T">{c.deck.menu}</text>
+              <view className="DeckMenuClose" bindtap={() => setMenuOpen(false)}>
+                <text className="DeckMenuCloseText T">×</text>
+              </view>
+            </view>
+            <view className="DeckMenuList">
+              {c.deck.chapters.map((label, index) => (
+                <view
+                  key={label}
+                  className={index === slide ? 'DeckMenuItem DeckMenuItemOn' : 'DeckMenuItem'}
+                  bindtap={() => goSlide(index)}
+                >
+                  <text className="DeckMenuNo T">{`0${index + 1}`}</text>
+                  <text className="DeckMenuLabel T">{label}</text>
+                  {index === slide ? <text className="DeckMenuNow T">●</text> : null}
+                </view>
+              ))}
+            </view>
+            <text className="DeckMenuHint T">{c.deck.menuHint}</text>
+          </view>
+        ) : null}
       </view>
     </view>
   );

@@ -3162,3 +3162,332 @@ page {
 .DeckBtnTextOn {
   color: var(--amber);
 }
+
+/* deck top navigation */
+
+.DeckTopNav {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.DeckNavItem {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 2px;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.DeckNavItem:hover {
+  border-bottom-color: var(--rule);
+}
+
+.DeckNavItem:active {
+  opacity: 0.6;
+}
+
+.DeckNavNo {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+}
+
+.DeckNavLabel {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink2);
+  transition: color 0.2s ease;
+}
+
+.DeckNavItemOn {
+  border-bottom-color: var(--amber);
+}
+
+.DeckNavItemOn .DeckNavLabel {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.DeckNavItemOn .DeckNavNo {
+  color: var(--deep);
+}
+
+.DeckMenuBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.DeckMenuBtnText {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--ink2);
+}
+
+.DeckMenuBtnBars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.DeckMenuBtnBar {
+  width: 13px;
+  height: 1.5px;
+  background-color: var(--ink);
+}
+
+/* deck progress + ghost index */
+
+.DeckProgress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.DeckProgressFill {
+  height: 2px;
+  background-color: var(--amber);
+  box-shadow: 0 0 12px rgba(255, 176, 32, 0.75);
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.SlideGhost {
+  position: absolute;
+  right: 60px;
+  bottom: -38px;
+  font-family: var(--mono);
+  font-size: 200px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.08em;
+  color: rgba(255, 176, 32, 0.1);
+  z-index: 3;
+  pointer-events: none;
+  animation: ghostIn 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.SlideGhostNarrow {
+  right: 6px;
+  bottom: -10px;
+  font-size: 108px;
+  color: rgba(255, 176, 32, 0.09);
+}
+
+@keyframes ghostIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* chapter rail */
+
+.DeckRail {
+  position: absolute;
+  right: 12px;
+  top: 72px;
+  bottom: 74px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 11px;
+  z-index: 6;
+}
+
+.RailItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.RailLabel {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.RailItemOn .RailLabel {
+  opacity: 1;
+  color: var(--deep);
+}
+
+.RailItem:hover .RailLabel {
+  opacity: 1;
+}
+
+.RailLine {
+  width: 16px;
+  height: 2px;
+  background-color: var(--rule);
+  transition: width 0.22s ease, background-color 0.22s ease;
+}
+
+.RailItem:hover .RailLine {
+  background-color: var(--deep);
+}
+
+.RailItemOn .RailLine {
+  width: 30px;
+  background-color: var(--amber);
+}
+
+.DeckDotOn .DeckDotInner {
+  animation: dotGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes dotGlow {
+  from {
+    box-shadow: 0 0 0 rgba(255, 176, 32, 0);
+  }
+  to {
+    box-shadow: 0 0 8px rgba(255, 176, 32, 0.8);
+  }
+}
+
+/* chapter menu */
+
+.DeckMenu {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: var(--paper);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 20px 28px;
+  animation: menuIn 0.3s ease both;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.DeckMenuHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule2);
+}
+
+.DeckMenuTitle {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--ink3);
+}
+
+.DeckMenuClose {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--rule);
+  border-radius: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.DeckMenuClose:active {
+  transform: scale(0.92);
+}
+
+.DeckMenuCloseText {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.DeckMenuList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.DeckMenuItem {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 14px;
+  padding: 15px 6px;
+  border-bottom: 1px solid var(--rule2);
+  transition: background-color 0.18s ease;
+}
+
+.DeckMenuItem:active {
+  background-color: rgba(255, 176, 32, 0.12);
+}
+
+.DeckMenuItemOn {
+  background-color: rgba(255, 176, 32, 0.08);
+}
+
+.DeckMenuNo {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+}
+
+.DeckMenuLabel {
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.DeckMenuItemOn .DeckMenuLabel {
+  color: var(--deep);
+}
+
+.DeckMenuNow {
+  margin-left: auto;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--amber);
+}
+
+.DeckMenuHint {
+  margin-top: auto;
+  padding-top: 18px;
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.7;
+  letter-spacing: 0.1em;
+  color: var(--ink3);
+}
