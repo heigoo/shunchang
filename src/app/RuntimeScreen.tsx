@@ -505,7 +505,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               <text className="RuntimeNextLabel">{tText('下一环节')}</text>
               <text className="RuntimeNextCount">
                 {remaining > 0
-                  ? `${tText('剩余')} ${pad3(remaining)}`
+                  ? tText('剩余 {n}', { n: pad3(remaining) })
                   : tText('最后环节')}
               </text>
             </view>

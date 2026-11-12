@@ -480,7 +480,8 @@ export function ListScreen(props: ListScreenProps) {
       <view className="ListHeader">
         <view className="ListBrandRow">
           <text className="ListBrand">{tText('顺场')}</text>
-          {xishi ? <text className="ListBrandSeal">{tText('喜事')}</text> : null}
+          {/* 印章保留中文，英文界面下避免长单词挤压右侧操作 */}
+          {xishi ? <text className="ListBrandSeal">喜事</text> : null}
         </view>
         <view className="ListHeaderRight">
           {isWide ? (

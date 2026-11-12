@@ -144,6 +144,7 @@ export const EN: Record<string, string> = {
   顺延下一环节: 'Shift next segment',
   顺延: 'Shift',
   剩余: 'Left',
+  '剩余 {n}': '{n} left',
   已超出: 'Over',
   已超时: 'Overdue',
   距锁定时刻: 'Until lock',
