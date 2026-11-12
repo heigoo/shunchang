@@ -46,6 +46,8 @@ export interface Copy {
     stat: string;
     progress: string;
     note: string;
+    tryHint: string;
+    allDone: string;
   };
   brand: {
     eyebrow: string;
@@ -53,7 +55,7 @@ export interface Copy {
     paras: string[];
     spec: string;
   };
-  quote: { eyebrow: string; title: string; body: string };
+  quote: { eyebrow: string; title: string; body: string; hint: string };
   cta: {
     eyebrow: string;
     title: string;
@@ -154,6 +156,8 @@ const ZH: Copy = {
     stat: '4 / 38 已完成',
     progress: '第 4 项进行中',
     note: '当前行琥珀高亮，顺延行保留原时间。',
+    tryHint: '点任意行 · 试着推进现场',
+    allDone: '全场完成 · 顺场收官',
   },
   brand: {
     eyebrow: '04 · 标记',
@@ -169,6 +173,7 @@ const ZH: Copy = {
     eyebrow: '05 · 名字',
     title: '顺，不是控。',
     body: '控场是把人按住，顺场是让事接上。',
+    hint: '点一下 · 再放一次',
   },
   cta: {
     eyebrow: '06 · 开始',
@@ -274,6 +279,8 @@ const EN: Copy = {
     stat: '4 / 38 COMPLETE',
     progress: 'ITEM 4 IN PROGRESS',
     note: 'Amber marks now; a shifted row keeps its original time.',
+    tryHint: 'TAP ANY ROW · MOVE THE DAY',
+    allDone: 'ALL DONE · THE DAY LANDED',
   },
   brand: {
     eyebrow: '04 · THE MARK',
@@ -289,6 +296,7 @@ const EN: Copy = {
     eyebrow: '05 · THE NAME',
     title: 'Shift, not control.',
     body: 'Control pins people down. Cue keeps things connected.',
+    hint: 'TAP · PLAY IT AGAIN',
   },
   cta: {
     eyebrow: '06 · START',

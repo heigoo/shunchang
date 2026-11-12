@@ -1,4 +1,4 @@
-import { useCallback, useState } from '@lynx-js/react';
+import { useCallback, useRef, useState } from '@lynx-js/react';
 
 import { reportViewportWidth, useIsWide } from '../src/platform/viewport';
 import { COPY } from './copy';
@@ -64,19 +64,31 @@ function BigMark() {
   );
 }
 
-function BoardLine({ row, wide }: { row: BoardRow; wide: boolean }) {
+function BoardLine({
+  row,
+  wide,
+  checked,
+  onTap,
+}: {
+  row: BoardRow;
+  wide: boolean;
+  checked: boolean;
+  onTap: () => void;
+}) {
   const now = row.state === 'now';
   const shift = row.state === 'shift';
-  const done = row.state === 'done';
+  const done = row.state === 'done' || checked;
   const rowClass = [
     'BoardRow',
+    'BoardRowTap',
     now ? 'BoardRowNow' : '',
     shift ? 'BoardRowShift' : '',
     done ? 'BoardRowDone' : '',
+    checked ? 'BoardRowChecked' : '',
   ].join(' ');
 
   return (
-    <view className={rowClass}>
+    <view className={rowClass} bindtap={onTap}>
       <view className="BoardTimeCol">
         <view className={now ? 'BoardDot BoardDotNow' : 'BoardDot'} />
         <text className="BoardTime T">{row.time}</text>
@@ -87,6 +99,9 @@ function BoardLine({ row, wide }: { row: BoardRow; wide: boolean }) {
         {wide ? <text className="BoardOwner T">{row.owner}</text> : null}
       </view>
       <text className="BoardTag T">{row.tag}</text>
+      <view className={checked ? 'BoardTick BoardTickOn' : 'BoardTick'}>
+        <text className="BoardTickText T">✓</text>
+      </view>
     </view>
   );
 }
@@ -95,12 +110,63 @@ export function App() {
   const [lang, setLang] = useState<Lang>('zh');
   const [joined, setJoined] = useState(false);
   const [toIndex, setToIndex] = useState(0);
+  const [scrollPct, setScrollPct] = useState(0);
+  const [showTop, setShowTop] = useState(false);
+  const [doneRows, setDoneRows] = useState<Record<number, boolean>>({});
+  const [fwKey, setFwKey] = useState(0);
+  const [markTap, setMarkTap] = useState(0);
+  const scrollRef = useRef<any>(null);
   const wide = useIsWide(1000);
   const c = COPY[lang];
 
   const go = useCallback((index: number) => {
     setToIndex(index);
   }, []);
+
+  const toTop = useCallback(() => {
+    (scrollRef.current as any)?.invoke?.({
+      method: 'scrollTo',
+      params: { offset: 0, index: 0, smooth: true },
+    });
+    if (toIndex === 0) {
+      setToIndex(1);
+      setTimeout(() => setToIndex(0), 40);
+    } else {
+      setToIndex(0);
+    }
+    setShowTop(false);
+  }, [toIndex]);
+
+  const onScroll = useCallback((event: any) => {
+    const detail = event?.detail;
+    if (!detail || typeof detail.scrollTop !== 'number') return;
+    const height =
+      typeof detail.scrollHeight === 'number' && detail.scrollHeight > 0
+        ? detail.scrollHeight
+        : 1;
+    const pct = Math.max(
+      0,
+      Math.min(100, Math.round((detail.scrollTop / (height * 0.85)) * 100)),
+    );
+    setScrollPct((prev) => (prev === pct ? prev : pct));
+    const nextShow = detail.scrollTop > 700;
+    setShowTop((prev) => (prev === nextShow ? prev : nextShow));
+  }, []);
+
+  const toggleRow = useCallback((index: number) => {
+    setDoneRows((prev) => ({ ...prev, [index]: !prev[index] }));
+  }, []);
+
+  const boardRows = c.board.rows;
+  const boardTargets = boardRows.filter((row) => row.state !== 'done').length;
+  const checkedCount = boardRows.reduce(
+    (count, _row, index) => count + (doneRows[index] ? 1 : 0),
+    0,
+  );
+  const boardAllDone = boardTargets > 0 && checkedCount >= boardTargets;
+  const boardPct = boardAllDone
+    ? 100
+    : Math.round(38 + (checkedCount / Math.max(1, boardTargets)) * 62);
 
   const splashStandard = lang === 'zh' ? splashStandardZh : splashStandardEn;
   const splashFestive = lang === 'zh' ? splashFestiveZh : splashFestiveEn;
@@ -116,6 +182,9 @@ export function App() {
         }
       }}
     >
+      <view className="ScrollBar">
+        <view className="ScrollBarFill" style={{ width: `${scrollPct}%` }} />
+      </view>
       <view className="Boot">
         <BigMark />
         <text className="BootWord T">{lang === 'zh' ? '顺场' : 'Cue'}</text>
@@ -124,11 +193,13 @@ export function App() {
         className="SiteScroll"
         scroll-orientation="vertical"
         scroll-to-index={toIndex}
+        bindscroll={onScroll}
+        ref={scrollRef}
       >
         {/* header */}
         <view className="Header">
           <view className={wide ? 'HeaderInner' : 'HeaderInner HeaderInnerNarrow'}>
-            <view className="Lockup" bindtap={() => go(0)}>
+            <view className="Lockup" bindtap={toTop}>
               <Mark />
               <text className={lang === 'en' ? 'Wordmark WordmarkEn T' : 'Wordmark T'}>
                 {lang === 'zh' ? '顺场' : 'Cue'}
@@ -138,18 +209,22 @@ export function App() {
 
             {wide ? (
               <view className="Nav">
-                <text className="NavItem T" bindtap={() => go(SECTION.product)}>
-                  {c.nav.product}
-                </text>
-                <text className="NavItem T" bindtap={() => go(SECTION.board)}>
-                  {c.nav.board}
-                </text>
-                <text className="NavItem T" bindtap={() => go(SECTION.brand)}>
-                  {c.nav.brand}
-                </text>
-                <text className="NavItem NavItemStrong T" bindtap={() => go(SECTION.start)}>
-                  {c.nav.start}
-                </text>
+                <view className="NavItemWrap" bindtap={() => go(SECTION.product)}>
+                  <text className="NavItem T">{c.nav.product}</text>
+                  <view className="NavLine" />
+                </view>
+                <view className="NavItemWrap" bindtap={() => go(SECTION.board)}>
+                  <text className="NavItem T">{c.nav.board}</text>
+                  <view className="NavLine" />
+                </view>
+                <view className="NavItemWrap" bindtap={() => go(SECTION.brand)}>
+                  <text className="NavItem T">{c.nav.brand}</text>
+                  <view className="NavLine" />
+                </view>
+                <view className="NavItemWrap" bindtap={() => go(SECTION.start)}>
+                  <text className="NavItem NavItemStrong T">{c.nav.start}</text>
+                  <view className="NavLine" />
+                </view>
               </view>
             ) : null}
 
@@ -229,6 +304,7 @@ export function App() {
                     src={splashStandard}
                     mode="aspectFill"
                   />
+                  <view className="PhoneSheen" />
                 </view>
                 <text className="PhoneLabel T">{c.hero.standard}</text>
               </view>
@@ -239,6 +315,7 @@ export function App() {
                     src={splashFestive}
                     mode="aspectFill"
                   />
+                  <view className="PhoneSheen PhoneSheenLate" />
                 </view>
                 <text className="PhoneLabel T">{c.hero.festive}</text>
               </view>
@@ -351,27 +428,52 @@ export function App() {
             </view>
 
             <view className="BoardCol">
-              <view className="Board">
+              {boardAllDone ? (
+                <view className="BoardCelebrate">
+                  {CELEBRATE.slice(0, 14).map((piece, index) => (
+                    <view
+                      key={index}
+                      className={`CelebratePiece BoardPiece ${piece.color} ${piece.size} ${piece.delay}`}
+                      style={{ left: `${piece.left}%` }}
+                    />
+                  ))}
+                </view>
+              ) : null}
+              <view className={boardAllDone ? 'Board BoardLanded' : 'Board'}>
                 <view className="BoardHead">
                   <text className="BoardDay T">{c.board.day}</text>
                   <text className="BoardMeta T">{c.board.meta}</text>
                 </view>
                 <view className="BoardRows">
-                  {c.board.rows.map((row) => (
-                    <BoardLine key={row.time} row={row} wide={wide} />
+                  {boardRows.map((row, index) => (
+                    <BoardLine
+                      key={row.time}
+                      row={row}
+                      wide={wide}
+                      checked={!!doneRows[index]}
+                      onTap={() => toggleRow(index)}
+                    />
                   ))}
                 </view>
                 <view className="BoardFoot">
                   <text className="BoardStat T">{c.board.stat}</text>
                   <view className="BoardProgress">
                     <view className="BoardTrack">
-                      <view className="BoardFill" />
+                      <view
+                        className="BoardFill"
+                        style={{ width: `${boardPct}%` }}
+                      />
                     </view>
                     <text className="BoardStat T">{c.board.progress}</text>
                   </view>
                 </view>
               </view>
-              <text className="BoardNote T">{c.board.note}</text>
+              <view className="BoardNoteRow">
+                <text className="BoardNote T">{c.board.note}</text>
+                <text className={boardAllDone ? 'BoardHint BoardHintOn T' : 'BoardHint T'}>
+                  {boardAllDone ? c.board.allDone : c.board.tryHint}
+                </text>
+              </view>
             </view>
           </view>
         </view>
@@ -381,10 +483,15 @@ export function App() {
           <view className={wide ? 'SectionInner' : 'SectionInner SectionInnerNarrow'}>
             <view className="SectionRule" />
             <view className={wide ? 'BrandInner' : 'BrandInner BrandInnerNarrow'}>
-              <view className="BrandMarkCard">
+              <view
+                className="BrandMarkCard"
+                bindtap={() => setMarkTap((n) => n + 1)}
+              >
                 <view className="MarkHalo" />
                 <view className="MarkHalo MarkHalo2" />
-                <BigMark />
+                <view key={markTap} className={markTap > 0 ? 'MarkPop MarkPopOn' : 'MarkPop'}>
+                  <BigMark />
+                </view>
               </view>
               <view className="BrandCopy">
                 <text className="Eyebrow T">{c.brand.eyebrow}</text>
@@ -406,8 +513,8 @@ export function App() {
         </view>
 
         {/* quote */}
-        <view className="Quote">
-          <view className="Fireworks">
+        <view className="Quote" bindtap={() => setFwKey((n) => n + 1)}>
+          <view className="Fireworks" key={fwKey}>
             {BURSTS.map((burst, index) => (
               <view
                 key={index}
@@ -428,6 +535,12 @@ export function App() {
               </view>
             ))}
           </view>
+          {fwKey > 0 ? (
+            <view className="QuoteWave" key={fwKey}>
+              <view className="QuoteWaveRing" />
+              <view className="QuoteWaveRing QuoteWaveRing2" />
+            </view>
+          ) : null}
           <view className="QuoteInner">
             {wide ? (
               <text className={lang === 'en' ? 'QuoteGlyph QuoteGlyphEn T' : 'QuoteGlyph T'}>
@@ -439,6 +552,9 @@ export function App() {
               {c.quote.title}
             </text>
             <text className="QuoteBody T">{c.quote.body}</text>
+            <text className={wide ? 'QuoteHint T' : 'QuoteHint QuoteHintNarrow T'}>
+              {c.quote.hint}
+            </text>
           </view>
         </view>
 
@@ -510,6 +626,11 @@ export function App() {
           </view>
         </view>
       </scroll-view>
+      {showTop ? (
+        <view className={wide ? 'ToTop' : 'ToTop ToTopNarrow'} bindtap={toTop}>
+          <text className="ToTopArrow T">↑</text>
+        </view>
+      ) : null}
     </view>
   );
 }
