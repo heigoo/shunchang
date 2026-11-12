@@ -1,6 +1,12 @@
 import pipe from 'sparkling-method';
 import { getItem, setItem } from 'sparkling-storage';
 
+import {
+  getDesktopStorage,
+  isDesktopRuntime,
+  resetDesktopRuntimeForTest,
+} from '../platform/desktop';
+
 export interface KVStore {
   get(key: string): string | null;
   set(key: string, value: string): void;
@@ -11,6 +17,7 @@ export interface KVStore {
 
 type Backend =
   | 'web'
+  | 'desktop'
   | 'sparkling-storage'
   | 'lynx-sync'
   | 'lynx-async'
@@ -52,6 +59,10 @@ function hasSparklingStorage(): boolean {
 function detectBackend(): Backend {
   if (hasSparklingStorage()) {
     return 'sparkling-storage';
+  }
+
+  if (isDesktopRuntime()) {
+    return 'desktop';
   }
 
   try {
@@ -250,6 +261,115 @@ function hydrateSparkling(keys: string[]): Promise<void> {
   ).then(() => undefined);
 }
 
+function readDesktop(key: string): string | null {
+  // 首屏数据由 hydrate 预载进内存；未水合前与 Sparkling 一致返回 null。
+  return memory.get(key) ?? null;
+}
+
+function writeDesktop(key: string, value: string): void {
+  memory.set(key, value);
+  try {
+    const bridge = getDesktopStorage();
+    if (bridge) {
+      bridge.set(key, value).catch(() => undefined);
+    }
+  } catch {
+    // Keep the in-memory copy when persistence is unavailable.
+  }
+}
+
+/** 等待桌面桥落盘完成；超时或失败也 resolve，保持既有容错风格。 */
+function writeDesktopAsync(key: string, value: string): Promise<void> {
+  memory.set(key, value);
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (!settled) {
+        settled = true;
+        resolve();
+      }
+    };
+    const timer = setTimeout(finish, 600);
+
+    try {
+      const bridge = getDesktopStorage();
+      if (!bridge) {
+        clearTimeout(timer);
+        finish();
+        return;
+      }
+      bridge.set(key, value).then(
+        () => {
+          clearTimeout(timer);
+          finish();
+        },
+        () => {
+          clearTimeout(timer);
+          finish();
+        },
+      );
+    } catch {
+      clearTimeout(timer);
+      finish();
+    }
+  });
+}
+
+function removeDesktop(key: string): void {
+  memory.delete(key);
+  try {
+    const bridge = getDesktopStorage();
+    if (bridge) {
+      bridge.remove(key).catch(() => undefined);
+    }
+  } catch {
+    // Ignore.
+  }
+}
+
+/** 桌面桥支持整表读取，一次性把所有键值载入内存。 */
+function hydrateDesktop(): Promise<void> {
+  const bridge = getDesktopStorage();
+  if (!bridge) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (!settled) {
+        settled = true;
+        resolve();
+      }
+    };
+    const timer = setTimeout(finish, 2000);
+
+    try {
+      bridge.getAll().then(
+        (all) => {
+          if (all && typeof all === 'object') {
+            Object.keys(all).forEach((key) => {
+              const value = all[key];
+              if (typeof value === 'string') {
+                memory.set(key, value);
+              }
+            });
+          }
+          clearTimeout(timer);
+          finish();
+        },
+        () => {
+          clearTimeout(timer);
+          finish();
+        },
+      );
+    } catch {
+      clearTimeout(timer);
+      finish();
+    }
+  });
+}
+
 function readLynxSync(key: string): string | null {
   try {
     const value = nativeValue(getLynx().getStorageSync(key));
@@ -410,6 +530,9 @@ export const storage: KVStore = {
       if (backend === 'sparkling-storage') {
         return readSparkling(key);
       }
+      if (backend === 'desktop') {
+        return readDesktop(key);
+      }
       if (backend === 'lynx-sync') {
         return readLynxSync(key);
       }
@@ -432,6 +555,8 @@ export const storage: KVStore = {
         writeWeb(key, value);
       } else if (backend === 'sparkling-storage') {
         writeSparkling(key, value);
+      } else if (backend === 'desktop') {
+        writeDesktop(key, value);
       } else if (backend === 'lynx-sync') {
         writeLynxSync(key, value);
       } else if (backend === 'lynx-async') {
@@ -448,8 +573,12 @@ export const storage: KVStore = {
 
   setAsync(key: string, value: string): Promise<void> {
     try {
-      if (currentBackend() === 'sparkling-storage') {
+      const backend = currentBackend();
+      if (backend === 'sparkling-storage') {
         return writeSparklingAsync(key, value);
+      }
+      if (backend === 'desktop') {
+        return writeDesktopAsync(key, value);
       }
     } catch {
       // Fall through to the synchronous path.
@@ -469,6 +598,8 @@ export const storage: KVStore = {
         }
       } else if (backend === 'sparkling-storage') {
         removeSparkling(key);
+      } else if (backend === 'desktop') {
+        removeDesktop(key);
       } else if (backend === 'lynx-sync') {
         memory.delete(key);
         const lynx = getLynx();
@@ -492,9 +623,19 @@ export const storage: KVStore = {
     if (backend === 'sparkling-storage') {
       return hydrateSparkling(keys);
     }
+    if (backend === 'desktop') {
+      return hydrateDesktop();
+    }
     if (backend === 'lynx-session') {
       return hydrateLynxSession(keys);
     }
     return Promise.resolve();
   },
 };
+
+/** 仅供测试：清空缓存后端与内存副本，避免用例之间互相污染。 */
+export function resetStorageForTest(): void {
+  cachedBackend = null;
+  memory.clear();
+  resetDesktopRuntimeForTest();
+}
