@@ -23,6 +23,10 @@ export function reportViewportWidth(width: number): void {
 function readGlobalWidth(): number | null {
   try {
     const global = globalThis as any;
+    const props = global.lynx?.__globalProps;
+    if (props && typeof props.siteWidth === 'number' && props.siteWidth > 0) {
+      return props.siteWidth;
+    }
     if (typeof global.innerWidth === 'number' && global.innerWidth > 0) {
       return global.innerWidth;
     }
@@ -103,9 +107,24 @@ export function useIsWide(breakpoint = 1024): boolean {
     if (latestWidth > 0) {
       applyWidth(latestWidth);
     }
-    measureRootWidth(applyWidth);
+
+    // 首帧可能还没完成布局，Web 上 layoutchange 也不一定补发；
+    // 这里做几次有界重测，拿到宽度就停止依赖计时器。
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const measure = () => measureRootWidth(applyWidth);
+    measure();
+    [80, 240, 800].forEach((delay) => {
+      timers.push(setTimeout(measure, delay));
+    });
 
     let removeResize: (() => void) | null = null;
+    const propsTimer = setInterval(() => {
+      const next = readGlobalWidth();
+      if (next !== null) {
+        applyWidth(next);
+      }
+    }, 800);
+
     try {
       const win = (globalThis as any).window;
       if (win && typeof win.addEventListener === 'function') {
@@ -125,6 +144,8 @@ export function useIsWide(breakpoint = 1024): boolean {
 
     return () => {
       cancelled = true;
+      clearInterval(propsTimer);
+      timers.forEach((timer) => clearTimeout(timer));
       widthListeners.delete(applyWidth);
       removeResize?.();
     };

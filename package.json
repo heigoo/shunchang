@@ -6,7 +6,9 @@
     "build": "rspeedy build",
     "dev": "rspeedy dev",
     "preview": "rspeedy preview",
-    "test": "rstest run"
+    "test": "rstest run",
+    "site:dev": "rspeedy dev -c site.lynx.config.ts",
+    "site:build": "rspeedy build -c site.lynx.config.ts"
   },
   "dependencies": {
     "@lynx-js/react": "^0.126.2",
