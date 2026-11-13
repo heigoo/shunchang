@@ -413,6 +413,24 @@ export async function downloadTextFile(
   return webDownload(filename, text, mime);
 }
 
+/** 全量备份分享：Android 调系统分享面板发送 JSON 文件，其余环境降级为下载/保存。 */
+export async function shareTextFile(
+  filename: string,
+  text: string,
+  mime: string = 'application/json',
+): Promise<boolean> {
+  const host = readAndroidHost();
+  if (host && typeof host.shareJson === 'function') {
+    try {
+      host.shareJson(filename, text);
+      return true;
+    } catch {
+      // 分享通道异常时退回保存/下载，避免备份丢失。
+    }
+  }
+  return downloadTextFile(filename, text, mime);
+}
+
 /** Android：把 HTML 写到缓存并通过系统分享面板发送。 */
 export function shareHtmlFile(filename: string, html: string): boolean {
   const host = readAndroidHost();

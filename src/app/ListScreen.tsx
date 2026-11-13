@@ -45,7 +45,7 @@ import {
   parseBackup,
   previewBackup,
 } from './backupOps';
-import { downloadTextFile, exportSheetFile, pickJsonFile } from './share';
+import { downloadTextFile, exportSheetFile, pickJsonFile, shareTextFile } from './share';
 
 export interface ListScreenProps {
   onOpenSheet(id: string): void;
@@ -391,6 +391,12 @@ export function ListScreen(props: ListScreenProps) {
   const exportAllBackup = () => {
     void downloadTextFile(backupFileName(), encodeBackup()).then((ok) => {
       showToast(ok ? tText('已导出全量备份') : tText('当前环境无法导出文件'));
+    });
+  };
+
+  const shareAllBackup = () => {
+    void shareTextFile(backupFileName(), encodeBackup()).then((ok) => {
+      showToast(ok ? tText('已分享全量备份') : tText('当前环境无法分享文件'));
     });
   };
 
@@ -1002,8 +1008,16 @@ export function ListScreen(props: ListScreenProps) {
               </view>
               <view className="BackupAction">
                 <Button
-                  label={tText('选择备份文件导入')}
+                  label={tText('分享备份')}
                   kind="secondary"
+                  block
+                  onTap={shareAllBackup}
+                />
+              </view>
+              <view className="BackupAction">
+                <Button
+                  label={tText('选择备份文件导入')}
+                  kind="tertiary"
                   block
                   onTap={handleBackupFile}
                 />

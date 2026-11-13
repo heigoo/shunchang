@@ -18,6 +18,7 @@ import {
   isWeb,
   pickJsonFile,
   resetNativeHostForTest,
+  shareTextFile,
 } from '../share';
 
 type BridgeCall = (
@@ -340,6 +341,20 @@ describe('android host bridge', () => {
     expect(pickJson).toHaveBeenCalledTimes(1);
     emitter.emit('shunchang:pickedJson', [{ text: '{"ok":true}' }]);
     expect(onText).toHaveBeenCalledWith('{"ok":true}');
+  });
+
+  it('shares a full backup through the native share bridge', async () => {
+    const shareJson = rstest.fn();
+    installAndroidHost(
+      { pickJson: () => {}, saveJson: () => {}, shareJson },
+      makeEmitter(),
+    );
+
+    await expect(
+      shareTextFile('backup.json', '{"v":2}'),
+    ).resolves.toBe(true);
+
+    expect(shareJson).toHaveBeenCalledWith('backup.json', '{"v":2}');
   });
 
   it('ignores a canceled native pick', () => {
