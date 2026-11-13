@@ -272,9 +272,8 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const view = buildRuntimeView(sheet, runtime);
   const finished = view.finished;
   const timeline = computeTimeline(sheet, runtime.offsetMin);
-  const upcomingStart = Math.max(runtime.currentIndex + 1, 0);
-  const upcomingRows = timeline.rows.slice(upcomingStart, upcomingStart + 3);
-  const remaining = Math.max(sheet.items.length - upcomingStart, 0);
+  const total = sheet.items.length;
+  const doneCount = Math.min(Math.max(runtime.currentIndex, 0), total);
 
   const commit = (next: RuntimeState) => {
     saveRuntime(next);
@@ -344,6 +343,13 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   };
 
   if (finished) {
+    const completedCount = sheet.items.filter(
+      (item) => runtime.actuals[item.id]?.result === 'done',
+    ).length;
+    const skippedCount = sheet.items.filter(
+      (item) => runtime.actuals[item.id]?.result === 'skipped',
+    ).length;
+
     return (
       <view className="RuntimeViewport">
         <view
@@ -351,7 +357,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
         style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
       >
           <view className="DoneBody">
-            <text className="DoneLabel">{tText('流程完成')}</text>
+            <view className="DoneHead">
+              <text className="DoneLabel">RUN COMPLETE · 执行回执</text>
+              <text className="DoneStamp">{tText('完成')}</text>
+            </view>
             <text className="DoneTitle">{tText('已完成')}</text>
             <text className="DoneName">
               {sheet.name.length > 0 ? sheet.name : tText('未命名手册')}
@@ -360,6 +369,18 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <view className="DoneRule" />
 
             <view className="DoneStat">
+              <text className="DoneStatLabel">{tText('环节完成')}</text>
+              <text className="DoneStatValue">{`${pad3(completedCount)} / ${pad3(
+                total,
+              )}`}</text>
+            </view>
+            {skippedCount > 0 ? (
+              <view className="DoneStat">
+                <text className="DoneStatLabel">{tText('跳过')}</text>
+                <text className="DoneStatValue">{pad3(skippedCount)}</text>
+              </view>
+            ) : null}
+            <view className="DoneStat">
               <text className="DoneStatLabel">{tText('计划总时长')}</text>
               <text className="DoneStatValue">{formatDuration(view.planTotalMin)}</text>
             </view>
@@ -367,10 +388,14 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               <text className="DoneStatLabel">{tText('实际总时长')}</text>
               <text className="DoneStatValue">{formatDuration(view.actualTotalMin)}</text>
             </view>
-            <view className="DoneStat">
+            <view className="DoneStat DoneStat--last">
               <text className="DoneStatLabel">{tText('差值')}</text>
-              <text className="DoneStatValue">{diffText(view.diffMin)}</text>
+              <text className="DoneStatValue DoneStatValue--accent">
+                {diffText(view.diffMin)}
+              </text>
             </view>
+
+            <text className="DoneNote">{tText('顺场 · 现场调度')}</text>
           </view>
 
           <view className="DoneActions">
@@ -429,9 +454,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               <view className="RuntimeBack" bindtap={onBack}>
                 <text className="RuntimeBackText">←</text>
               </view>
-              <text className="RuntimeTopName">
-                {sheet.name.length > 0 ? sheet.name : tText('未命名手册')}
-              </text>
+              <view className="RuntimeTopNameWrap">
+                <text className="RuntimeTopKicker">{tText('执行台')}</text>
+                <text className="RuntimeTopName">
+                  {sheet.name.length > 0 ? sheet.name : tText('未命名手册')}
+                </text>
+              </view>
             </view>
             <view className="RuntimeTopBadges">
             {view.hasConflict ? (
@@ -507,39 +535,57 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             </view>
           ) : null}
 
-          <view className="RuntimeNext">
-            <view className="RuntimeNextHead">
-              <text className="RuntimeNextLabel">{tText('下一环节')}</text>
-              <text className="RuntimeNextCount">
-                {remaining > 0
-                  ? tText('剩余 {n}', { n: pad3(remaining) })
-                  : tText('最后环节')}
+          <view className="RuntimeRail">
+            <view className="RuntimeRailHead">
+              <text className="RuntimeRailLabel">{tText('环节轨道')}</text>
+              <text className="RuntimeRailCount">
+                {`${pad3(doneCount)} / ${pad3(total)}`}
               </text>
             </view>
-            {upcomingRows.length > 0 ? (
-              <view className="RuntimeNextRows">
-                {upcomingRows.map((row) => {
-                  const item = sheet.items[row.index];
-                  return (
-                    <view className="RuntimeNextRow" key={item.id}>
-                      <text className="RuntimeNextNo">{pad3(row.index + 1)}</text>
-                      <text className="RuntimeNextTime">
-                        {formatClockDisplay(row.displayStart)}
-                      </text>
-                      <text className="RuntimeNextValue">
+            <scroll-view
+              className="RuntimeRailScroll"
+              scroll-orientation="vertical"
+            >
+              {timeline.rows.map((row, index) => {
+                const item = sheet.items[row.index];
+                const state =
+                  index < runtime.currentIndex
+                    ? 'done'
+                    : index === runtime.currentIndex
+                      ? 'active'
+                      : 'next';
+                const owner = item.owner.trim();
+                return (
+                  <view
+                    className={`RailRow RailRow--${state}`}
+                    key={`rail-${item.id}`}
+                  >
+                    <view className="RailDot" />
+                    <text className="RailNo">{pad3(index + 1)}</text>
+                    <text className="RailTime">
+                      {formatClockDisplay(row.displayStart)}
+                    </text>
+                    <view className="RailMain">
+                      <text className="RailName">
                         {item.name.length > 0
                           ? item.name
                           : tText('未命名环节')}
                       </text>
+                      {owner.length > 0 ? (
+                        <text className="RailOwner">{owner}</text>
+                      ) : null}
                     </view>
-                  );
-                })}
-              </view>
-            ) : (
-              <text className="RuntimeNextEmpty">
-                {tText('已是最后一个环节')}
-              </text>
-            )}
+                    <text className="RailState">
+                      {state === 'done'
+                        ? tText('已完成')
+                        : state === 'active'
+                          ? tText('进行中')
+                          : tText('待执行')}
+                    </text>
+                  </view>
+                );
+              })}
+            </scroll-view>
           </view>
         </view>
 
@@ -561,9 +607,8 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 setSyncOpen(true);
               }}
             >
-              <text className="RuntimeSyncBtnText">
-                {tText('同步码 {code}', { code: syncCodeText })}
-              </text>
+              <text className="RuntimeSyncLabel">{tText('同步码')}</text>
+              <text className="RuntimeSyncCode">{syncCodeText}</text>
               <text className="RuntimeSyncChevron">›</text>
             </view>
           </view>
@@ -571,6 +616,18 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
         {shiftOpen ? null : (
           <view className="RuntimeActions">
+            <view className="RuntimeActionsHead">
+              <text className="RuntimeActionsLabel">
+                {tText('本环节操作')}
+              </text>
+              {currentRow ? (
+                <text className="RuntimeActionsTime">
+                  {`${formatClockDisplay(currentRow.displayStart)} — ${formatClockDisplay(
+                    currentRow.displayEnd,
+                  )}`}
+                </text>
+              ) : null}
+            </view>
             {role === 'follower' ? (
               <text className="RuntimeReadonly">
                 {tText('本设备为跟随角色，不能推进环节')}
