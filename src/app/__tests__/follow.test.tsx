@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render } from '@lynx-js/react/testing-library';
-import { beforeEach, expect, rstest, test } from '@rstest/core';
+import { afterEach, beforeEach, expect, rstest, test } from '@rstest/core';
 
 import type { Sheet } from '../../domain/types';
 import {
@@ -51,8 +51,25 @@ function makeSheet(): Sheet {
   };
 }
 
+const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location');
+
+function stubSearch(search: string): void {
+  Object.defineProperty(globalThis, 'location', {
+    value: { origin: 'https://example.com', pathname: '/follow.html', search, hash: '' },
+    configurable: true,
+  });
+}
+
 beforeEach(() => {
   clearAllForTest();
+});
+
+afterEach(() => {
+  if (originalLocation) {
+    Object.defineProperty(globalThis, 'location', originalLocation);
+  } else {
+    delete (globalThis as any).location;
+  }
 });
 
 test('renders the follower view with sync trail and item states', async () => {
@@ -155,4 +172,59 @@ test('takes over the owner only after confirmation', async () => {
 
   expect(onTakeOver).toHaveBeenCalledWith(SHEET_ID);
   expect(getRuntime(SHEET_ID)?.ownerEpoch).toBe(2);
+});
+
+test('preselects the owner from the o query parameter', async () => {
+  stubSearch('?follow=1&o=%E6%91%84%E5%BD%B1');
+  saveSheet(makeSheet());
+  saveRuntime({
+    sheetId: SHEET_ID,
+    currentIndex: 2,
+    actuals: {},
+    offsetMin: 0,
+    autoOffsetMin: 0,
+    manualOffsetMin: 0,
+    execVersion: 3,
+    lastSyncAt: Date.now(),
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
+  });
+
+  const { findAllByText, queryByText } = render(
+    <FollowScreen sheetId={SHEET_ID} onBack={() => {}} followOnly />,
+  );
+
+  expect((await findAllByText('合影')).length).toBeGreaterThan(0);
+  expect(queryByText('迎宾签到')).toBeNull();
+  expect(queryByText('仪式开始')).toBeNull();
+});
+
+test('shows the current item countdown for followers', async () => {
+  saveSheet(makeSheet());
+  saveRuntime({
+    sheetId: SHEET_ID,
+    currentIndex: 1,
+    actuals: {},
+    offsetMin: 0,
+    autoOffsetMin: 0,
+    manualOffsetMin: 0,
+    execVersion: 3,
+    lastSyncAt: Date.now(),
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
+  });
+
+  const { findByText } = render(
+    <FollowScreen sheetId={SHEET_ID} onBack={() => {}} followOnly />,
+  );
+
+  expect(await findByText(/本环节剩余|本环节已超时/)).toBeInTheDocument();
 });

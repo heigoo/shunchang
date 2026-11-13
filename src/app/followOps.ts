@@ -1,3 +1,5 @@
+import { formatShortCode } from '../domain/codec';
+import type { TimelineRow } from '../domain/timeline';
 import type { RuntimeState, Sheet } from '../domain/types';
 import { t } from '../i18n';
 
@@ -103,4 +105,73 @@ export function ownerOptions(sheet: Sheet): string[] {
   }
 
   return options;
+}
+
+/** 从跟随链接的查询串读取 `o=<负责人>`，无值时返回空串。 */
+export function ownerFromSearch(search: string): string {
+  const query = typeof search === 'string' ? search.replace(/^\?/, '') : '';
+  if (query.length === 0) {
+    return '';
+  }
+
+  for (const part of query.split('&')) {
+    const separator = part.indexOf('=');
+    if (separator < 0 || part.slice(0, separator) !== 'o') {
+      continue;
+    }
+    const raw = part.slice(separator + 1).replace(/\+/g, ' ');
+    try {
+      return decodeURIComponent(raw).trim();
+    } catch {
+      return raw.trim();
+    }
+  }
+
+  return '';
+}
+
+export interface SyncCopyInput {
+  sheetName: string;
+  execVersion: number;
+  now: number;
+  /** 原始 9 位短码；空串表示当前版本超出短码范围。 */
+  shortCode: string;
+}
+
+/** 可直接发到微信群的中文同步文案：手册名、版本、时间、短码。 */
+export function buildSyncCopyText(input: SyncCopyInput): string {
+  const name = input.sheetName.trim().length > 0 ? input.sheetName.trim() : t('未命名手册');
+  const date = new Date(input.now);
+  const time = `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${clockOf(input.now)}`;
+  const code = formatShortCode(input.shortCode);
+  const codeLine =
+    code.length > 0
+      ? t('九位短码 {code}', { code })
+      : t('当前版本无法用短码同步，请用二维码/链接');
+
+  return [
+    `【顺场】${name} · ${t('第 {n} 版', { n: input.execVersion })}`,
+    t('同步时间 {time}', { time }),
+    codeLine,
+  ].join('\n');
+}
+
+export interface FollowCountdownTarget {
+  kind: 'current' | 'next';
+  targetMin: number;
+}
+
+/** 跟随视图：当前环节剩余时间；尚未开始时显示下一环节倒计时。 */
+export function followCountdownTarget(
+  rows: TimelineRow[],
+  currentIndex: number,
+  total: number,
+): FollowCountdownTarget | null {
+  if (currentIndex >= 0 && currentIndex < total && rows[currentIndex]) {
+    return { kind: 'current', targetMin: rows[currentIndex].displayEnd };
+  }
+  if (currentIndex < 0 && total > 0 && rows[0]) {
+    return { kind: 'next', targetMin: rows[0].displayStart };
+  }
+  return null;
 }

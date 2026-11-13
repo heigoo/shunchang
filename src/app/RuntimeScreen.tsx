@@ -4,7 +4,7 @@ import { runOnBackground, runOnMainThread, useEffect, useRef, useState } from '@
 
 import { MAX_INSERTED_ITEMS, buildExecutionSheet } from '../domain/execution';
 import { computeTimeline, formatClockDisplay, formatDuration } from '../domain/timeline';
-import { encodeShortCode } from '../domain/codec';
+import { encodeShortCode, formatShortCode } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
 import { useIsWide } from '../platform/viewport';
 import { t, useT } from '../i18n';
@@ -18,6 +18,7 @@ import {
 import type { RuntimeSnapshot } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
+import { formatCountdown, secondsUntil } from './countdown';
 import {
   applyLockOverride,
   applyShift,
@@ -39,8 +40,12 @@ import {
   setScreenAwake,
 } from './share';
 import { ShiftPanel } from './ShiftPanel';
+import { SyncBoard } from './SyncBoard';
 import { SyncPanel } from './SyncPanel';
 import { webWakeLockSupported } from './webBridge';
+
+// 跟随端复用同一套倒计时；保留原有导出路径，避免测试与调用方迁移。
+export { formatCountdown, secondsUntil };
 
 export interface RuntimeScreenProps {
   sheetId: string;
@@ -117,42 +122,6 @@ function offsetLabel(offsetMin: number): string {
     : t('早 {n} 分', { n: Math.abs(offsetMin) });
 }
 
-export function secondsUntil(targetMin: number, nowMs: number): number {
-  const now = new Date(nowMs);
-  const nowSec = Math.floor(nowMs / 1000);
-  // 计划时间是本地墙钟分钟，日界线必须用本地零点而不是 UTC 零点。
-  const dayStart = Math.floor(
-    new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000,
-  );
-  let best: number | null = null;
-
-  for (const shift of [-1, 0, 1]) {
-    const targetSec = dayStart + shift * 86400 + targetMin * 60;
-    const diff = targetSec - nowSec;
-    if (best === null || Math.abs(diff) < Math.abs(best)) {
-      best = diff;
-    }
-  }
-
-  return Math.round(best ?? 0);
-}
-
-export function formatCountdown(seconds: number): {
-  sign: 'left' | 'over';
-  text: string;
-} {
-  const over = seconds < 0;
-  const total = Math.abs(seconds);
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const rest = total % 60;
-  const text =
-    total >= 6000
-      ? `${pad2(hours)}:${pad2(minutes)}:${pad2(rest)}`
-      : `${pad2(minutes)}:${pad2(rest)}`;
-  return { sign: over ? 'over' : 'left', text };
-}
-
 export const LOW_BATTERY_THRESHOLD = 20;
 
 /** 低于 20% 且用户未关闭提示时才显示导出备份提醒。 */
@@ -192,6 +161,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [role] = useState<'owner' | 'follower'>(() => getRole());
   const [shiftOpen, setShiftOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [skipOpen, setSkipOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -213,6 +183,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
 
   const shiftPresence = usePresence(shiftOpen);
   const syncPresence = usePresence(syncOpen);
+  const boardPresence = usePresence(boardOpen);
   const endPresence = usePresence(endOpen);
   const skipPresence = usePresence(skipOpen);
   const adjustPresence = usePresence(adjustOpen);
@@ -223,6 +194,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     if (
       !shiftOpen &&
       !syncOpen &&
+      !boardOpen &&
       !endOpen &&
       !skipOpen &&
       !adjustOpen &&
@@ -256,13 +228,26 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
         setShiftOpen(false);
         return true;
       }
+      if (boardOpen) {
+        setBoardOpen(false);
+        return true;
+      }
       if (syncOpen) {
         setSyncOpen(false);
         return true;
       }
       return false;
     });
-  }, [shiftOpen, syncOpen, endOpen, skipOpen, adjustOpen, historyOpen, restoreIndex]);
+  }, [
+    shiftOpen,
+    syncOpen,
+    boardOpen,
+    endOpen,
+    skipOpen,
+    adjustOpen,
+    historyOpen,
+    restoreIndex,
+  ]);
 
   useEffect(() => {
     viewportWidthListener = (width: number) => {
@@ -607,8 +592,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   };
 
   const syncCode = encodeShortCode(sheet.id, runtime);
-  const syncCodeText =
-    syncCode.length === 6 ? `${syncCode.slice(0, 3)}-${syncCode.slice(3)}` : syncCode;
+  const syncCodeText = formatShortCode(syncCode);
 
   const undoBar = undoLabel ? (
     <view className="RuntimeUndo">
@@ -926,7 +910,11 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               }}
             >
               <text className="RuntimeSyncLabel">{tText('同步码')}</text>
-              <text className="RuntimeSyncCode">{syncCodeText}</text>
+              <text className={syncCodeText.length > 0 ? 'RuntimeSyncCode' : 'RuntimeSyncCodeFallback'}>
+                {syncCodeText.length > 0
+                  ? syncCodeText
+                  : tText('请用二维码/链接')}
+              </text>
               <text className="RuntimeSyncChevron">›</text>
             </view>
           </view>
@@ -1275,6 +1263,21 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             closing={syncPresence.closing}
             onClose={() => {
               setSyncOpen(false);
+            }}
+            onOpenBoard={() => {
+              setSyncOpen(false);
+              setBoardOpen(true);
+            }}
+          />
+        ) : null}
+
+        {boardPresence.mounted ? (
+          <SyncBoard
+            sheet={sheet}
+            runtime={runtime}
+            closing={boardPresence.closing}
+            onClose={() => {
+              setBoardOpen(false);
             }}
           />
         ) : null}

@@ -8,6 +8,7 @@ import { setFollowUrlForTest } from '../../platform/followConfig';
 import { callDesktopBridge, desktopOpenPrintHtml } from '../desktopBridge';
 import {
   buildFollowUrl,
+  buildOwnerFollowUrl,
   buildShareUrl,
   buildShortFollowUrl,
   buildShortUrl,
@@ -142,6 +143,17 @@ describe('share urls', () => {
 
     expect(buildShortFollowUrl('ABC-DEF')).toBe(
       'https://follow.example.com/follow.html?follow=1#s=ABC-DEF',
+    );
+  });
+
+  it('adds the owner query before the payload hash', () => {
+    setFollowUrlForTest('https://follow.example.com/follow.html');
+
+    expect(buildOwnerFollowUrl('abc', '摄影')).toBe(
+      `https://follow.example.com/follow.html?follow=1&o=${encodeURIComponent('摄影')}#d=abc`,
+    );
+    expect(buildOwnerFollowUrl('abc', '  ')).toBe(
+      'https://follow.example.com/follow.html?follow=1#d=abc',
     );
   });
 });

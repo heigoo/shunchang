@@ -13,11 +13,18 @@ import { getRuntime, getSheet, setRole } from '../store/repository';
 import { t, useT } from '../i18n';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
-import { buildSyncTrail, itemState, ownerOptions } from './followOps';
+import { formatCountdown, secondsUntil } from './countdown';
+import {
+  buildSyncTrail,
+  followCountdownTarget,
+  itemState,
+  ownerFromSearch,
+  ownerOptions,
+} from './followOps';
 import type { ItemState } from './followOps';
 import { ImportPanel } from './ImportPanel';
 import { readOwnerNotice, takeOverOwner } from './importFlow';
-import { canUseNativeFiles } from './share';
+import { canUseNativeFiles, webLocation } from './share';
 
 export interface FollowScreenProps {
   sheetId?: string;
@@ -31,7 +38,7 @@ export interface FollowScreenProps {
 }
 
 const MINUS = '\u2212';
-const CLOCK_TICK_MS = 30000;
+const CLOCK_TICK_MS = 1000;
 
 const STATUS_LABEL: Record<ItemState, string> = {
   done: '已完成',
@@ -84,7 +91,11 @@ export function FollowScreen(props: FollowScreenProps) {
     sheetId ? getRuntime(sheetId) : null,
   );
   const [now, setNow] = useState<number>(() => Date.now());
-  const [ownerFilter, setOwnerFilter] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState<string>(() => {
+    const search = webLocation()?.search ?? '';
+    const owner = ownerFromSearch(search);
+    return owner.length > 0 ? owner : 'all';
+  });
   const [importOpen, setImportOpen] = useState(false);
   const [takeoverOpen, setTakeoverOpen] = useState(false);
   const [tick, setTick] = useState(0);
@@ -246,6 +257,11 @@ export function FollowScreen(props: FollowScreenProps) {
   }
 
   const owners = ownerOptions(execSheet);
+  // 链接里的负责人不存在时退回全部，避免跟随者看到空列表。
+  const effectiveOwner =
+    ownerFilter !== 'all' && owners.indexOf(ownerFilter) < 0
+      ? 'all'
+      : ownerFilter;
   const allRows = execSheet.items.map((item, index) => ({
     item,
     index,
@@ -254,9 +270,9 @@ export function FollowScreen(props: FollowScreenProps) {
   }));
 
   let visibleRows =
-    ownerFilter === 'all'
+    effectiveOwner === 'all'
       ? allRows
-      : allRows.filter((entry) => entry.item.owner.trim() === ownerFilter);
+      : allRows.filter((entry) => entry.item.owner.trim() === effectiveOwner);
 
   if (
     currentIndex >= 0 &&
@@ -264,6 +280,15 @@ export function FollowScreen(props: FollowScreenProps) {
   ) {
     visibleRows = [allRows[currentIndex], ...visibleRows];
   }
+
+  const countdownTarget = followCountdownTarget(
+    timeline.rows,
+    currentIndex,
+    total,
+  );
+  const countdown = countdownTarget
+    ? formatCountdown(secondsUntil(countdownTarget.targetMin, now))
+    : null;
 
   return (
     <view
@@ -359,6 +384,27 @@ export function FollowScreen(props: FollowScreenProps) {
           </text>
         )}
 
+        {countdown && countdownTarget ? (
+          <view className="FollowCountdown">
+            <text className="FollowCountdownLabel">
+              {countdownTarget.kind === 'next'
+                ? t('距开始')
+                : countdown.sign === 'over'
+                  ? t('本环节已超时')
+                  : t('本环节剩余')}
+            </text>
+            <text
+              className={
+                countdown.sign === 'over'
+                  ? 'FollowCountdownValue FollowCountdownValue--over'
+                  : 'FollowCountdownValue'
+              }
+            >
+              {`${countdown.sign === 'over' ? MINUS : ''}${countdown.text}`}
+            </text>
+          </view>
+        ) : null}
+
         <view className="FollowProgress">
           <view className="FollowProgressMeta">
             <text className="FollowProgressLabel">{t('完成度')}</text>
@@ -381,7 +427,9 @@ export function FollowScreen(props: FollowScreenProps) {
         <view className="FollowOwnerTrack">
           <view
             className={
-              ownerFilter === 'all' ? 'FollowChip FollowChip--active' : 'FollowChip'
+              effectiveOwner === 'all'
+                ? 'FollowChip FollowChip--active'
+                : 'FollowChip'
             }
             bindtap={() => {
               setOwnerFilter('all');
@@ -389,7 +437,7 @@ export function FollowScreen(props: FollowScreenProps) {
           >
             <text
               className={
-                ownerFilter === 'all'
+                effectiveOwner === 'all'
                   ? 'FollowChipText FollowChipText--active'
                   : 'FollowChipText'
               }
@@ -398,7 +446,7 @@ export function FollowScreen(props: FollowScreenProps) {
             </text>
           </view>
           {owners.map((owner) => {
-            const active = ownerFilter === owner;
+            const active = effectiveOwner === owner;
             return (
               <view
                 key={owner}

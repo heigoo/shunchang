@@ -1,7 +1,15 @@
 import { expect, test } from '@rstest/core';
 
 import type { RuntimeState, Sheet } from '../../domain/types';
-import { buildSyncTrail, itemState, ownerOptions } from '../followOps';
+import type { TimelineRow } from '../../domain/timeline';
+import {
+  buildSyncCopyText,
+  buildSyncTrail,
+  followCountdownTarget,
+  itemState,
+  ownerFromSearch,
+  ownerOptions,
+} from '../followOps';
 
 const NOW = 1_760_000_000_000;
 const MINUTE = 60 * 1000;
@@ -131,4 +139,73 @@ test('itemState keeps earlier items pending after a full sync', () => {
 test('ownerOptions removes blanks and duplicates while keeping order', () => {
   const sheet = makeSheet(['督导', '', '主持', '督导', ' 摄影 ']);
   expect(ownerOptions(sheet)).toEqual(['督导', '主持', '摄影']);
+});
+
+test('ownerFromSearch reads and decodes the owner query', () => {
+  expect(ownerFromSearch('?follow=1&o=%E6%91%84%E5%BD%B1')).toBe('摄影');
+  expect(ownerFromSearch('?o=摄影')).toBe('摄影');
+  expect(ownerFromSearch('?o=灯光+组')).toBe('灯光 组');
+  expect(ownerFromSearch('?follow=1')).toBe('');
+  expect(ownerFromSearch('')).toBe('');
+});
+
+test('buildSyncCopyText includes the sheet, version, time and short code', () => {
+  const text = buildSyncCopyText({
+    sheetName: '秋季婚礼流程',
+    execVersion: 3,
+    now: new Date(2026, 10, 13, 14, 5, 0).getTime(),
+    shortCode: '23456789A',
+  });
+
+  expect(text).toContain('【顺场】秋季婚礼流程');
+  expect(text).toContain('第 3 版');
+  expect(text).toContain('11-13 14:05');
+  expect(text).toContain('234-567-89A');
+});
+
+test('buildSyncCopyText falls back to the link hint when no short code exists', () => {
+  const text = buildSyncCopyText({
+    sheetName: '',
+    execVersion: 1024,
+    now: NOW,
+    shortCode: '',
+  });
+
+  expect(text).toContain('未命名手册');
+  expect(text).toContain('当前版本无法用短码同步，请用二维码/链接');
+});
+
+test('followCountdownTarget counts the current item end or the next start', () => {
+  const rows: TimelineRow[] = [
+    {
+      itemId: 'item-0',
+      index: 0,
+      planStart: 480,
+      displayStart: 480,
+      displayEnd: 510,
+      effectiveDurationMin: 30,
+      lockAt: null,
+      compressedLostMin: 0,
+    },
+    {
+      itemId: 'item-1',
+      index: 1,
+      planStart: 510,
+      displayStart: 510,
+      displayEnd: 540,
+      effectiveDurationMin: 30,
+      lockAt: null,
+      compressedLostMin: 0,
+    },
+  ];
+
+  expect(followCountdownTarget(rows, 0, 2)).toEqual({
+    kind: 'current',
+    targetMin: 510,
+  });
+  expect(followCountdownTarget(rows, -1, 2)).toEqual({
+    kind: 'next',
+    targetMin: 480,
+  });
+  expect(followCountdownTarget(rows, 2, 2)).toBeNull();
 });

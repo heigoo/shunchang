@@ -203,6 +203,34 @@
   margin-top: 8px;
 }
 
+/* 当前环节剩余时间：跟随者最关心的数字 */
+.FollowCountdown {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  margin-top: 12px;
+}
+
+.FollowCountdownLabel {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.FollowCountdownValue {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+}
+
+.FollowCountdownValue--over {
+  color: var(--amber);
+}
+
 /* 进度：当前环节之前的完成度 */
 .FollowProgress {
   display: flex;

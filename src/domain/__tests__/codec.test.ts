@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@rstest/core';
+import { deflateSync, strToU8 } from 'fflate';
 
 import type { Item, RuntimeState, Sheet } from '../types';
 import {
@@ -9,6 +10,7 @@ import {
   encodeFile,
   encodePayload,
   encodeShortCode,
+  formatShortCode,
   normalizeShortCode,
   sheetFingerprint,
 } from '../codec';
@@ -68,6 +70,57 @@ function makeRuntime(sheet: Sheet): RuntimeState {
   };
 }
 
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** 构造 Task 9 之前的 v1 载荷：运行时只有前 5 个字段。 */
+function encodeLegacyV1(sheet: Sheet, runtime: RuntimeState): string {
+  const data = {
+    v: 1,
+    s: [
+      sheet.id,
+      sheet.name,
+      sheet.date,
+      sheet.startMin,
+      sheet.status,
+      sheet.version,
+      sheet.updatedAt,
+      sheet.items.map((item) => [
+        item.id,
+        item.name,
+        item.durationMin,
+        item.owner,
+        item.note,
+        item.lockAt,
+        item.locked ? 1 : 0,
+      ]),
+    ],
+    r: [
+      runtime.currentIndex,
+      runtime.offsetMin,
+      runtime.execVersion,
+      runtime.lastSyncAt,
+      runtime.actuals,
+    ],
+  };
+
+  const compressed = deflateSync(strToU8(JSON.stringify(data)));
+  let sum = 0;
+  for (let i = 0; i < compressed.length; i += 1) {
+    sum = (sum + compressed[i]) % 65536;
+  }
+  const framed = new Uint8Array(compressed.length + 2);
+  framed[0] = (sum >> 8) & 0xff;
+  framed[1] = sum & 0xff;
+  framed.set(compressed, 2);
+  return toBase64Url(framed);
+}
+
 function bitsOf(value: number, width: number): string {
   let bits = '';
   for (let shift = width - 1; shift >= 0; shift -= 1) {
@@ -109,7 +162,7 @@ describe('payload codec', () => {
     expect(code.length).toBeLessThan(2000);
     expect(decodePayload(code)).toEqual({
       ok: true,
-      payload: { v: 1, sheet, runtime },
+      payload: { v: 2, sheet, runtime },
     });
   });
 
@@ -117,7 +170,7 @@ describe('payload codec', () => {
     const sheet = makeSheet();
     const decoded = decodePayload(encodePayload(sheet));
 
-    expect(decoded).toEqual({ ok: true, payload: { v: 1, sheet } });
+    expect(decoded).toEqual({ ok: true, payload: { v: 2, sheet } });
   });
 
   it('detects a tampered payload', () => {
@@ -174,6 +227,86 @@ describe('payload codec', () => {
     expect(decoded.ok).toBe(true);
     if (decoded.ok) {
       expect(decoded.payload.sheet.items[0].note).toBe('与酒店确认灯光');
+    }
+  });
+
+  it('carries manual offset, owner epoch, inserts and lock overrides', () => {
+    const sheet = makeSheet();
+    const insertedItem: Item = {
+      id: 'insert-1',
+      name: '长辈致辞',
+      durationMin: 10,
+      owner: '主持',
+      note: '临时加场',
+      lockAt: null,
+    };
+    const runtime: RuntimeState = {
+      ...makeRuntime(sheet),
+      offsetMin: 18,
+      autoOffsetMin: 3,
+      manualOffsetMin: 15,
+      ownerEpoch: 4,
+      ownerDeviceId: 'D-7K2M',
+      lastSyncMode: 'short',
+      insertedItems: [
+        {
+          id: 'insert-1',
+          afterId: 'item-3',
+          createdAt: 1762700200000,
+          item: insertedItem,
+        },
+      ],
+      lockOverrides: { 'item-3': 600, 'item-4': null },
+      audit: [
+        {
+          id: 'audit-1',
+          at: 1762700300000,
+          type: 'insert',
+          label: '插入「长辈致辞」',
+        },
+      ],
+    };
+
+    const decoded = decodePayload(encodePayload(sheet, runtime));
+
+    expect(decoded.ok).toBe(true);
+    if (decoded.ok) {
+      expect(decoded.payload.v).toBe(2);
+      expect(decoded.payload.runtime).toEqual({ ...runtime, audit: [] });
+      expect(decoded.payload.runtime?.insertedItems[0].item.name).toBe(
+        '长辈致辞',
+      );
+      expect(decoded.payload.runtime?.lockOverrides).toEqual({
+        'item-3': 600,
+        'item-4': null,
+      });
+    }
+  });
+
+  it('migrates a v1 payload with default v2 runtime fields', () => {
+    const sheet = makeSheet();
+    const runtime = makeRuntime(sheet);
+    const decoded = decodePayload(encodeLegacyV1(sheet, runtime));
+
+    expect(decoded.ok).toBe(true);
+    if (decoded.ok) {
+      expect(decoded.payload.v).toBe(1);
+      expect(decoded.payload.runtime).toEqual({
+        sheetId: sheet.id,
+        currentIndex: runtime.currentIndex,
+        actuals: runtime.actuals,
+        offsetMin: runtime.offsetMin,
+        autoOffsetMin: runtime.offsetMin,
+        manualOffsetMin: 0,
+        execVersion: runtime.execVersion,
+        lastSyncAt: runtime.lastSyncAt,
+        ownerEpoch: 0,
+        ownerDeviceId: '',
+        lastSyncMode: 'full',
+        insertedItems: [],
+        lockOverrides: {},
+        audit: [],
+      });
     }
   });
 });
@@ -235,6 +368,17 @@ describe('short code', () => {
 
     expect(normalizeShortCode(messy)).toBe(code);
     expect(decodeShortCode(messy)).toEqual(decodeShortCode(code));
+  });
+
+  it('formats nine characters as XXX-XXX-XXX and keeps empty codes empty', () => {
+    const sheet = makeSheet();
+    const code = encodeShortCode(sheet.id, makeRuntime(sheet));
+
+    expect(formatShortCode(code)).toBe(
+      `${code.slice(0, 3)}-${code.slice(3, 6)}-${code.slice(6)}`,
+    );
+    expect(formatShortCode('')).toBe('');
+    expect(formatShortCode('ABC')).toBe('ABC');
   });
 
   it('rejects the retired six-character code', () => {

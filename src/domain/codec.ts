@@ -1,6 +1,12 @@
 import { deflateSync, inflateSync, strFromU8, strToU8 } from 'fflate';
 
-import type { Item, RuntimeState, Sheet, SheetStatus } from './types';
+import type {
+  InsertedItem,
+  Item,
+  RuntimeState,
+  Sheet,
+  SheetStatus,
+} from './types';
 
 export interface PayloadRuntime {
   sheetId: string;
@@ -12,7 +18,7 @@ export interface PayloadRuntime {
 }
 
 export interface SheetPayload {
-  v: 1;
+  v: 1 | 2;
   sheet: Sheet;
   runtime?: RuntimeState;
 }
@@ -159,6 +165,18 @@ function payloadNote(note: string, compact: boolean): string {
   return `${chars.slice(0, COMPACT_NOTE_LIMIT).join('')}${NOTE_TRUNCATED_MARK}`;
 }
 
+function compactItemTuple(item: Item, compactNotes: boolean): unknown[] {
+  return [
+    item.id,
+    item.name,
+    item.durationMin,
+    item.owner,
+    payloadNote(item.note, compactNotes),
+    item.lockAt,
+    item.locked ? 1 : 0,
+  ];
+}
+
 export function encodePayload(
   sheet: Sheet,
   runtime?: RuntimeState,
@@ -166,7 +184,7 @@ export function encodePayload(
 ): string {
   const compactNotes = options?.compactNotes === true;
   const data: Record<string, unknown> = {
-    v: 1,
+    v: 2,
     s: [
       sheet.id,
       sheet.name,
@@ -175,15 +193,7 @@ export function encodePayload(
       sheet.status,
       sheet.version,
       sheet.updatedAt,
-      sheet.items.map((item) => [
-        item.id,
-        item.name,
-        item.durationMin,
-        item.owner,
-        payloadNote(item.note, compactNotes),
-        item.lockAt,
-        item.locked ? 1 : 0,
-      ]),
+      sheet.items.map((item) => compactItemTuple(item, compactNotes)),
     ],
   };
 
@@ -196,6 +206,18 @@ export function encodePayload(
       runtime.actuals,
       runtime.ownerEpoch,
       runtime.lastSyncMode === 'short' ? 1 : 0,
+      runtime.manualOffsetMin,
+      runtime.ownerDeviceId,
+      runtime.insertedItems.map((entry) => [
+        entry.id,
+        entry.afterId,
+        entry.createdAt,
+        compactItemTuple(entry.item, compactNotes),
+      ]),
+      Object.keys(runtime.lockOverrides).map((id) => [
+        id,
+        runtime.lockOverrides[id],
+      ]),
     ];
   }
 
@@ -279,9 +301,69 @@ function parseCompactSheet(value: unknown): Sheet | null {
   };
 }
 
+function parseInsertedItems(value: unknown): InsertedItem[] | null {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const items: InsertedItem[] = [];
+  for (const raw of value) {
+    if (!Array.isArray(raw) || raw.length < 4) {
+      return null;
+    }
+    const [id, afterId, createdAt, rawItem] = raw;
+    const item = parseCompactItem(rawItem);
+    if (
+      typeof id !== 'string' ||
+      typeof afterId !== 'string' ||
+      typeof createdAt !== 'number' ||
+      !item
+    ) {
+      return null;
+    }
+    items.push({ id, afterId, createdAt, item });
+  }
+  return items;
+}
+
+function parseLockOverrides(
+  value: unknown,
+): Record<string, number | null> | null {
+  if (value === undefined) {
+    return {};
+  }
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const overrides: Record<string, number | null> = {};
+  for (const raw of value) {
+    if (!Array.isArray(raw) || raw.length < 2) {
+      return null;
+    }
+    const [id, lockAt] = raw;
+    if (typeof id !== 'string') {
+      return null;
+    }
+    if (lockAt === null) {
+      overrides[id] = null;
+      continue;
+    }
+    if (typeof lockAt !== 'number' || !Number.isFinite(lockAt)) {
+      return null;
+    }
+    overrides[id] = lockAt;
+  }
+  return overrides;
+}
+
 function parseCompactRuntime(
   value: unknown,
   sheetId: string,
+  version: number,
 ): RuntimeState | null {
   if (!Array.isArray(value) || value.length < 5) {
     return null;
@@ -308,25 +390,37 @@ function parseCompactRuntime(
     return null;
   }
 
+  // v2 才携带手动偏移、设备标识、现场插入与锁定覆盖；v1 全部补默认。
+  const manualOffsetMin =
+    version >= 2 && typeof value[7] === 'number' ? value[7] : 0;
+  const ownerDeviceId =
+    version >= 2 && typeof value[8] === 'string' ? value[8] : '';
+  const insertedItems = version >= 2 ? parseInsertedItems(value[9]) : [];
+  const lockOverrides = version >= 2 ? parseLockOverrides(value[10]) : {};
+  if (!insertedItems || !lockOverrides) {
+    return null;
+  }
+
   return {
     sheetId,
     currentIndex,
     actuals: actuals as RuntimeState['actuals'],
     offsetMin,
-    autoOffsetMin: offsetMin,
-    manualOffsetMin: 0,
+    autoOffsetMin: offsetMin - manualOffsetMin,
+    manualOffsetMin,
     execVersion,
     lastSyncAt,
     ownerEpoch: typeof ownerEpoch === 'number' ? ownerEpoch : 0,
-    ownerDeviceId: '',
+    ownerDeviceId,
     lastSyncMode: syncMode === 1 ? 'short' : 'full',
-    insertedItems: [],
-    lockOverrides: {},
+    insertedItems,
+    lockOverrides,
+    // 审计只进文件备份，不随链接/二维码分发。
     audit: [],
   };
 }
 
-function parseCompactPayload(value: unknown): SheetPayload | null {
+function parseCompactPayload(value: unknown, version: 1 | 2): SheetPayload | null {
   if (!value || typeof value !== 'object') {
     return null;
   }
@@ -337,9 +431,9 @@ function parseCompactPayload(value: unknown): SheetPayload | null {
     return null;
   }
 
-  const payload: SheetPayload = { v: 1, sheet };
+  const payload: SheetPayload = { v: version, sheet };
   if (data.r !== undefined) {
-    const runtime = parseCompactRuntime(data.r, sheet.id);
+    const runtime = parseCompactRuntime(data.r, sheet.id, version);
     if (!runtime) {
       return null;
     }
@@ -383,11 +477,11 @@ export function decodePayload(code: string): DecodeResult {
   if (typeof version !== 'number') {
     return { ok: false, error: 'bad-format' };
   }
-  if (version !== 1) {
+  if (version !== 1 && version !== 2) {
     return { ok: false, error: 'unsupported-version' };
   }
 
-  const payload = parseCompactPayload(parsed);
+  const payload = parseCompactPayload(parsed, version);
   if (!payload) {
     return { ok: false, error: 'bad-format' };
   }
@@ -545,6 +639,15 @@ export function encodeShortCode(sheetId: string, runtime: RuntimeState): string 
     code += SHORT_CODE_ALPHABET[parseInt(bits.slice(i, i + 5), 2)];
   }
   return code;
+}
+
+/** 9 位短码展示为 XXX-XXX-XXX；其他长度原样返回（含空串）。 */
+export function formatShortCode(code: string): string {
+  const text = typeof code === 'string' ? code.trim().toUpperCase() : '';
+  if (text.length !== SHORT_CODE_LENGTH) {
+    return text;
+  }
+  return `${text.slice(0, 3)}-${text.slice(3, 6)}-${text.slice(6)}`;
 }
 
 export function normalizeShortCode(text: string): string {

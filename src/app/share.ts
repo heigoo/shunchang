@@ -144,6 +144,24 @@ export function buildShortFollowUrl(code: string): string {
   return base.length > 0 ? `${base}#s=${code}` : '';
 }
 
+/** 按负责人生成专属跟随链接：`?follow=1&o=<负责人>#d=<payload>`。 */
+export function buildOwnerFollowUrl(payload: string, owner: string): string {
+  const base = ensureFollowFlag(followBaseUrl());
+  if (base.length === 0) {
+    return '';
+  }
+
+  const name = typeof owner === 'string' ? owner.trim() : '';
+  if (name.length === 0) {
+    return `${base}#d=${payload}`;
+  }
+
+  const hashIndex = base.indexOf('#');
+  const head = hashIndex >= 0 ? base.slice(0, hashIndex) : base;
+  const separator = head.indexOf('?') >= 0 ? '&' : '?';
+  return `${head}${separator}o=${encodeURIComponent(name)}#d=${payload}`;
+}
+
 /** 兼容旧调用名：分享链接现在始终指向跟随页。 */
 export function buildShareUrl(payload: string): string {
   return buildFollowUrl(payload);
