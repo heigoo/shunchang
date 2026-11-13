@@ -108,21 +108,20 @@ export function createSheetFromTemplate(
     return null;
   }
 
-  let cursor = template.startMin;
   const items: Item[] = template.items.map((entry) => {
     const locked = entry.locked === true;
+    // 锁定环节只保留“需要锁定”的标记，绝对时刻留待用户按现场补填。
     const next: Item = {
       id: createId(),
       name: t(entry.name),
       durationMin: entry.durationMin,
       owner: t(entry.owner),
       note: entry.note,
-      lockAt: locked ? cursor : null,
+      lockAt: null,
     };
     if (locked) {
       next.locked = true;
     }
-    cursor += entry.durationMin;
     return next;
   });
 

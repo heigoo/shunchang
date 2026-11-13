@@ -1,3 +1,4 @@
+import { TEMPLATES_KEY } from '../domain/customTemplates';
 import { MAX_INSERTED_ITEMS } from '../domain/execution';
 import type {
   AuditEntry,
@@ -514,6 +515,7 @@ export async function hydrateStorage(): Promise<void> {
     ROLE_KEY,
     LAST_VIEW_KEY,
     THEME_KEY,
+    TEMPLATES_KEY,
     'shunchang.lang',
   ]);
 
@@ -545,13 +547,15 @@ export function clearAllForTest(): void {
   runtimeKeys.clear();
   snapshotKeys.clear();
 
-  [SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY, THEME_KEY].forEach((key) => {
-    try {
-      storage.remove(key);
-    } catch {
-      // Ignore.
-    }
-  });
+  [SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY, THEME_KEY, TEMPLATES_KEY].forEach(
+    (key) => {
+      try {
+        storage.remove(key);
+      } catch {
+        // Ignore.
+      }
+    },
+  );
 
   lastError = null;
 }

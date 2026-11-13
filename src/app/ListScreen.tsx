@@ -7,6 +7,14 @@ import type { StatusFilter } from './listFilter';
 import { registerBackHandler } from './backBus';
 import { ImportPanel } from './ImportPanel';
 import { ThemePanel } from './ThemePanel';
+import type { CustomTemplate } from '../domain/customTemplates';
+import {
+  createSheetFromCustomTemplate,
+  deleteCustomTemplate,
+  listCustomTemplates,
+  renameCustomTemplate,
+  saveSheetAsTemplate,
+} from '../domain/customTemplates';
 import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
@@ -119,6 +127,16 @@ export function ListScreen(props: ListScreenProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [moreSheet, setMoreSheet] = useState<Sheet | null>(null);
   const [renameText, setRenameText] = useState('');
+  const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(() =>
+    listCustomTemplates(),
+  );
+  const [manageTemplates, setManageTemplates] = useState(false);
+  const [templateNames, setTemplateNames] = useState<Record<string, string>>(
+    {},
+  );
+  const [pendingTemplateDelete, setPendingTemplateDelete] =
+    useState<CustomTemplate | null>(null);
+  const [templateDeleteOpen, setTemplateDeleteOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -163,10 +181,26 @@ export function ListScreen(props: ListScreenProps) {
 
   // 返回键优先关闭当前打开的浮层。
   useEffect(() => {
-    if (!createOpen && !importOpen && !deleteOpen && !themeOpen && !moreOpen) {
+    if (
+      !createOpen &&
+      !importOpen &&
+      !deleteOpen &&
+      !themeOpen &&
+      !moreOpen &&
+      !manageTemplates &&
+      !templateDeleteOpen
+    ) {
       return;
     }
     return registerBackHandler(() => {
+      if (templateDeleteOpen) {
+        closeTemplateDelete();
+        return true;
+      }
+      if (manageTemplates) {
+        setManageTemplates(false);
+        return true;
+      }
       if (moreOpen) {
         setMoreOpen(false);
         return true;
@@ -189,7 +223,15 @@ export function ListScreen(props: ListScreenProps) {
       }
       return false;
     });
-  }, [createOpen, importOpen, deleteOpen, themeOpen, moreOpen]);
+  }, [
+    createOpen,
+    importOpen,
+    deleteOpen,
+    themeOpen,
+    moreOpen,
+    manageTemplates,
+    templateDeleteOpen,
+  ]);
 
   const reload = () => {
     setSheets(listSheets());
@@ -204,6 +246,8 @@ export function ListScreen(props: ListScreenProps) {
 
   const openCreate = () => {
     setCreateDate(formatDateKey(Date.now()));
+    setCustomTemplates(listCustomTemplates());
+    setManageTemplates(false);
     setCreateOpen(true);
   };
 
@@ -229,6 +273,76 @@ export function ListScreen(props: ListScreenProps) {
     setCreateOpen(false);
     reload();
     onCreate?.(sheet.id);
+  };
+
+  const createFromCustom = (template: CustomTemplate) => {
+    const now = Date.now();
+    const sheet = createSheetFromCustomTemplate(template, now, createDate);
+    saveSheet(sheet);
+    setCreateOpen(false);
+    reload();
+    onCreate?.(sheet.id);
+  };
+
+  const openTemplateManage = () => {
+    const templates = listCustomTemplates();
+    const names: Record<string, string> = {};
+    templates.forEach((template) => {
+      names[template.id] = template.name;
+    });
+    setCustomTemplates(templates);
+    setTemplateNames(names);
+    setManageTemplates(true);
+  };
+
+  const handleTemplateNameInput = (id: string, event: any) => {
+    const detail = event && event.detail ? event.detail : null;
+    const value = detail && typeof detail.value === 'string' ? detail.value : '';
+    setTemplateNames((previous) => ({ ...previous, [id]: value }));
+  };
+
+  const saveTemplateRename = (template: CustomTemplate) => {
+    const name = (templateNames[template.id] ?? '').trim();
+    if (name.length === 0) {
+      showToast(tText('模板名称不能为空'));
+      return;
+    }
+    const updated = renameCustomTemplate(template.id, name);
+    if (!updated) {
+      return;
+    }
+    setCustomTemplates(listCustomTemplates());
+    setTemplateNames((previous) => ({ ...previous, [template.id]: updated.name }));
+    showToast(tText('已保存名称'));
+  };
+
+  const openTemplateDelete = (template: CustomTemplate) => {
+    setPendingTemplateDelete(template);
+    setTemplateDeleteOpen(true);
+  };
+
+  const closeTemplateDelete = () => {
+    setTemplateDeleteOpen(false);
+    setPendingTemplateDelete(null);
+  };
+
+  const confirmTemplateDelete = () => {
+    if (!pendingTemplateDelete) {
+      return;
+    }
+    deleteCustomTemplate(pendingTemplateDelete.id);
+    closeTemplateDelete();
+    setCustomTemplates(listCustomTemplates());
+  };
+
+  const saveAsTemplate = () => {
+    if (!moreSheet) {
+      return;
+    }
+    saveSheetAsTemplate(moreSheet, `${displayName(moreSheet)} 模板`);
+    setCustomTemplates(listCustomTemplates());
+    setMoreOpen(false);
+    showToast(tText('已保存为模板'));
   };
 
   const showToast = (text: string) => {
@@ -822,6 +936,10 @@ export function ListScreen(props: ListScreenProps) {
               <text className="PanelOptionName">{tText('复制为新手册')}</text>
               <text className="PanelOptionArrow">→</text>
             </view>
+            <view className="PanelOption" bindtap={saveAsTemplate}>
+              <text className="PanelOptionName">{tText('另存为模板')}</text>
+              <text className="PanelOptionArrow">→</text>
+            </view>
             <view className="PanelOption" bindtap={exportBackup}>
               <text className="PanelOptionName">{tText('导出备份')}</text>
               <text className="PanelOptionArrow">→</text>
@@ -871,10 +989,7 @@ export function ListScreen(props: ListScreenProps) {
               />
             </view>
 
-            <scroll-view
-              className="PanelOptions"
-              scroll-orientation="vertical"
-            >
+            <scroll-view className="PanelOptions" scroll-orientation="vertical">
               <view
                 className="PanelOption"
                 bindtap={() => {
@@ -906,7 +1021,9 @@ export function ListScreen(props: ListScreenProps) {
                     }}
                   >
                     <view className="PanelOptionLabel">
-                      <text className="PanelOptionName">{tText(template.name)}</text>
+                      <text className="PanelOptionName">
+                        {tText(template.name)}
+                      </text>
                       <text className="PanelOptionTagline">
                         {tText(template.tagline)}
                       </text>
@@ -920,7 +1037,169 @@ export function ListScreen(props: ListScreenProps) {
                   </view>
                 );
               })}
+
+              <view className="TemplateSection">
+                <view className="TemplateSectionHead">
+                  <text className="TemplateSectionTitle">
+                    {tText('我的模板')}
+                  </text>
+                  {customTemplates.length > 0 ? (
+                    <view
+                      className="TemplateManageLink"
+                      bindtap={openTemplateManage}
+                    >
+                      <text className="TemplateManageLinkText">
+                        {tText('管理')}
+                      </text>
+                    </view>
+                  ) : null}
+                </view>
+                {customTemplates.length === 0 ? (
+                  <text className="TemplateEmptyText">
+                    {tText('把手册另存为模板后会显示在这里。')}
+                  </text>
+                ) : (
+                  customTemplates.map((template) => {
+                    const minutes = template.items.reduce(
+                      (sum, entry) => sum + entry.durationMin,
+                      0,
+                    );
+                    return (
+                      <view
+                        key={template.id}
+                        className={
+                          isWide
+                            ? 'PanelOption'
+                            : 'PanelOption PanelOption--stacked'
+                        }
+                        bindtap={() => {
+                          createFromCustom(template);
+                        }}
+                      >
+                        <view className="PanelOptionLabel">
+                          <text className="PanelOptionName">
+                            {template.name}
+                          </text>
+                        </view>
+                        <view className="PanelOptionMeta">
+                          <text className="PanelOptionMetaText">
+                            {createOptionMeta(template.items.length, minutes)}
+                          </text>
+                          <text className="PanelOptionArrow">→</text>
+                        </view>
+                      </view>
+                    );
+                  })
+                )}
+              </view>
             </scroll-view>
+          </view>
+        </view>
+      ) : null}
+
+      {manageTemplates ? (
+        <view
+          className="Overlay"
+          bindtap={() => {
+            setManageTemplates(false);
+          }}
+        >
+          <view className="Panel" catchtap={() => {}}>
+            <view className="PanelHeader">
+              <view className="PanelHeaderText">
+                <text className="PanelTitle">{tText('我的模板')}</text>
+                <text className="PanelSubtitle">
+                  {tText('重命名或删除本地模板')}
+                </text>
+              </view>
+              <view
+                className="PanelClose"
+                bindtap={() => {
+                  setManageTemplates(false);
+                }}
+              >
+                <text className="PanelCloseText">{tText('关闭')}</text>
+              </view>
+            </view>
+
+            <scroll-view className="PanelOptions" scroll-orientation="vertical">
+              {customTemplates.length === 0 ? (
+                <view className="TemplateEmpty">
+                  <text className="TemplateEmptyText">
+                    {tText('还没有自定义模板')}
+                  </text>
+                </view>
+              ) : (
+                customTemplates.map((template) => (
+                  <view key={template.id} className="TemplateManageRow">
+                    <text className="TemplateManageName">{template.name}</text>
+                    <input
+                      className="SheetRenameInput TemplateManageInput"
+                      default-value={templateNames[template.id] ?? template.name}
+                      placeholder={tText('模板名称')}
+                      bindinput={(event) => {
+                        handleTemplateNameInput(template.id, event);
+                      }}
+                    />
+                    <view className="TemplateManageActions">
+                      <view
+                        className="TemplateManageAction"
+                        bindtap={() => {
+                          saveTemplateRename(template);
+                        }}
+                      >
+                        <text className="TemplateManageActionText">
+                          {tText('保存名称')}
+                        </text>
+                      </view>
+                      <view
+                        className="TemplateManageAction TemplateManageAction--danger"
+                        bindtap={() => {
+                          openTemplateDelete(template);
+                        }}
+                      >
+                        <text className="TemplateManageActionText">
+                          {tText('删除')}
+                        </text>
+                      </view>
+                    </view>
+                  </view>
+                ))
+              )}
+            </scroll-view>
+          </view>
+        </view>
+      ) : null}
+
+      {templateDeleteOpen && pendingTemplateDelete ? (
+        <view className="Overlay" bindtap={closeTemplateDelete}>
+          <view className="Panel Panel--confirm" catchtap={() => {}}>
+            <view className="PanelHeader">
+              <text className="PanelTitle">{tText('删除模板')}</text>
+            </view>
+            <view className="PanelBody">
+              <text className="PanelBodyText">
+                {tText('「{name}」删除后不可恢复。', {
+                  name: pendingTemplateDelete.name,
+                })}
+              </text>
+            </view>
+            <view className="PanelActions">
+              <view className="PanelAction">
+                <Button
+                  label={tText('取消')}
+                  kind="tertiary"
+                  onTap={closeTemplateDelete}
+                />
+              </view>
+              <view className="PanelAction">
+                <Button
+                  label={tText('删除')}
+                  kind="secondary"
+                  onTap={confirmTemplateDelete}
+                />
+              </view>
+            </view>
           </view>
         </view>
       ) : null}

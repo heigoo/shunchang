@@ -3,6 +3,7 @@ import { describe, expect, it } from '@rstest/core';
 import { TEMPLATES, createSheetFromTemplate } from '../templates';
 import type { WeddingTemplate } from '../templates';
 import { formatDateKey } from '../types';
+import { validateForPublish } from '../validate';
 
 const NOW = 1762732800000;
 
@@ -20,7 +21,7 @@ describe('templates', () => {
     });
   });
 
-  it('locks the banquet segment at its planned start', () => {
+  it('keeps the banquet segment locked without a preset lock time', () => {
     TEMPLATES.forEach((template) => {
       const lockedIndex = template.items.findIndex(
         (entry) => entry.locked === true,
@@ -33,13 +34,23 @@ describe('templates', () => {
 
       const lockedItem = sheet!.items[lockedIndex];
       expect(lockedItem.locked).toBe(true);
+      expect(lockedItem.lockAt).toBeNull();
+    });
+  });
 
-      const plannedStart =
-        template.startMin +
-        template.items
-          .slice(0, lockedIndex)
-          .reduce((sum, entry) => sum + entry.durationMin, 0);
-      expect(lockedItem.lockAt).toBe(plannedStart);
+  it('blocks publishing a template sheet until the lock time is filled', () => {
+    const sheet = createSheetFromTemplate('chinese', NOW);
+    expect(sheet).not.toBeNull();
+
+    const lockErrorIndex = sheet!.items.findIndex(
+      (entry) => entry.locked === true,
+    );
+    const errors = validateForPublish(sheet!);
+
+    expect(errors).toContainEqual({
+      index: lockErrorIndex,
+      field: 'lockAt',
+      message: '锁定环节需填写锁定时刻',
     });
   });
 
