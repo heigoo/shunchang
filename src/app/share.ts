@@ -6,7 +6,63 @@ import { t } from '../i18n';
 import { isDesktopRuntime } from '../platform/desktop';
 import { followBaseUrl } from '../platform/followConfig';
 import { desktopPickJson, desktopSaveJson } from './desktopBridge';
-import { webDownload, webLocationSnapshot, webPickJsonFile } from './webBridge';
+import {
+  webBatteryLevel,
+  webDownload,
+  webLocationSnapshot,
+  webPickJsonFile,
+  webSetWakeLock,
+} from './webBridge';
+
+/** Android 壳（Sparkling）通过 NativeModules.ShunchangHost 暴露的能力子集。 */
+interface AndroidHost {
+  pickJson?: () => void;
+  saveJson?: (filename: string, text: string) => void;
+  shareJson?: (filename: string, text: string) => void;
+  shareFile?: (filename: string, text: string, mime: string) => boolean;
+  shareText?: (text: string) => void;
+  printHtml?: (html: string, jobName: string) => void;
+  keepScreenOn?: (keepOn: boolean) => void;
+  getBatteryLevel?: () => number;
+}
+
+declare const NativeModules: any;
+
+function readNativeModules(): any {
+  try {
+    if (typeof NativeModules !== 'undefined' && NativeModules) {
+      return NativeModules;
+    }
+  } catch {
+    // 裸全局在部分运行时不可见，继续尝试 globalThis。
+  }
+  try {
+    return (globalThis as any).NativeModules ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function readAndroidHost(): AndroidHost | null {
+  try {
+    const host = readNativeModules()?.ShunchangHost;
+    if (
+      !host
+      || typeof host.pickJson !== 'function'
+      || typeof host.saveJson !== 'function'
+    ) {
+      return null;
+    }
+    return host as AndroidHost;
+  } catch {
+    return null;
+  }
+}
+
+/** 运行在带文件/打印能力的 Android 壳里。 */
+export function canUseAndroidHost(): boolean {
+  return readAndroidHost() !== null;
+}
 
 function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
@@ -34,7 +90,7 @@ export function isWeb(): boolean {
 }
 
 export function canUseNativeFiles(): boolean {
-  return isWeb() || isDesktopRuntime();
+  return canUseAndroidHost() || isWeb() || isDesktopRuntime();
 }
 
 export function webLocation(): {
@@ -167,9 +223,119 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-function nativeShareText(text: string): boolean {
+interface PendingSave {
+  resolve: (ok: boolean) => void;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+let pendingPick: ((text: string) => void) | null = null;
+let pendingSave: PendingSave | null = null;
+let hostEventsInstalled = false;
+
+function hostEventPayload(value: any): any {
+  const first = Array.isArray(value) ? value[0] : value;
+  if (first && typeof first === 'object' && first.data && typeof first.data === 'object') {
+    return first.data;
+  }
+  return first;
+}
+
+function readLynxEngine(): any {
   try {
-    const host = (globalThis as any).NativeModules?.ShunchangHost;
+    if (typeof lynx !== 'undefined' && lynx) {
+      return lynx;
+    }
+  } catch {
+    // 继续尝试 globalThis。
+  }
+  try {
+    return (globalThis as any).lynx ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** 原生文件结果通过全局事件回传；只安装一次监听。 */
+function installHostEvents(): boolean {
+  if (hostEventsInstalled) {
+    return true;
+  }
+  try {
+    const engine: any = readLynxEngine();
+    const emitter = engine && typeof engine.getJSModule === 'function'
+      ? engine.getJSModule('GlobalEventEmitter')
+      : null;
+    if (!emitter || typeof emitter.addListener !== 'function') {
+      return false;
+    }
+    hostEventsInstalled = true;
+
+    emitter.addListener('shunchang:pickedJson', (value: any) => {
+      const payload = hostEventPayload(value) ?? {};
+      const callback = pendingPick;
+      pendingPick = null;
+      if (callback && typeof payload.text === 'string' && payload.text.length > 0) {
+        callback(payload.text);
+      }
+    });
+
+    emitter.addListener('shunchang:savedFile', (value: any) => {
+      const payload = hostEventPayload(value) ?? {};
+      const pending = pendingSave;
+      pendingSave = null;
+      if (pending) {
+        clearTimeout(pending.timer);
+        pending.resolve(payload.ok === true);
+      }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function androidSaveFile(filename: string, text: string): Promise<boolean> {
+  const host = readAndroidHost();
+  if (!host || typeof host.saveJson !== 'function') {
+    return Promise.resolve(false);
+  }
+  if (!installHostEvents()) {
+    // 拿不到事件通道时退回系统分享，至少让文件离开应用。
+    try {
+      host.shareJson?.(filename, text);
+      return Promise.resolve(true);
+    } catch {
+      return Promise.resolve(false);
+    }
+  }
+
+  return new Promise<boolean>((resolve) => {
+    // 同一时刻只跟踪最后一次保存；旧的请求按取消处理，避免悬挂。
+    if (pendingSave) {
+      clearTimeout(pendingSave.timer);
+      pendingSave.resolve(false);
+      pendingSave = null;
+    }
+    const timer = setTimeout(() => {
+      if (pendingSave && pendingSave.resolve === resolve) {
+        pendingSave = null;
+        resolve(false);
+      }
+    }, 120000);
+    pendingSave = { resolve, timer };
+    try {
+      host.saveJson?.(filename, text);
+    } catch {
+      pendingSave = null;
+      clearTimeout(timer);
+      resolve(false);
+    }
+  });
+}
+
+function nativeShareText(text: string): boolean {
+  const host = readAndroidHost();
+  try {
     if (host && typeof host.shareText === 'function') {
       host.shareText(text);
       return true;
@@ -178,6 +344,16 @@ function nativeShareText(text: string): boolean {
     // 宿主未提供分享能力时降级为复制。
   }
   return false;
+}
+
+/** 仅供测试：重置原生事件通道与等待中的回调。 */
+export function resetNativeHostForTest(): void {
+  pendingPick = null;
+  if (pendingSave) {
+    clearTimeout(pendingSave.timer);
+    pendingSave = null;
+  }
+  hostEventsInstalled = false;
 }
 
 export type ShareOutcome = 'shared' | 'copied' | 'failed';
@@ -207,6 +383,9 @@ export async function downloadTextFile(
   text: string,
   mime: string = 'application/json',
 ): Promise<boolean> {
+  if (canUseAndroidHost()) {
+    return androidSaveFile(filename, text);
+  }
   if (isDesktopRuntime()) {
     return desktopSaveJson(filename, text);
   }
@@ -214,6 +393,63 @@ export async function downloadTextFile(
     return false;
   }
   return webDownload(filename, text, mime);
+}
+
+/** Android：把 HTML 写到缓存并通过系统分享面板发送。 */
+export function shareHtmlFile(filename: string, html: string): boolean {
+  const host = readAndroidHost();
+  if (!host || typeof host.shareFile !== 'function') {
+    return false;
+  }
+  try {
+    return host.shareFile(filename, html, 'text/html') === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Android：用 WebView + PrintManager 调起系统打印；壳内失败会自动回退为分享 HTML。 */
+export function printHtmlNative(html: string, jobName: string): boolean {
+  const host = readAndroidHost();
+  if (!host || typeof host.printHtml !== 'function') {
+    return false;
+  }
+  try {
+    host.printHtml(html, jobName);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 屏幕常亮：Android 走原生 Flag，Web 走 Wake Lock，其他环境静默忽略。 */
+export function setScreenAwake(keepOn: boolean): void {
+  const host = readAndroidHost();
+  if (host && typeof host.keepScreenOn === 'function') {
+    try {
+      host.keepScreenOn(keepOn);
+      return;
+    } catch {
+      // 落到 Wake Lock 分支。
+    }
+  }
+  webSetWakeLock(keepOn);
+}
+
+/** 读取电量百分比；原生与 Web Battery API 都不支持时返回 null。 */
+export function readBatteryLevel(): Promise<number | null> {
+  const host = readAndroidHost();
+  if (host && typeof host.getBatteryLevel === 'function') {
+    try {
+      const level = host.getBatteryLevel();
+      if (typeof level === 'number' && level >= 0 && level <= 100) {
+        return Promise.resolve(Math.round(level));
+      }
+    } catch {
+      // 落到 Web Battery API。
+    }
+  }
+  return webBatteryLevel();
 }
 
 export async function exportSheetFile(
@@ -225,6 +461,19 @@ export async function exportSheetFile(
 }
 
 export function pickJsonFile(onText: (text: string) => void): void {
+  const host = readAndroidHost();
+  if (host && typeof host.pickJson === 'function') {
+    if (!installHostEvents()) {
+      return;
+    }
+    pendingPick = onText;
+    try {
+      host.pickJson();
+    } catch {
+      pendingPick = null;
+    }
+    return;
+  }
   if (isDesktopRuntime()) {
     void desktopPickJson().then((text) => {
       if (typeof text === 'string') {

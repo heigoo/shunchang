@@ -24,8 +24,15 @@ import {
   createRuntime,
   skipCurrent,
 } from './runtimeOps';
+import {
+  canUseAndroidHost,
+  exportSheetFile,
+  readBatteryLevel,
+  setScreenAwake,
+} from './share';
 import { ShiftPanel } from './ShiftPanel';
 import { SyncPanel } from './SyncPanel';
+import { webWakeLockSupported } from './webBridge';
 
 export interface RuntimeScreenProps {
   sheetId: string;
@@ -131,6 +138,19 @@ export function formatCountdown(seconds: number): {
   return { sign: over ? 'over' : 'left', text };
 }
 
+export const LOW_BATTERY_THRESHOLD = 20;
+
+/** 低于 20% 且用户未关闭提示时才显示导出备份提醒。 */
+export function batteryWarningNeeded(
+  level: number | null,
+  dismissed: boolean,
+): boolean {
+  return !dismissed
+    && level !== null
+    && level >= 0
+    && level < LOW_BATTERY_THRESHOLD;
+}
+
 function diffText(value: number): string {
   if (value > 0) {
     return `+${formatDuration(value)}`;
@@ -162,6 +182,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [shiftToast, setShiftToast] = useState<string | null>(null);
   const isWideActions = useIsWide(NARROW_ACTIONS_WIDTH);
   const [mainWidth, setMainWidth] = useState<number | null>(null);
+  const [keepAwake, setKeepAwake] = useState(false);
+  const [awakeSupported, setAwakeSupported] = useState<boolean>(
+    () => canUseAndroidHost(),
+  );
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [batteryDismissed, setBatteryDismissed] = useState(false);
 
   const shiftPresence = usePresence(shiftOpen);
   const syncPresence = usePresence(syncOpen);
@@ -212,6 +238,47 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     }
     return () => {
       viewportWidthListener = null;
+    };
+  }, []);
+
+  // Web 端用 Wake Lock 降级；不支持时隐藏常亮开关。
+  useEffect(() => {
+    if (canUseAndroidHost()) {
+      return;
+    }
+    let cancelled = false;
+    void webWakeLockSupported().then((supported) => {
+      if (!cancelled) {
+        setAwakeSupported(supported);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 离开执行台时恢复系统息屏设置并释放 Wake Lock。
+  useEffect(() => {
+    return () => {
+      setScreenAwake(false);
+    };
+  }, []);
+
+  // 低电量提示：进入执行台与运行中每 30 秒读取一次。
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      void readBatteryLevel().then((level) => {
+        if (!cancelled && level !== null) {
+          setBatteryLevel(level);
+        }
+      });
+    };
+    check();
+    const timer = setInterval(check, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
     };
   }, []);
 
@@ -314,6 +381,18 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       setShiftToast(null);
       shiftToastTimer.current = null;
     }, 2400);
+  };
+
+  const toggleKeepAwake = () => {
+    const next = !keepAwake;
+    setKeepAwake(next);
+    setScreenAwake(next);
+  };
+
+  const exportBackup = () => {
+    void exportSheetFile(sheet, runtime).then((ok) => {
+      showShiftToast(ok ? tText('备份已导出') : tText('导出失败，请重试'));
+    });
   };
 
   const syncCode = encodeShortCode(sheet.id, runtime);
@@ -449,6 +528,16 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               kind="amber"
               label={offsetLabel(runtime.offsetMin)}
             />
+            {onPrint ? (
+              <view
+                className="RuntimeToolBtn"
+                bindtap={() => {
+                  onPrint(sheet.id);
+                }}
+              >
+                <text className="RuntimeToolText">{tText('导出/打印')}</text>
+              </view>
+            ) : null}
             <view
               className="RuntimeEndBtn"
               bindtap={() => {
@@ -459,6 +548,27 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             </view>
           </view>
         </view>
+
+        {batteryWarningNeeded(batteryLevel, batteryDismissed) ? (
+          <view className="RuntimeBattery">
+            <text className="RuntimeBatteryText">
+              {tText('电量仅 {n}%，建议立即导出备份', { n: batteryLevel ?? 0 })}
+            </text>
+            <view className="RuntimeBatteryExport" bindtap={exportBackup}>
+              <text className="RuntimeBatteryExportText">
+                {tText('立即导出备份')}
+              </text>
+            </view>
+            <view
+              className="RuntimeBatteryClose"
+              bindtap={() => {
+                setBatteryDismissed(true);
+              }}
+            >
+              <text className="RuntimeBatteryCloseText">×</text>
+            </view>
+          </view>
+        ) : null}
 
         <view className="RuntimeBody" key={currentItem ? currentItem.id : 'end'}>
           <text className="RuntimeSeg">
@@ -604,6 +714,20 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 </text>
               ) : null}
             </view>
+            {awakeSupported ? (
+              <view className="RuntimeAwakeRow" bindtap={toggleKeepAwake}>
+                <text className="RuntimeAwakeLabel">{tText('屏幕常亮')}</text>
+                <text
+                  className={
+                    keepAwake
+                      ? 'RuntimeAwakeState RuntimeAwakeState--on'
+                      : 'RuntimeAwakeState'
+                  }
+                >
+                  {keepAwake ? tText('已开启') : tText('已关闭')}
+                </text>
+              </view>
+            ) : null}
             {role === 'follower' ? (
               <text className="RuntimeReadonly">
                 {tText('本设备为跟随角色，不能推进环节')}

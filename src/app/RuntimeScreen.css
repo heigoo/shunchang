@@ -119,6 +119,102 @@
   color: var(--dim);
 }
 
+/* 常驻的导出 / 打印入口 */
+.RuntimeToolBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  margin-left: 4px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.RuntimeToolText {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* 低电量提示条：一次性提醒 + 立即导出备份 */
+.RuntimeBattery {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--screen-line-strong);
+  background-color: var(--screen-2);
+}
+
+.RuntimeBatteryText {
+  flex: 1;
+  font-size: 12px;
+  color: var(--bright);
+}
+
+.RuntimeBatteryExport {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 32px;
+  margin-left: 8px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line-strong);
+}
+
+.RuntimeBatteryExportText {
+  font-size: 12px;
+  color: var(--bright);
+}
+
+.RuntimeBatteryClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 4px;
+}
+
+.RuntimeBatteryCloseText {
+  font-size: 16px;
+  color: var(--dim);
+}
+
+/* 屏幕常亮开关 */
+.RuntimeAwakeRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  margin-bottom: 8px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line);
+}
+
+.RuntimeAwakeLabel {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.RuntimeAwakeState {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.RuntimeAwakeState--on {
+  color: var(--bright);
+}
+
 .RuntimeShiftToast {
   position: absolute;
   left: 0;

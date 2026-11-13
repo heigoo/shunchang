@@ -1,10 +1,11 @@
 import '@testing-library/jest-dom';
-import { render } from '@lynx-js/react/testing-library';
-import { beforeEach, expect, test } from '@rstest/core';
+import { fireEvent, render } from '@lynx-js/react/testing-library';
+import { afterEach, beforeEach, expect, rstest, test } from '@rstest/core';
 
 import type { Sheet } from '../../domain/types';
 import { clearAllForTest, saveSheet } from '../../store/repository';
 import { PrintScreen } from '../PrintScreen';
+import { resetNativeHostForTest } from '../share';
 
 const SHEET_ID = 'sheet-print-screen';
 
@@ -30,6 +31,11 @@ function makeSheet(): Sheet {
 
 beforeEach(() => {
   clearAllForTest();
+});
+
+afterEach(() => {
+  delete (globalThis as any).NativeModules;
+  resetNativeHostForTest();
 });
 
 test('renders every page of the printed sheet', async () => {
@@ -64,4 +70,37 @@ test('shows the print button on web', async () => {
   );
 
   expect(await findByText('打印')).toBeInTheDocument();
+});
+
+test('offers native export and system print on android', async () => {
+  saveSheet(makeSheet());
+  const printHtml = rstest.fn();
+  const shareFile = rstest.fn(() => true);
+  (globalThis as any).NativeModules = {
+    ShunchangHost: {
+      pickJson: () => {},
+      saveJson: () => {},
+      printHtml,
+      shareFile,
+    },
+  };
+
+  const { findByText } = render(
+    <PrintScreen sheetId={SHEET_ID} onBack={() => {}} />,
+  );
+
+  expect(await findByText('系统打印')).toBeInTheDocument();
+
+  fireEvent.tap(await findByText('系统打印'));
+  expect(printHtml).toHaveBeenCalledWith(
+    expect.stringContaining('<html'),
+    expect.stringContaining('秋季婚礼流程'),
+  );
+
+  fireEvent.tap(await findByText('导出并分享'));
+  expect(shareFile).toHaveBeenCalledWith(
+    expect.stringContaining('.html'),
+    expect.stringContaining('<html'),
+    'text/html',
+  );
 });

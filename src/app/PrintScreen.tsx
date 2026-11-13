@@ -15,7 +15,13 @@ import { getRuntime, getSheet } from '../store/repository';
 import { Button } from '../ui';
 import { desktopOpenPrintHtml } from './desktopBridge';
 import { QrCode } from './QrCode';
-import { buildShareUrl, isWeb } from './share';
+import {
+  buildShareUrl,
+  canUseAndroidHost,
+  isWeb,
+  printHtmlNative,
+  shareHtmlFile,
+} from './share';
 import { buildPrintHtml } from './printHtml';
 import {
   buildPrintRows,
@@ -65,12 +71,13 @@ export function PrintScreen(props: PrintScreenProps) {
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
   const [printedAt] = useState(() => Date.now());
-  const [printStatus, setPrintStatus] = useState<'idle' | 'done' | 'failed'>(
-    'idle',
-  );
+  const [printStatus, setPrintStatus] = useState<
+    'idle' | 'done' | 'failed' | 'printed' | 'shared' | 'shareFailed'
+  >('idle');
   const compact = !useIsWide(BREAKPOINT_TABLET);
   const widePage = useIsWide(BREAKPOINT_PRINT_WIDE);
   const desktop = isDesktopRuntime();
+  const android = canUseAndroidHost();
 
   if (!sheet) {
     return (
@@ -118,6 +125,31 @@ export function PrintScreen(props: PrintScreenProps) {
       },
     );
   };
+
+  const handleAndroidPrint = () => {
+    const html = buildPrintHtml(sheet, runtime, printedAt);
+    const started = printHtmlNative(html, printFileName(sheet));
+    setPrintStatus(started ? 'printed' : 'failed');
+  };
+
+  const handleAndroidShare = () => {
+    const html = buildPrintHtml(sheet, runtime, printedAt);
+    const shared = shareHtmlFile(`${printFileName(sheet)}.html`, html);
+    setPrintStatus(shared ? 'shared' : 'shareFailed');
+  };
+
+  const statusLabel =
+    printStatus === 'done'
+      ? t('已生成打印页，请在浏览器中打印')
+      : printStatus === 'printed'
+        ? t('已打开打印预览')
+        : printStatus === 'shared'
+          ? t('已导出，请在系统面板中选择保存或发送')
+          : printStatus === 'shareFailed'
+            ? t('导出失败，请重试')
+            : printStatus === 'failed'
+              ? t('打印文件导出失败')
+              : '';
 
   const renderPage = (page: PrintPage) => (
     <view
@@ -247,14 +279,23 @@ export function PrintScreen(props: PrintScreenProps) {
         <view className="PrintActionsBack">
           <Button label={t('← 返回')} kind="tertiary" onTap={onBack} />
         </view>
-        {printStatus === 'idle' ? null : (
-          <text className="PrintActionsStatus">
-            {printStatus === 'done'
-              ? t('已生成打印页，请在浏览器中打印')
-              : t('打印文件导出失败')}
-          </text>
-        )}
-        {isWeb() ? (
+        {!android && printStatus !== 'idle' ? (
+          <text className="PrintActionsStatus">{statusLabel}</text>
+        ) : null}
+        {android ? (
+          <view className="PrintActionsAndroid">
+            <view className="PrintActionsShare">
+              <Button
+                label={t('导出并分享')}
+                kind="secondary"
+                onTap={handleAndroidShare}
+              />
+            </view>
+            <view className="PrintActionsPrint">
+              <Button label={t('系统打印')} onTap={handleAndroidPrint} />
+            </view>
+          </view>
+        ) : isWeb() ? (
           <view className="PrintActionsPrint">
             <Button label={t('打印')} onTap={handlePrint} />
           </view>
@@ -270,6 +311,12 @@ export function PrintScreen(props: PrintScreenProps) {
           </text>
         )}
       </view>
+
+      {android && printStatus !== 'idle' ? (
+        <view className="PrintToastWrap">
+          <text className="PrintToastText">{statusLabel}</text>
+        </view>
+      ) : null}
     </view>
   );
 }

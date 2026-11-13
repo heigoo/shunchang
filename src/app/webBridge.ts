@@ -357,3 +357,134 @@ export function webWriteLanguage(lang: string): void {
     // The bridge is a web-only enhancement.
   }
 }
+
+// ---------- 屏幕常亮 / 电量（Web 降级） ----------
+
+let batteryWaiters: Array<(level: number | null) => void> = [];
+
+function resolveBattery(level: number | null): void {
+  const waiters = batteryWaiters;
+  batteryWaiters = [];
+  waiters.forEach((waiter) => waiter(level));
+}
+
+function supportWakeLockMainThread(): boolean {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const navigator: any = host ? host.navigator : null;
+    return !!navigator
+      && !!navigator.wakeLock
+      && typeof navigator.wakeLock.request === 'function';
+  } catch {
+    return false;
+  }
+}
+
+function setWakeLockMainThread(keepOn: boolean): void {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const navigator: any = host ? host.navigator : null;
+    if (!navigator || !navigator.wakeLock) {
+      return;
+    }
+    const global: any = globalThis as any;
+    if (!keepOn) {
+      const lock = global.__shunchangWakeLock;
+      global.__shunchangWakeLock = null;
+      if (lock && typeof lock.release === 'function') {
+        void lock.release();
+      }
+      return;
+    }
+    if (global.__shunchangWakeLock) {
+      return;
+    }
+    navigator.wakeLock.request('screen').then((lock: any) => {
+      global.__shunchangWakeLock = lock;
+    }).catch(() => undefined);
+  } catch {
+    // Wake Lock 不可用时保持系统默认息屏。
+  }
+}
+
+function readBatteryMainThread(): void {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const navigator: any = host ? host.navigator : null;
+    if (!navigator || typeof navigator.getBattery !== 'function') {
+      runOnBackground(resolveBattery)(null);
+      return;
+    }
+    navigator.getBattery().then((battery: any) => {
+      const level = battery && typeof battery.level === 'number'
+        ? Math.round(battery.level * 100)
+        : null;
+      runOnBackground(resolveBattery)(level);
+    }).catch(() => {
+      runOnBackground(resolveBattery)(null);
+    });
+  } catch {
+    runOnBackground(resolveBattery)(null);
+  }
+}
+
+export async function webWakeLockSupported(): Promise<boolean> {
+  try {
+    return (await runOnMainThread(supportWakeLockMainThread)()) === true;
+  } catch {
+    return false;
+  }
+}
+
+export function webSetWakeLock(keepOn: boolean): void {
+  try {
+    void runOnMainThread(setWakeLockMainThread)(keepOn).catch(() => undefined);
+  } catch {
+    // 没有主线程桥时无法申请 Wake Lock。
+  }
+}
+
+export function webBatteryLevel(): Promise<number | null> {
+  return new Promise<number | null>((resolve) => {
+    let settled = false;
+    const finish = (level: number | null) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      resolve(level);
+    };
+    const timer = setTimeout(() => {
+      batteryWaiters = batteryWaiters.filter((waiter) => waiter !== finish);
+      finish(null);
+    }, 1200);
+    batteryWaiters.push(finish);
+    try {
+      void runOnMainThread(readBatteryMainThread)().catch(() => finish(null));
+    } catch {
+      finish(null);
+    }
+  });
+}
