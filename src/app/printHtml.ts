@@ -150,7 +150,7 @@ export function buildPrintHtml(
   const summary = printSummary(sheet, runtime);
   const stamp = stampText(printedAt);
   const title = escapeHtml(summary.title);
-  const hint = escapeHtml(t('桌面版请用文件或六位短码分发'));
+  const hint = escapeHtml(t('桌面版请用文件或九位短码分发'));
 
   const pageHtml = pages
     .map((page) => {

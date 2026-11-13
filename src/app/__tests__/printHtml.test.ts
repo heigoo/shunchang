@@ -142,7 +142,7 @@ test('does not embed a QR code and keeps the distribution hint', () => {
 
   expect(html).not.toContain('<svg');
   expect(html).not.toContain('data:image');
-  expect(html).toContain('桌面版请用文件或六位短码分发');
+  expect(html).toContain('桌面版请用文件或九位短码分发');
 });
 
 test('renders the print sheet in English when the language is English', () => {
@@ -163,7 +163,7 @@ test('renders the print sheet in English when the language is English', () => {
   expect(html).toContain('Page 1 of 1');
   expect(html).toContain('Printed at');
   expect(html).toContain('Shunchang');
-  expect(html).toContain('On desktop, use a file or the 6-character code');
+  expect(html).toContain('On desktop, use a file or the 9-character code');
   expect(html).toContain('Print page created; print it in your browser');
   expect(html).not.toContain('序号');
 });

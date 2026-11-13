@@ -84,7 +84,7 @@ export function PublishPanel(props: PublishPanelProps) {
       >
         <view className="PublishHead">
           <view className="PublishHeadTop">
-            <text className="PublishKicker">发布凭证 · PUBLISHED</text>
+            <text className="PublishKicker">{t('发布凭证')}</text>
             <text className="PublishVersion">{`V${sheet.version}`}</text>
           </view>
           <text className="PublishTitle">

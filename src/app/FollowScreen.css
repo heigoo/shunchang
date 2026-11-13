@@ -704,6 +704,7 @@
 .FollowCurrentState,
 .FollowProgressLabel,
 .FollowPassLabel,
+.FollowPassNo,
 .FollowRowLock {
   font-family: var(--sans);
   font-size: 11.5px;

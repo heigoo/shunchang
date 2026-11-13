@@ -111,7 +111,7 @@ export function ImportPanel(props: ImportPanelProps) {
               <view className="ImportHeadText">
                 <text className="ImportTitle">{t('载入手册')}</text>
                 <text className="ImportSubtitle">
-                  {t('用相机扫码打开跟随页；短码仅用于已持有同一手册的设备')}
+                  {t('用相机扫码打开跟随页；九位短码仅用于已持有同一手册的设备')}
                 </text>
               </view>
               <view className="ImportClose" bindtap={onClose}>

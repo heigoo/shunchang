@@ -615,7 +615,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       >
           <view className="DoneBody">
             <view className="DoneHead">
-              <text className="DoneLabel">RUN COMPLETE · 执行回执</text>
+              <text className="DoneLabel">{tText('执行回执')}</text>
               <text className="DoneStamp">{tText('完成')}</text>
             </view>
             <text className="DoneTitle">{tText('已完成')}</text>
@@ -797,7 +797,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <view className="RuntimeLockRow">
               <Badge
                 kind="stamp"
-                label={tText('不早于 {time}', {
+                label={tText('锁定 {time} · 到点开始', {
                   time: formatClockDisplay(currentRow.lockAt),
                 })}
               />

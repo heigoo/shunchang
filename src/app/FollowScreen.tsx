@@ -170,13 +170,13 @@ export function FollowScreen(props: FollowScreenProps) {
           <view className="FollowPass">
             <view className="FollowPassHead">
               <text className="FollowPassLabel">{t('现场跟随')}</text>
-              <text className="FollowPassNo">PASS 01</text>
+              <text className="FollowPassNo">{t('跟随凭证')}</text>
             </view>
             <text className="FollowPassTitle">{t('跟随现场')}</text>
             <text className="FollowPassText">
               {followOnly
                 ? t('打开督导分享的跟随链接，载入后即可查看现场进度')
-                : t('扫描督导的二维码，或输入短码载入手册')}
+                : t('用手机相机扫描督导的二维码，或输入九位短码（需已载入手册）')}
             </text>
             <view className="FollowPassRule" />
             {followOnly ? null : (
@@ -298,7 +298,7 @@ export function FollowScreen(props: FollowScreenProps) {
       <view className="FollowSync">
         <view className="FollowSyncRow">
           <view className="FollowSyncMain">
-            <text className="FollowSyncKicker">FOLLOW · 现场跟随</text>
+            <text className="FollowSyncKicker">{t('现场跟随')}</text>
             <text className="FollowSyncText">{syncText}</text>
           </view>
           <view className="FollowSyncAction" bindtap={openImport}>
@@ -371,7 +371,7 @@ export function FollowScreen(props: FollowScreenProps) {
               <view className="FollowCurrentLock">
                 <Badge
                   kind="stamp"
-                  label={t('不早于 {time}', {
+                  label={t('锁定 {time} · 到点开始', {
                     time: formatClockDisplay(currentItem.lockAt),
                   })}
                 />
@@ -504,7 +504,7 @@ export function FollowScreen(props: FollowScreenProps) {
                   </text>
                   {entry.item.lockAt !== null ? (
                     <text className="FollowRowLock">
-                      {t('不早于 {time}', {
+                      {t('锁定 {time}', {
                         time: formatClockDisplay(entry.item.lockAt),
                       })}
                     </text>

@@ -51,6 +51,8 @@ export const EN: Record<string, string> = {
 
   // 列表
   手册列表: 'Run sheets',
+  调度手册: 'Run sheets',
+  调度: 'Flow',
   新建手册: 'New sheet',
   搜索手册名称: 'Search sheets',
   输入手册名称: 'Enter sheet name',
@@ -122,20 +124,20 @@ export const EN: Record<string, string> = {
   撤销: 'Undo',
   '锁定 待填': 'Lock — pending',
   '锁定 {time}': 'Lock {time}',
+  '锁定 {time} · 到点开始': 'Locked {time} · starts on time',
+  '锁定 · 到点开始': 'Lock · starts on time',
   手册不存在: 'Sheet not found',
   时间: 'Time',
   '第 {n} 版': 'Version {n}',
   '锁定冲突 {n}': 'Lock conflicts {n}',
   自动保存: 'Saved',
   待填: 'Pending',
-  '不早于 {time}': 'Not before {time}',
   准点: 'On time',
   完成度: 'Completed',
   '晚 {n} 分': '{n} min late',
   '早 {n} 分': '{n} min early',
   时间不足: 'Not enough time',
   '整体顺延 {from} → {to} 分钟': 'Shift {from} → {to} min',
-  '锁定 = 不早于该时刻开始': 'Lock = cannot start before this time',
   跳过本环节: 'Skip this segment',
   '确认跳过？': 'Skip this segment?',
   '跳过后不会推进偏移，记录会标注为跳过。':
@@ -146,8 +148,8 @@ export const EN: Record<string, string> = {
   '现场调度 · 快速说明': 'Run sheet · Quick guide',
   编排: 'Schedule',
   执行: 'Run',
-  '把环节按时间排好；锁定表示不早于该时刻开始。':
-    'Order the segments; a lock means the segment cannot start before that time.',
+  '把环节按时间排好；锁定表示到点开始，不会提前。':
+    'Order the segments; a lock means the segment starts on time and never early.',
   '只看当前环节，完成后自动推进；晚点就顺延。':
     'See only the current segment; completing it advances the run. Running late? Shift it.',
   '把同步码给现场，所有人看到同一版。':
@@ -207,6 +209,7 @@ export const EN: Record<string, string> = {
   提前: 'Early',
   推迟: 'Late',
   流程完成: 'Run complete',
+  执行回执: 'Run receipt',
   环节完成: 'Segments completed',
   跳过: 'Skipped',
   计划总时长: 'Planned total',
@@ -227,8 +230,8 @@ export const EN: Record<string, string> = {
   // 跟随
   跟随: 'Follow',
   载入手册: 'Load sheet',
-  '用相机扫码打开跟随页；短码仅用于已持有同一手册的设备':
-    'Scan the follow page with your camera app; the code only works on devices that already have this sheet',
+  '用相机扫码打开跟随页；九位短码仅用于已持有同一手册的设备':
+    'Scan the follow page with your camera app; the 9-character code only works on devices that already have this sheet',
   锁定冲突: 'Lock conflict',
   已全部结束: 'All done',
   尚未开始: 'Not started yet',
@@ -237,9 +240,10 @@ export const EN: Record<string, string> = {
   '同步码 {code}': 'Sync code {code}',
   '偏移 {value}': 'Offset {value}',
   现场跟随: 'Live follow',
+  跟随凭证: 'Follow pass',
   跟随现场: 'Follow on site',
-  '扫描督导的二维码，或输入短码载入手册':
-    "Scan the coordinator's QR code or enter the short code to load the sheet",
+  '用手机相机扫描督导的二维码，或输入九位短码（需已载入手册）':
+    "Scan the coordinator's QR code with your phone camera, or enter the 9-character code (the sheet must already be loaded)",
   '打开督导分享的跟随链接，载入后即可查看现场进度':
     'Open the follow link shared by the coordinator to see live progress',
   更新: 'Update',
@@ -261,13 +265,14 @@ export const EN: Record<string, string> = {
   '已生成打印页，请在浏览器中打印':
     'Print page created; print it in your browser',
   打印文件导出失败: 'Failed to export the print file',
-  '桌面版请用文件或六位短码分发':
-    'On desktop, use a file or the 6-character code',
+  '桌面版请用文件或九位短码分发':
+    'On desktop, use a file or the 9-character code',
   页脚: 'Footer',
   页码: 'Page',
 
   // 发布 / 导入 / 同步
   继续编辑: 'Keep editing',
+  发布凭证: 'Publish receipt',
   开始执行: 'Start run',
   '已发布 · 第 {n} 版': 'Published · Version {n}',
   '扫码即用 · 接收方打开后进入跟随视图':
@@ -300,7 +305,7 @@ export const EN: Record<string, string> = {
     'Provided after the run starts; only for devices that already have this sheet',
   '文件含完整备注，适合环节较多或无法扫码时':
     'Includes full notes; use when there are many segments or scanning is not possible',
-  使用文件或六位短码分发: 'Share with a file or the 6-character code',
+  使用文件或九位短码分发: 'Share with a file or the 9-character code',
   导出文件: 'Export file',
   扫码: 'Scan',
   文件: 'File',

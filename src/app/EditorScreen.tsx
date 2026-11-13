@@ -175,7 +175,7 @@ function durationText(item: Item): string {
 function lockText(item: Item): string {
   return item.lockAt === null
     ? t('待填')
-    : t('不早于 {time}', { time: formatClock(item.lockAt) });
+    : t('锁定 {time}', { time: formatClock(item.lockAt) });
 }
 
 export function EditorScreen(props: EditorScreenProps) {
@@ -1092,7 +1092,7 @@ export function EditorScreen(props: EditorScreenProps) {
           </text>
         </view>
         <text className="EditorLegend">
-          {tText('锁定 = 不早于该时刻开始')}
+          {tText('锁定 · 到点开始')}
         </text>
         {isWide ? (
           <view className={isDesktop ? 'EditorTable' : 'EditorTable EditorTable--medium'}>

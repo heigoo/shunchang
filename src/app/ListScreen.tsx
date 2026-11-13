@@ -616,7 +616,7 @@ export function ListScreen(props: ListScreenProps) {
       return (
         <view className="EmptyBlock">
           <view className="EmptyHead">
-            <text className="EmptyCode">FORM 01 · BLANK</text>
+            <text className="EmptyCode">{tText('空白手册')}</text>
             <text className="EmptyStamp">{tText('草稿')}</text>
           </view>
           <text className="EmptyTitle">{tText('还没有手册')}</text>
@@ -788,7 +788,7 @@ export function ListScreen(props: ListScreenProps) {
           <view className="ListHero">
             <view className="ListHeroMain">
               <text className="ListKicker">
-                {isWide ? 'SCHEDULE SHEETS · 调度手册' : 'SCHEDULE SHEETS'}
+                {isWide ? tText('调度手册') : tText('调度')}
               </text>
               <text className="ListTitle">{tText('现场手册')}</text>
             </view>
@@ -935,7 +935,7 @@ export function ListScreen(props: ListScreenProps) {
                 <view className="GuideText">
                   <text className="GuideStepTitle">{tText('编排')}</text>
                   <text className="GuideStepBody">
-                    {tText('把环节按时间排好；锁定表示不早于该时刻开始。')}
+                    {tText('把环节按时间排好；锁定表示到点开始，不会提前。')}
                   </text>
                 </view>
               </view>
