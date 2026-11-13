@@ -1304,3 +1304,21 @@
 .lang-en .Btn.EditorSmallBtn .BtnLabel {
   white-space: nowrap;
 }
+
+/* 桌面表格：锁定列收成轻量文字入口，避免一整列按钮压过时间与环节 */
+.LockBtn.LockBtn--table {
+  min-width: 44px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-width: 0;
+  border-bottom-width: 1px;
+  border-bottom-style: dashed;
+  border-bottom-color: var(--paper-3);
+  background-color: transparent;
+}
+
+.LockBtn.LockBtn--table .LockBtnText {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}

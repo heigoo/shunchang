@@ -574,13 +574,13 @@ export function EditorScreen(props: EditorScreenProps) {
       return (
         <view className="LockCell">
           <view
-            className="LockBtn"
+            className="LockBtn LockBtn--table"
             bindtap={() => {
               handleToggleLock(index);
               setLockEdit(index);
             }}
           >
-            <text className="LockBtnText">{tText('锁定')}</text>
+            <text className="LockBtnText">{tText('锁')}</text>
           </view>
           {conflicted ? <Badge kind="stamp" label={tText('冲突')} /> : null}
         </view>

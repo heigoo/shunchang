@@ -480,4 +480,5 @@ export const EN: Record<string, string> = {
     'Scan with the system camera to open the follow page; you can also paste a link, enter a code, or choose a file',
   发到群里: 'Send to group',
   '{range}（{duration}）': '{range} ({duration})',
+  锁: 'Lock',
 };

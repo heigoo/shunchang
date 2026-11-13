@@ -777,7 +777,9 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                   onPrint(sheet.id);
                 }}
               >
-                <text className="RuntimeToolText">{tText('导出/打印')}</text>
+                <text className="RuntimeToolText">
+                  {wideActions ? tText('导出/打印') : tText('打印')}
+                </text>
               </view>
             ) : null}
             <view
