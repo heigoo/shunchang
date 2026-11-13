@@ -1,3 +1,5 @@
+/* 手册列表：一张摊开的现场调度总表 */
+
 .ListScreen {
   position: relative;
   display: flex;
@@ -15,11 +17,17 @@
   width: 100%;
 }
 
+/* ---------- 顶部品牌条 ---------- */
+
 .ListNotice {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 8px 24px;
+  padding: 9px 24px;
+  background-color: var(--paper-2);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: var(--vermilion);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--rule);
@@ -35,7 +43,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 10px 24px 8px 24px;
+  padding: 14px 24px 12px 24px;
 }
 
 .ListBrandRow {
@@ -46,20 +54,21 @@
 
 .ListBrand {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   color: var(--ink);
 }
 
 .ListBrandSeal {
-  margin-left: 8px;
-  padding: 2px 6px;
+  margin-left: 10px;
+  padding: 2px 5px;
   background-color: var(--xishi-red);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   color: #FFF7E9;
+  transform: rotate(-2deg);
 }
 
 .ListHeaderRight {
@@ -72,10 +81,10 @@
 
 .ListMeta {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 9px;
+  letter-spacing: 0.2em;
   color: var(--ink-3);
-  margin-right: 12px;
+  margin-right: 18px;
 }
 
 .ListLoad {
@@ -83,14 +92,14 @@
   flex-direction: row;
   align-items: center;
   height: 44px;
-  padding-left: 8px;
+  padding-left: 10px;
   flex-shrink: 0;
-  padding-right: 8px;
-  margin-right: 4px;
+  padding-right: 10px;
+  margin-right: 2px;
 }
 
 .ListLoadText {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink-2);
 }
 
@@ -101,21 +110,23 @@
   height: 44px;
   padding-left: 14px;
   flex-shrink: 0;
-  padding-right: 6px;
+  padding-right: 4px;
   border-left-width: 1px;
   border-left-style: solid;
-  border-left-color: var(--rule);
+  border-left-color: var(--rule-strong);
 }
 
 .ListFollowText {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink-2);
 }
 
 .ListRule {
   height: 1px;
-  background-color: var(--rule);
+  background-color: var(--rule-strong);
 }
+
+/* ---------- 主体 ---------- */
 
 .ListMain {
   display: flex;
@@ -123,60 +134,123 @@
   flex-direction: column;
   align-self: center;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1160px;
   box-sizing: border-box;
-  padding: 24px 24px 32px 24px;
+  padding: 30px 24px 36px 24px;
 }
 
-.ListTitleRow {
+/* 页头：标题在左，份数与主题在右，底部压一条重线 */
+.ListHero {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
+  animation: scRiseIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.ListHeroMain {
+  display: flex;
+  flex-direction: column;
+}
+
+.ListKicker {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 
 .ListTitle {
+  margin-top: 8px;
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 36px;
   font-weight: 700;
+  line-height: 42px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.ListHeroAside {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.ListCountBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 20px;
+}
+
+.ListCountNumber {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 44px;
   letter-spacing: 0.02em;
   color: var(--ink);
 }
 
-.ListTitleRight {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.ListToast {
-  margin-right: 14px;
-  font-size: 12px;
-  color: var(--ink-2);
-  animation: scPopIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-.ListCount {
+.ListCountLabel {
+  margin-top: 2px;
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: 9px;
+  letter-spacing: 0.16em;
   color: var(--ink-3);
 }
 
+.ListHeroRule {
+  height: 3px;
+  margin-top: 16px;
+  background-color: var(--ink);
+  animation: scRuleIn 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* 手机：压缩页头字阶，避免 320pt 窄屏把标题与份数挤成两行 */
+.ListScreen--narrow .ListTitle {
+  font-size: 32px;
+  line-height: 38px;
+}
+
+.ListScreen--narrow .ListCountNumber {
+  font-size: 38px;
+  line-height: 40px;
+}
+
+.ListScreen--narrow .ListCountBlock {
+  margin-left: 14px;
+}
+
+.ListScreen--narrow .ListTheme {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.ListScreen--narrow .ListThemeText {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/* 主题入口：排在份数左侧，保持页头右侧一列 */
 .ListTheme {
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 44px;
-  margin-right: 6px;
+  height: 34px;
+  margin-right: 4px;
   padding-left: 10px;
   padding-right: 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--rule-strong);
 }
 
 .ListThemeDot {
-  width: 8px;
-  height: 8px;
-  margin-right: 6px;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
   border-radius: 4px;
   background-color: var(--amber);
 }
@@ -186,36 +260,83 @@
 }
 
 .ListThemeText {
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
   color: var(--ink-2);
 }
+
+/* ---------- 搜索与筛选 ---------- */
 
 .ListToolbar {
   display: flex;
   flex-direction: row;
   align-items: flex-end;
   margin-top: 18px;
+  animation: scRiseIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.ListSearchRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.ListSearchWrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 270px;
+  flex-shrink: 0;
+  height: 44px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--ink);
+}
+
+.ListSearchIcon {
+  width: 22px;
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--ink-3);
 }
 
 .ListSearch {
-  width: 260px;
-  height: 44px;
-  padding: 0 0 8px 0;
+  flex: 1;
+  height: 42px;
+  padding: 0;
   background-color: transparent;
   border-width: 0;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--rule);
   font-size: 14px;
   color: var(--ink);
 }
 
-.ListFilters {
+.ListToolbarMain {
   display: flex;
   flex: 1;
   flex-direction: row;
   align-items: flex-end;
-  margin-left: 20px;
+  margin-left: 24px;
+}
+
+.ListFiltersScroll {
+  display: flex;
+  flex: 1;
+  height: 44px;
+}
+
+.ListFilters {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  height: 44px;
+  padding-left: 2px;
+}
+
+.ListToolbarAction {
+  flex-shrink: 0;
+  margin-left: 16px;
 }
 
 .ListToolbar--narrow {
@@ -223,35 +344,68 @@
   align-items: stretch;
 }
 
+.ListToolbar--narrow .ListSearchRow {
+  width: 100%;
+}
+
+.ListToolbar--narrow .ListSearchWrap {
+  width: auto;
+  flex: 1;
+}
+
+.ListToolbar--narrow .ListToolbarMain {
+  margin-left: 0;
+  margin-top: 10px;
+}
+
+.ListToolbar--narrow .ListFiltersScroll {
+  width: 100%;
+}
+
+.ListToolbar--narrow .FilterItem {
+  padding-left: 9px;
+  padding-right: 9px;
+}
+
+.ListToolbar--narrow .FilterText {
+  font-size: 12px;
+}
+
+.ListToolbarAction--inline {
+  margin-left: 10px;
+  margin-bottom: 2px;
+}
+
 /* 折叠屏展开 / 平板：收紧搜索与筛选，避免筛选文字换行 */
-.ListToolbar--medium .ListSearch {
+.ListToolbar--medium .ListSearchWrap {
   width: 220px;
 }
 
-.ListToolbar--medium .ListFilters {
-  margin-left: 12px;
+.ListToolbar--medium .ListToolbarMain {
+  margin-left: 16px;
 }
 
 .ListToolbar--medium .FilterItem {
   flex-shrink: 0;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-left: 9px;
+  padding-right: 9px;
 }
 
 .ListToolbar--medium .FilterText {
   font-size: 12px;
 }
 
-.ListToolbar--narrow .ListSearch {
-  width: 100%;
-}
-
-.ListToolbar--narrow .ListFilters {
-  margin-left: 0;
-}
-
 .ListCreate {
   flex-shrink: 0;
+}
+
+.Btn.ListCreate {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.Btn.ListCreate .BtnLabel {
+  font-size: 13px;
 }
 
 .ListCreate--xishi {
@@ -261,11 +415,6 @@
 
 .ListCreate--xishi .BtnLabel {
   color: #FFF8EF;
-}
-
-.ListToolbar--narrow .ListCreate {
-  align-self: flex-start;
-  margin-top: 12px;
 }
 
 .FilterItem {
@@ -295,37 +444,48 @@
 
 .FilterItem--active .FilterText {
   color: var(--ink);
+  font-weight: 600;
 }
+
+/* ---------- 宽屏表格 ---------- */
 
 .Table {
   display: flex;
   flex-direction: column;
-  margin-top: 16px;
+  margin-top: 24px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--ink);
 }
 
 .ListTableHead {
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 32px;
+  height: 36px;
+  padding-left: 3px;
+  background-color: var(--paper-2);
   border-bottom-width: 1px;
   border-bottom-style: solid;
-  border-bottom-color: var(--rule);
+  border-bottom-color: var(--rule-strong);
 }
 
 .Th {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--ink-3);
 }
 
 .ColNo {
-  width: 64px;
+  width: 60px;
+  flex-shrink: 0;
 }
 
 .ColDate {
-  width: 72px;
+  width: 74px;
+  flex-shrink: 0;
 }
 
 .ColName {
@@ -334,23 +494,30 @@
 }
 
 .ColStatus {
-  width: 96px;
+  width: 104px;
+  flex-shrink: 0;
+  padding-right: 12px;
 }
 
 .ColSeg {
   width: 64px;
+  flex-shrink: 0;
+  padding-left: 4px;
 }
 
 .ColUpdated {
-  width: 80px;
+  width: 78px;
+  flex-shrink: 0;
 }
 
 .ColAction {
-  width: 104px;
+  width: 72px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+  padding-right: 4px;
 }
 
 /* 折叠屏展开 / 平板：更新时间列不渲染，给名称留出宽度 */
@@ -362,31 +529,48 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 44px;
+  height: 54px;
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: transparent;
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--rule);
 }
 
 .ListRow--alt {
-  background-color: var(--paper-2);
+  background-color: rgba(20, 18, 11, 0.025);
+}
+
+/* 执行中的手册用琥珀侧标提示，不改变整行底色 */
+.ListRow--running {
+  border-left-color: var(--amber-deep);
+  background-color: var(--amber-wash);
 }
 
 .CellNo {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   color: var(--ink-3);
 }
 
 .CellDate {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--ink-2);
 }
 
 .CellName {
-  font-size: 14px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--ink);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .CellSeg {
@@ -397,7 +581,7 @@
 
 .CellUpdated {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ink-3);
 }
 
@@ -413,135 +597,241 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  height: 44px;
   min-width: 48px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .RowActionText {
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.1em;
   color: var(--ink-3);
 }
+
+/* ---------- 窄屏列表 ---------- */
 
 .NarrowList {
   display: flex;
   flex-direction: column;
-  margin-top: 16px;
+  margin-top: 18px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--ink);
 }
 
 .NarrowRow {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  padding: 12px 0;
+  align-items: stretch;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: transparent;
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--rule);
 }
 
 .NarrowRow--alt {
-  background-color: var(--paper-2);
+  background-color: rgba(20, 18, 11, 0.025);
+}
+
+.NarrowRow--running {
+  border-left-color: var(--amber-deep);
+  background-color: var(--amber-wash);
+}
+
+.NarrowNo {
+  width: 40px;
+  flex-shrink: 0;
+  padding-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
 }
 
 .NarrowMain {
   display: flex;
   flex: 1;
   flex-direction: column;
-}
-
-.NarrowTop {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+  padding-right: 10px;
 }
 
 .NarrowName {
-  max-width: 70%;
-  margin-right: 10px;
-  font-size: 14px;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 0.02em;
   color: var(--ink);
 }
 
 .NarrowMeta {
-  margin-top: 4px;
+  margin-top: 5px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
   color: var(--ink-3);
 }
+
+.NarrowTail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.NarrowMore {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  height: 34px;
+  min-width: 40px;
+  margin-right: 0;
+}
+
+.NarrowMoreText {
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+
+/* ---------- 空状态：一张空白调度单 ---------- */
 
 .EmptyBlock {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  max-width: 560px;
-  margin-top: 24px;
-  padding: 28px 0 32px 0;
-  border-top-width: 1px;
+  width: 100%;
+  max-width: 660px;
+  margin-top: 30px;
+  padding: 20px 0 30px 0;
+  border-top-width: 3px;
   border-top-style: solid;
   border-top-color: var(--ink);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--rule);
-  animation: scRiseIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: scRiseIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.EmptyHead {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .EmptyCode {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 9px;
+  letter-spacing: 0.2em;
   color: var(--ink-3);
 }
 
-.EmptyRule {
-  width: 44px;
-  height: 2px;
-  margin-top: 14px;
-  background-color: var(--ink);
-}
-
 .EmptyStamp {
-  position: absolute;
-  right: 4px;
-  top: 30px;
-  padding: 4px 8px;
+  padding: 4px 9px;
   border-width: 1px;
   border-style: solid;
   border-color: var(--vermilion);
   font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   color: var(--vermilion);
   transform: rotate(-4deg);
+  animation: scStampIn 260ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
 }
 
 .EmptyTitle {
-  margin-top: 14px;
+  margin-top: 16px;
   font-family: var(--serif);
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 700;
+  line-height: 40px;
+  letter-spacing: 0.03em;
   color: var(--ink);
 }
 
 .EmptyHint {
-  max-width: 320px;
+  max-width: 340px;
   margin-top: 8px;
   font-size: 13px;
   line-height: 21px;
   color: var(--ink-3);
 }
 
-.EmptyAction {
+.EmptyFields {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
   margin-top: 22px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
 }
+
+.EmptyField {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.EmptyField--mid {
+  padding-left: 16px;
+  border-left-width: 1px;
+  border-left-style: solid;
+  border-left-color: var(--rule);
+}
+
+.EmptyFieldLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+}
+
+.EmptyFieldValue {
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+}
+
+.EmptyAction {
+  margin-top: 24px;
+}
+
+.Btn.EmptyActionBtn {
+  padding-left: 26px;
+  padding-right: 26px;
+}
+
+/* ---------- 页脚 ---------- */
 
 .ListFooter {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 12px 24px 20px 24px;
+  justify-content: space-between;
+  margin-top: 30px;
+  padding-top: 12px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--rule);
@@ -549,10 +839,35 @@
 
 .ListFooterText {
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  letter-spacing: 0.16em;
   color: var(--ink-3);
 }
+
+/* 轻提示：落在页脚上方的纸片 */
+.ListToastLayer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 34px;
+  z-index: 60;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ListToast {
+  padding: 9px 16px;
+  background-color: var(--ink);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  animation: scPopIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- 浮层面板 ---------- */
 
 .Overlay {
   position: fixed;
@@ -574,13 +889,13 @@
   display: flex;
   flex-direction: column;
   width: 90%;
-  max-width: 440px;
+  max-width: 460px;
   max-height: 84vh;
   background-color: var(--paper);
   border-width: 1px;
   border-style: solid;
   border-color: var(--ink);
-  border-top-width: 3px;
+  border-top-width: 4px;
   border-radius: 0;
   animation: scModalIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
@@ -596,7 +911,7 @@
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 18px 20px 12px 20px;
+  padding: 20px 22px 14px 22px;
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--rule);
@@ -609,15 +924,17 @@
 
 .PanelTitle {
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   color: var(--ink);
 }
 
 .PanelSubtitle {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
   color: var(--ink-3);
 }
 
@@ -627,14 +944,14 @@
   align-items: center;
   flex-shrink: 0;
   height: 44px;
-  margin-top: -10px;
-  margin-right: -8px;
-  padding-left: 8px;
-  padding-right: 8px;
+  margin-top: -12px;
+  margin-right: -10px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .PanelCloseText {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ink-3);
   white-space: nowrap;
 }
@@ -644,8 +961,8 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  min-height: 56px;
-  padding: 13px 20px;
+  min-height: 60px;
+  padding: 14px 22px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--rule);
@@ -669,7 +986,7 @@
 
 .PanelOption--stacked .PanelOptionMeta {
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .PanelOption--stacked .PanelOptionArrow {
@@ -678,12 +995,14 @@
 
 .PanelOptionName {
   font-size: 14px;
+  font-weight: 600;
   color: var(--ink);
 }
 
 .PanelOptionTagline {
-  margin-top: 3px;
+  margin-top: 4px;
   font-size: 11px;
+  line-height: 16px;
   color: var(--ink-3);
 }
 
@@ -696,25 +1015,27 @@
 
 .PanelOptionMetaText {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   white-space: nowrap;
+  letter-spacing: 0.04em;
   color: var(--ink-3);
 }
 
 .PanelOptionArrow {
-  margin-left: 12px;
-  font-size: 14px;
+  margin-left: 14px;
+  font-family: var(--mono);
+  font-size: 13px;
   color: var(--ink-2);
 }
 
 .Panel--confirm {
-  max-width: 380px;
+  max-width: 400px;
 }
 
 .PanelBody {
   display: flex;
   flex-direction: column;
-  padding: 4px 20px 18px 20px;
+  padding: 16px 22px 18px 22px;
 }
 
 .PanelBodyText {
@@ -734,7 +1055,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
-  padding: 4px 20px 18px 20px;
+  padding: 4px 22px 20px 22px;
 }
 
 .PanelAction {
@@ -744,13 +1065,13 @@
 /* ---------- 手册操作面板 ---------- */
 
 .SheetMore {
-  max-width: 420px;
+  max-width: 430px;
 }
 
 .SheetRename {
   display: flex;
   flex-direction: column;
-  padding: 4px 20px 18px 20px;
+  padding: 14px 22px 18px 22px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--rule);
@@ -758,21 +1079,21 @@
 
 .SheetRenameLabel {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 9px;
+  letter-spacing: 0.18em;
   color: var(--ink-3);
 }
 
 .SheetRenameInput {
   height: 44px;
-  margin-top: 6px;
+  margin-top: 8px;
   margin-bottom: 12px;
   padding-left: 12px;
   padding-right: 12px;
-  background-color: var(--bg);
+  background-color: var(--paper-2);
   border-width: 1px;
   border-style: solid;
-  border-color: var(--rule);
+  border-color: var(--rule-strong);
   font-size: 14px;
   color: var(--ink);
 }

@@ -90,13 +90,6 @@ function segmentCountText(count: number): string {
   return t('{n} 环节', { n: count });
 }
 
-function sheetCountText(count: number): string {
-  if (getLang() === 'en') {
-    return `${count} ${count === 1 ? 'sheet' : 'sheets'}`;
-  }
-  return t('共 {n} 份', { n: pad2(count) });
-}
-
 function createOptionMeta(count: number, minutes: number): string {
   return `${segmentCountText(count)} · ${formatDuration(minutes)}`;
 }
@@ -315,9 +308,15 @@ export function ListScreen(props: ListScreenProps) {
     reload();
   };
 
-  const renderStatus = (sheet: Sheet) => (
-    <Badge kind="outline" label={tText(STATUS_LABEL[sheet.status])} />
-  );
+  const renderStatus = (sheet: Sheet) => {
+    const kind =
+      sheet.status === 'running'
+        ? 'reverse'
+        : sheet.status === 'draft'
+          ? 'stamp'
+          : 'outline';
+    return <Badge kind={kind} label={tText(STATUS_LABEL[sheet.status])} />;
+  };
 
   const renderActions = (sheet: Sheet) => (
     <view className="RowActions">
@@ -327,18 +326,19 @@ export function ListScreen(props: ListScreenProps) {
           openMore(sheet);
         }}
       >
-        <text className="RowActionText">{tText('更多')}</text>
+        <text className="RowActionText">⋯</text>
       </view>
     </view>
   );
 
   const renderWideRow = (sheet: Sheet, index: number) => {
-    const classes =
-      index % 2 === 1 ? 'ListRow ListRow--alt RowIn' : 'ListRow RowIn';
+    const classes = ['ListRow', 'RowIn'];
+    if (index % 2 === 1) classes.push('ListRow--alt');
+    if (sheet.status === 'running') classes.push('ListRow--running');
     return (
       <view
         key={sheet.id}
-        className={classes}
+        className={classes.join(' ')}
         style={{ animationDelay: `${Math.min(index, 8) * 24}ms` }}
         bindtap={() => {
           onOpenSheet(sheet.id);
@@ -368,29 +368,38 @@ export function ListScreen(props: ListScreenProps) {
   };
 
   const renderNarrowRow = (sheet: Sheet, index: number) => {
-    const classes =
-      index % 2 === 1 ? 'NarrowRow NarrowRow--alt RowIn' : 'NarrowRow RowIn';
+    const classes = ['NarrowRow', 'RowIn'];
+    if (index % 2 === 1) classes.push('NarrowRow--alt');
+    if (sheet.status === 'running') classes.push('NarrowRow--running');
     return (
       <view
         key={sheet.id}
-        className={classes}
+        className={classes.join(' ')}
         style={{ animationDelay: `${Math.min(index, 8) * 24}ms` }}
         bindtap={() => {
           onOpenSheet(sheet.id);
         }}
       >
+        <text className="NarrowNo">{pad3(index + 1)}</text>
         <view className="NarrowMain">
-          <view className="NarrowTop">
-            <text className="NarrowName">{displayName(sheet)}</text>
-            {renderStatus(sheet)}
-          </view>
+          <text className="NarrowName">{displayName(sheet)}</text>
           <text className="NarrowMeta">
-            {`${pad3(index + 1)} · ${monthDay(sheet.date)} · ${segmentCountText(
+            {`${monthDay(sheet.date)} · ${segmentCountText(
               sheet.items.length,
-            )}`}
+            )} · ${formatDuration(totalMinutes(sheet))}`}
           </text>
         </view>
-        {renderActions(sheet)}
+        <view className="NarrowTail">
+          {renderStatus(sheet)}
+          <view
+            className="NarrowMore"
+            catchtap={() => {
+              openMore(sheet);
+            }}
+          >
+            <text className="NarrowMoreText">⋯</text>
+          </view>
+        </view>
       </view>
     );
   };
@@ -399,17 +408,36 @@ export function ListScreen(props: ListScreenProps) {
     if (sheets.length === 0) {
       return (
         <view className="EmptyBlock">
-          <text className="EmptyCode">FORM 01 · BLANK</text>
-          <text className="EmptyStamp">{tText('草稿')}</text>
-          <view className="EmptyRule" />
+          <view className="EmptyHead">
+            <text className="EmptyCode">FORM 01 · BLANK</text>
+            <text className="EmptyStamp">{tText('草稿')}</text>
+          </view>
           <text className="EmptyTitle">{tText('还没有手册')}</text>
           <text className="EmptyHint">
             {tText('从模板开始，或建一份空白手册。')}
           </text>
+          <view className="EmptyFields">
+            <view className="EmptyField">
+              <text className="EmptyFieldLabel">{tText('日期')}</text>
+              <text className="EmptyFieldValue">—</text>
+            </view>
+            <view className="EmptyField EmptyField--mid">
+              <text className="EmptyFieldLabel">{tText('环节')}</text>
+              <text className="EmptyFieldValue">—</text>
+            </view>
+            <view className="EmptyField EmptyField--mid">
+              <text className="EmptyFieldLabel">{tText('总时长')}</text>
+              <text className="EmptyFieldValue">—</text>
+            </view>
+          </view>
           <view className="EmptyAction">
             <Button
               label={tText('新建手册')}
-              className={xishi ? 'ListCreate ListCreate--xishi' : 'ListCreate'}
+              className={
+                xishi
+                  ? 'ListCreate EmptyActionBtn ListCreate--xishi'
+                  : 'ListCreate EmptyActionBtn'
+              }
               onTap={openCreate}
             />
           </view>
@@ -513,76 +541,124 @@ export function ListScreen(props: ListScreenProps) {
 
       <scroll-view className="ListScroll" scroll-orientation="vertical">
         <view className="ListMain">
-        <view className="ListTitleRow">
-          <text className="ListTitle">{tText('现场手册')}</text>
-          <view className="ListTitleRight">
-            {toast ? <text className="ListToast">{toast}</text> : null}
-            <view
-              className="ListTheme"
-              bindtap={() => {
-                setThemeOpen(true);
-              }}
-            >
-              <view
-                className={xishi ? 'ListThemeDot ListThemeDot--xishi' : 'ListThemeDot'}
-              />
-              <text className="ListThemeText">
-                {xishi ? tText('喜事') : tText('墨金')}
+          <view className="ListHero">
+            <view className="ListHeroMain">
+              <text className="ListKicker">
+                {isWide ? 'SCHEDULE SHEETS · 调度手册' : 'SCHEDULE SHEETS'}
               </text>
+              <text className="ListTitle">{tText('现场手册')}</text>
             </view>
-            <text className="ListCount">{sheetCountText(sheets.length)}</text>
-          </view>
-        </view>
-
-        <view
-          className={
-            isDesktop
-              ? 'ListToolbar'
-              : isWide
-                ? 'ListToolbar ListToolbar--medium'
-                : 'ListToolbar ListToolbar--narrow'
-          }
-        >
-          <input
-            className="ListSearch"
-            placeholder={tText('搜索手册名称')}
-            bindinput={handleInput}
-          />
-          <view className="ListFilters">
-            {STATUS_OPTIONS.map((option) => {
-              const active = option.value === status;
-              const classes = active
-                ? 'FilterItem FilterItem--active'
-                : 'FilterItem';
-              return (
+            <view className="ListHeroAside">
+              <view
+                className="ListTheme"
+                bindtap={() => {
+                  setThemeOpen(true);
+                }}
+              >
                 <view
-                  key={option.value}
-                  className={classes}
-                  bindtap={() => {
-                    setStatus(option.value);
-                  }}
-                >
-                  <text className="FilterText">{tText(option.label)}</text>
-                </view>
-              );
-            })}
+                  className={
+                    xishi ? 'ListThemeDot ListThemeDot--xishi' : 'ListThemeDot'
+                  }
+                />
+                <text className="ListThemeText">
+                  {xishi ? tText('喜事') : tText('墨金')}
+                </text>
+              </view>
+              <view className="ListCountBlock">
+                <text className="ListCountNumber">{pad2(sheets.length)}</text>
+                <text className="ListCountLabel">{tText('份手册')}</text>
+              </view>
+            </view>
           </view>
-          <Button
-            label={tText('新建手册')}
-            className={xishi ? 'ListCreate ListCreate--xishi' : 'ListCreate'}
-            onTap={openCreate}
-          />
+          <view className="ListHeroRule" />
+
+          <view
+            className={
+              isDesktop
+                ? 'ListToolbar'
+                : isWide
+                  ? 'ListToolbar ListToolbar--medium'
+                  : 'ListToolbar ListToolbar--narrow'
+            }
+          >
+            <view className="ListSearchRow">
+              <view className="ListSearchWrap">
+                <text className="ListSearchIcon">⌕</text>
+                <input
+                  className="ListSearch"
+                  placeholder={tText('搜索手册名称')}
+                  bindinput={handleInput}
+                />
+              </view>
+              {!isWide && sheets.length > 0 ? (
+                <view className="ListToolbarAction ListToolbarAction--inline">
+                  <Button
+                    label={tText('新建')}
+                    className={
+                      xishi ? 'ListCreate ListCreate--xishi' : 'ListCreate'
+                    }
+                    onTap={openCreate}
+                  />
+                </view>
+              ) : null}
+            </view>
+            <view className="ListToolbarMain">
+              <scroll-view
+                className="ListFiltersScroll"
+                scroll-orientation="horizontal"
+              >
+                <view className="ListFilters">
+                  {STATUS_OPTIONS.map((option) => {
+                    const active = option.value === status;
+                    const classes = active
+                      ? 'FilterItem FilterItem--active'
+                      : 'FilterItem';
+                    return (
+                      <view
+                        key={option.value}
+                        className={classes}
+                        bindtap={() => {
+                          setStatus(option.value);
+                        }}
+                      >
+                        <text className="FilterText">{tText(option.label)}</text>
+                      </view>
+                    );
+                  })}
+                </view>
+              </scroll-view>
+              {isWide && sheets.length > 0 ? (
+                <view className="ListToolbarAction">
+                  <Button
+                    label={isDesktop ? tText('新建手册') : tText('新建')}
+                    className={
+                      xishi ? 'ListCreate ListCreate--xishi' : 'ListCreate'
+                    }
+                    onTap={openCreate}
+                  />
+                </view>
+              ) : null}
+            </view>
+          </view>
+
+          {renderList()}
+
+          <view className="ListFooter">
+            <text className="ListFooterText">
+              {tText('共 {n} 份 · 数据保存在本设备', {
+                n: pad2(sheets.length),
+              })}
+            </text>
+            <text className="ListFooterText">{tText('顺场 · 现场调度')}</text>
+          </view>
         </view>
-
-        {renderList()}
-      </view>
-
-      <view className="ListFooter">
-        <text className="ListFooterText">
-          {tText('第 {a} / {b} 页 · 数据保存在本设备', { a: 1, b: 1 })}
-        </text>
-      </view>
       </scroll-view>
+
+      {toast ? (
+        <view className="ListToastLayer">
+          <text className="ListToast">{toast}</text>
+        </view>
+      ) : null}
 
       {importPresence.mounted ? (
         <ImportPanel

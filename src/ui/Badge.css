@@ -17,9 +17,9 @@
 
 .BadgeText {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 /* 琥珀底深色字：仅用于延误/冲突 */
@@ -32,16 +32,16 @@
 .Badge--reverse .BadgeText {
   color: var(--screen);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 /* 透明 + 1px 描边 + 弱化文字：版本号/偏移/同步状态 */
 .Badge--outline {
-  border-color: var(--rule);
+  border-color: var(--rule-strong);
 }
 
 .Badge--outline .BadgeText {
-  color: var(--fg-3);
+  color: var(--fg-2);
   font-weight: 500;
 }
 
@@ -49,13 +49,14 @@
 .Badge--stamp {
   padding: 3px 7px;
   border-color: var(--vermilion);
+  animation: scStampIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .Badge--stamp .BadgeText {
   color: var(--vermilion);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
 }
 
 .theme-dark .Badge--stamp {
@@ -64,4 +65,12 @@
 
 .theme-dark .Badge--stamp .BadgeText {
   color: var(--bright);
+}
+
+.theme-xishi .theme-light .Badge--outline {
+  border-color: var(--xishi-red);
+}
+
+.theme-xishi .theme-light .Badge--outline .BadgeText {
+  color: var(--xishi-red);
 }

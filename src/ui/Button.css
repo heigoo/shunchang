@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: center;
   height: var(--btn-h);
-  padding-left: 18px;
-  padding-right: 18px;
+  padding-left: 20px;
+  padding-right: 20px;
   border-width: 1px;
   border-style: solid;
   border-color: transparent;
@@ -17,7 +17,7 @@
   font-family: var(--sans);
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
 }
 
 .Btn--block {
@@ -47,7 +47,7 @@
 /* 浅/深底 + 1px 描边 */
 .Btn--secondary {
   background-color: var(--bg);
-  border-color: var(--rule);
+  border-color: var(--rule-strong);
 }
 
 .Btn--secondary .BtnLabel {

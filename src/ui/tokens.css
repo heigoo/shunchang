@@ -1,37 +1,50 @@
 /* 顺场设计令牌：光场（纸面调度单）与暗场（发车信息屏） */
 
 :root {
-  /* 光场原始色 */
-  --paper: #F1EEE6;
-  --paper-2: #E7E2D5;
-  --paper-3: #DCD6C6;
-  --ink: #15140F;
-  --ink-2: #4B4941;
-  --ink-3: #6F6C60;
-  --amber-deep: #A66A12;
-  --amber-wash: #F6E2B6;
-  --vermilion: #A8321E;
+  /* 光场原始色：偏暖的调度单纸面 */
+  --paper: #F2EDE1;
+  --paper-2: #E8E1D0;
+  --paper-3: #D6CCB6;
+  --ink: #14120B;
+  --ink-2: #474336;
+  --ink-3: #756F5C;
+  --rule-strong: #B4AA92;
+  --amber-deep: #A4660C;
+  --amber-wash: #F4E1B4;
+  --vermilion: #A02E18;
   /* 喜事品牌色：喜红只用于喜事场景，不是危险色 */
-  --xishi-red: #BE2A20;
-  --xishi-red-deep: #8A2416;
+  --xishi-red: #BC2A20;
+  --xishi-red-deep: #862316;
 
-  /* 暗场原始色 */
-  --screen: #0B0B09;
-  --screen-2: #16160F;
-  --screen-3: #22221A;
-  --screen-line: #2A2A22;
-  --dim: #8A8778;
-  --bright: #F5F2E8;
+  /* 暗场原始色：发车信息屏 */
+  --screen: #0A0A08;
+  --screen-2: #131310;
+  --screen-3: #1D1C16;
+  --screen-line: #2B2A22;
+  --screen-line-strong: #454335;
+  --dim: #918C7A;
+  --bright: #F7F3E7;
   --amber: #FFB020;
   --amber-light: #FFD98A;
 
   /* 浮层遮罩 */
-  --scrim: rgba(21, 20, 15, 0.38);
+  --scrim: rgba(20, 18, 11, 0.44);
 
   /* 尺寸 */
   --btn-h: 52px;
   --row-h: 40px;
   --topbar-h: 34px;
+  --gutter: 24px;
+  --gutter-narrow: 20px;
+
+  /* 字阶：大标题、页面标题、区块、正文、注记、微标 */
+  --fs-display: 40px;
+  --fs-h1: 30px;
+  --fs-h2: 22px;
+  --fs-h3: 18px;
+  --fs-body: 14px;
+  --fs-meta: 12px;
+  --fs-micro: 10px;
 
   /* 字体：标题用衬线，正文无衬线，数据等宽 */
   --sans: -apple-system, 'PingFang SC', 'HarmonyOS Sans', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
@@ -41,20 +54,20 @@
 
 .theme-light {
   /* 语义变量直接使用字面量，避免原生端对嵌套 var() 解析差异 */
-  --bg: #F1EEE6;
-  --fg: #15140F;
-  --fg-2: #4B4941;
-  --fg-3: #8B887A;
-  --rule: #DCD6C6;
-  --accent: #A66A12;
+  --bg: #F2EDE1;
+  --fg: #14120B;
+  --fg-2: #474336;
+  --fg-3: #756F5C;
+  --rule: #D6CCB6;
+  --accent: #A4660C;
 }
 
 .theme-dark {
-  --bg: #0B0B09;
-  --fg: #F5F2E8;
-  --fg-2: #8A8778;
-  --fg-3: #8A8778;
-  --rule: #2A2A22;
+  --bg: #0A0A08;
+  --fg: #F7F3E7;
+  --fg-2: #918C7A;
+  --fg-3: #918C7A;
+  --rule: #2B2A22;
   --accent: #FFB020;
 }
 
@@ -63,43 +76,45 @@
 /* 覆盖原始色：所有通过 var() 取色的页面会整体换肤。 */
 .theme-xishi {
   /* 光场：暖象牙纸，文字回到墨色，喜红只做强调 */
-  --paper: #F7F3EA;
-  --paper-2: #EFE8DB;
-  --paper-3: #E2D9C8;
-  --ink: #1A1712;
-  --ink-2: #4F4A40;
-  --ink-3: #6F6859;
-  --amber-deep: #A66A12;
-  --amber-wash: #F6E2B6;
+  --paper: #F7F2E6;
+  --paper-2: #EEE6D5;
+  --paper-3: #E0D5BF;
+  --ink: #1A160F;
+  --ink-2: #4D4739;
+  --ink-3: #736A56;
+  --rule-strong: #C9B99C;
+  --amber-deep: #A4660C;
+  --amber-wash: #F4E1B4;
 
   /* 暗场：极深暖墨 + 金色，保持信息屏的清晰度 */
-  --screen: #0F0B08;
-  --screen-2: #1A1410;
-  --screen-3: #241D17;
-  --screen-line: #2E2620;
-  --dim: #918878;
+  --screen: #0E0A07;
+  --screen-2: #19130F;
+  --screen-3: #231C15;
+  --screen-line: #2E251D;
+  --screen-line-strong: #4A3B2C;
+  --dim: #978C79;
   --bright: #F8F2E6;
   --amber: #FFB020;
   --amber-light: #FFD98A;
 
-  --scrim: rgba(26, 23, 18, 0.42);
+  --scrim: rgba(20, 14, 10, 0.46);
 }
 
 .theme-xishi .theme-light {
-  --bg: #F7F3EA;
-  --fg: #1A1712;
-  --fg-2: #4F4A40;
-  --fg-3: #7C7566;
-  --rule: #E2D9C8;
-  --accent: #BE2A20;
+  --bg: #F7F2E6;
+  --fg: #1A160F;
+  --fg-2: #4D4739;
+  --fg-3: #736A56;
+  --rule: #E0D5BF;
+  --accent: #BC2A20;
 }
 
 .theme-xishi .theme-dark {
-  --bg: #0F0B08;
+  --bg: #0E0A07;
   --fg: #F8F2E6;
-  --fg-2: #918878;
-  --fg-3: #918878;
-  --rule: #2E2620;
+  --fg-2: #978C79;
+  --fg-3: #978C79;
+  --rule: #2E251D;
   --accent: #FFB020;
 }
 
@@ -119,8 +134,24 @@
 
 .label {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* 表单微标：出现在每个区块左上角 */
+.u-micro {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.u-kicker {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
 }
 
