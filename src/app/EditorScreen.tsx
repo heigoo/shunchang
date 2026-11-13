@@ -174,7 +174,7 @@ function durationText(item: Item): string {
 
 function lockText(item: Item): string {
   return item.lockAt === null
-    ? t('待填')
+    ? t('锁定 待填')
     : t('锁定 {time}', { time: formatClock(item.lockAt) });
 }
 

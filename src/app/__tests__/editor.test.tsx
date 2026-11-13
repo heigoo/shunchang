@@ -87,6 +87,23 @@ test('renders the sheet name, numbering and computed plan times', async () => {
   expect(await findByText(/09:30/)).toBeInTheDocument();
 });
 
+test('shows 锁定 待填 for a locked item without a time', async () => {
+  const sheet = makeSheet();
+  sheet.items[0] = { ...sheet.items[0], locked: true, lockAt: null };
+  saveSheet(sheet);
+
+  const { findByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={() => {}}
+      onPrint={() => {}}
+    />,
+  );
+
+  expect(await findByText('[锁定 待填]')).toBeInTheDocument();
+});
+
 test('restores a deleted item with undo', async () => {
   saveSheet(makeSheet());
 

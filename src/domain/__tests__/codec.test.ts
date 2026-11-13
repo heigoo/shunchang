@@ -474,24 +474,32 @@ describe('short code', () => {
     expect(encodeShortCode(sheet.id, { ...runtime, ownerEpoch: 8 })).toBe('');
   });
 
-  it('clamps the offset into -180..331 minutes', () => {
+  it('refuses to encode an offset outside -180..331 minutes', () => {
     const sheet = makeSheet();
     const runtime = makeRuntime(sheet);
 
-    const early = decodeShortCode(
-      encodeShortCode(sheet.id, { ...runtime, offsetMin: -500 }),
+    expect(encodeShortCode(sheet.id, { ...runtime, offsetMin: -500 })).toBe('');
+    expect(encodeShortCode(sheet.id, { ...runtime, offsetMin: 1000 })).toBe('');
+    expect(encodeShortCode(sheet.id, { ...runtime, offsetMin: -181 })).toBe('');
+    expect(encodeShortCode(sheet.id, { ...runtime, offsetMin: 332 })).toBe('');
+    expect(
+      encodeShortCode(sheet.id, { ...runtime, offsetMin: Number.NaN }),
+    ).toBe('');
+
+    const earliest = decodeShortCode(
+      encodeShortCode(sheet.id, { ...runtime, offsetMin: -180 }),
     );
-    expect(early.ok).toBe(true);
-    if (early.ok) {
-      expect(early.payload.offsetMin).toBe(-180);
+    expect(earliest.ok).toBe(true);
+    if (earliest.ok) {
+      expect(earliest.payload.offsetMin).toBe(-180);
     }
 
-    const late = decodeShortCode(
-      encodeShortCode(sheet.id, { ...runtime, offsetMin: 1000 }),
+    const latest = decodeShortCode(
+      encodeShortCode(sheet.id, { ...runtime, offsetMin: 331 }),
     );
-    expect(late.ok).toBe(true);
-    if (late.ok) {
-      expect(late.payload.offsetMin).toBe(331);
+    expect(latest.ok).toBe(true);
+    if (latest.ok) {
+      expect(latest.payload.offsetMin).toBe(331);
     }
   });
 });

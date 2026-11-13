@@ -10,6 +10,7 @@ import {
   createRuntime,
   skipCurrent,
 } from '../runtimeOps';
+import { getDeviceId } from '../device';
 import { extendStartMin } from '../shiftPreview';
 
 function makeItem(
@@ -50,6 +51,15 @@ describe('createRuntime', () => {
     expect(runtime.offsetMin).toBe(0);
     expect(runtime.execVersion).toBe(1);
     expect(runtime.lastSyncAt).toBe(0);
+  });
+
+  it('stamps the local device as the owner', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime = createRuntime(sheet, 490);
+
+    expect(runtime.ownerEpoch).toBe(0);
+    expect(runtime.ownerDeviceId).toBe(getDeviceId());
+    expect(runtime.ownerDeviceId).toMatch(/^D-[2-9A-HJ-NP-Z]{4}$/);
   });
 });
 

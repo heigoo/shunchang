@@ -17,8 +17,11 @@ import {
   setRole,
 } from '../store/repository';
 import { storage } from '../store/storage';
+import { getDeviceId } from './device';
 import { webLocation } from './share';
 import { webClearHash } from './webBridge';
+
+export { getDeviceId } from './device';
 
 export type ImportError =
   | 'bad-format'
@@ -45,9 +48,7 @@ const MESSAGES: Record<ImportError, string> = {
   'ambiguous-sheet': '无法唯一匹配手册，请改用链接或文件',
 };
 
-const DEVICE_ID_KEY = 'shunchang.deviceId';
 const OWNER_NOTICE_PREFIX = 'shunchang.ownerNotice.';
-const DEVICE_ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 export function importErrorMessage(error: ImportError): string {
   return t(MESSAGES[error] ?? MESSAGES['bad-format']);
@@ -55,32 +56,6 @@ export function importErrorMessage(error: ImportError): string {
 
 function ownerNoticeKey(sheetId: string): string {
   return `${OWNER_NOTICE_PREFIX}${sheetId}`;
-}
-
-/** 本机设备短标识，首次使用时生成并落盘，形如 `D-7K2M`。 */
-export function getDeviceId(): string {
-  try {
-    const saved = storage.get(DEVICE_ID_KEY);
-    if (saved && saved.length > 0) {
-      return saved;
-    }
-  } catch {
-    // 读取失败时继续生成。
-  }
-
-  let suffix = '';
-  for (let i = 0; i < 4; i += 1) {
-    suffix += DEVICE_ID_ALPHABET[
-      Math.floor(Math.random() * DEVICE_ID_ALPHABET.length)
-    ];
-  }
-  const id = `D-${suffix}`;
-  try {
-    storage.set(DEVICE_ID_KEY, id);
-  } catch {
-    // 持久化失败时仍返回本次会话可用的标识。
-  }
-  return id;
 }
 
 /** 主控转移到更高代次时留下的本地提示，跟随页据此提示“只读”。 */

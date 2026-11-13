@@ -13,6 +13,7 @@ import {
 import type { TimelineRow } from '../domain/timeline';
 import type { AuditEntry, Item, RuntimeState, Sheet } from '../domain/types';
 import { t } from '../i18n';
+import { getDeviceId } from './device';
 
 /** 现场操作记录最多保留的条数。 */
 export const MAX_AUDIT_ENTRIES = 100;
@@ -324,7 +325,7 @@ export function createRuntime(sheet: Sheet, nowMin: number): RuntimeState {
     execVersion: 1,
     lastSyncAt: 0,
     ownerEpoch: 0,
-    ownerDeviceId: '',
+    ownerDeviceId: getDeviceId(),
     lastSyncMode: 'full',
     insertedItems: [],
     lockOverrides: {},

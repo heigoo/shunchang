@@ -587,12 +587,16 @@ export function sheetFingerprint(sheetId: string): number {
   return hash & 0x3fff;
 }
 
-function clampOffsetBits(offsetMin: number): number {
-  const safe = Number.isFinite(offsetMin) ? Math.round(offsetMin) : 0;
-  return (
-    Math.max(SHORT_OFFSET_MIN, Math.min(SHORT_OFFSET_MAX, safe)) -
-    SHORT_OFFSET_MIN
-  );
+/** 偏移转换为 9 bit；超出 -180..331 或无有效值时返回 null（不生成短码）。 */
+function offsetToBits(offsetMin: number): number | null {
+  if (!Number.isFinite(offsetMin)) {
+    return null;
+  }
+  const safe = Math.round(offsetMin);
+  if (safe < SHORT_OFFSET_MIN || safe > SHORT_OFFSET_MAX) {
+    return null;
+  }
+  return safe - SHORT_OFFSET_MIN;
 }
 
 function toBitString(value: number, width: number): string {
@@ -622,7 +626,10 @@ export function encodeShortCode(sheetId: string, runtime: RuntimeState): string 
     return '';
   }
 
-  const offsetBits = clampOffsetBits(runtime.offsetMin);
+  const offsetBits = offsetToBits(runtime.offsetMin);
+  if (offsetBits === null) {
+    return '';
+  }
   const checksum =
     (fingerprint + execVersion + currentIndex + offsetBits + ownerEpoch) % 4;
 
