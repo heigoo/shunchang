@@ -245,3 +245,23 @@
 .ShiftActionConfirm {
   flex: 1.5;
 }
+
+/* ---------- 中文微标：系统无衬线 + 收紧字距 ---------- */
+
+.ShiftLabel,
+.ShiftNowText,
+.ShiftRowName,
+.ShiftNote {
+  font-family: var(--sans);
+  letter-spacing: 0.04em;
+}
+
+.ShiftLabel,
+.ShiftNowText,
+.ShiftNote {
+  font-size: 11.5px;
+}
+
+.ShiftRowName {
+  font-size: 12px;
+}

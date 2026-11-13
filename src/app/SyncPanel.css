@@ -171,3 +171,26 @@
   flex-direction: row;
   margin-top: 12px;
 }
+
+/* ---------- 中文微标：系统无衬线 + 收紧字距 ---------- */
+
+.SyncLabel,
+.SyncCodeHint,
+.SyncMetaVersion,
+.SyncMetaTime {
+  font-family: var(--sans);
+  letter-spacing: 0.04em;
+}
+
+.SyncLabel {
+  font-size: 11.5px;
+}
+
+.SyncCodeHint {
+  font-size: 12px;
+}
+
+.SyncMetaVersion,
+.SyncMetaTime {
+  font-size: 11.5px;
+}

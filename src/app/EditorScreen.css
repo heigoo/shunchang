@@ -1063,3 +1063,48 @@
 .LockOff {
   height: 44px;
 }
+
+/* ---------- 中文微标：系统无衬线 + 收紧字距 ---------- */
+
+.EditorBackText,
+.MetaLabel,
+.MetaValue,
+.EditorSectionLabel,
+.EditorSectionCount,
+.EditorLegend,
+.Th,
+.CardSub,
+.CardMeta,
+.BodyLabel,
+.FieldLabel,
+.FieldUnit,
+.LockBtnText {
+  font-family: var(--sans);
+  letter-spacing: 0.04em;
+}
+
+.EditorBackText,
+.MetaValue,
+.EditorSectionCount,
+.EditorLegend,
+.FieldUnit,
+.BodyLabel,
+.CardMeta {
+  font-size: 11.5px;
+}
+
+.MetaLabel,
+.FieldLabel,
+.LockBtnText,
+.Th {
+  font-size: 11px;
+}
+
+.EditorSectionLabel {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.CardSub {
+  font-size: 12px;
+}
