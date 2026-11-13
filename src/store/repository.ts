@@ -16,7 +16,7 @@ const LAST_VIEW_KEY = 'shunchang.lastView';
 const THEME_KEY = 'shunchang.theme';
 const CORRUPT_MESSAGE = '本地数据损坏，已忽略';
 
-type AppView = 'list' | 'editor' | 'runtime' | 'follow' | 'print';
+type AppView = 'list' | 'editor' | 'runtime' | 'follow' | 'print' | 'report';
 
 export type AppTheme = 'default' | 'xishi';
 
@@ -25,7 +25,14 @@ interface LastView {
   sheetId?: string;
 }
 
-const VIEWS: AppView[] = ['list', 'editor', 'runtime', 'follow', 'print'];
+const VIEWS: AppView[] = [
+  'list',
+  'editor',
+  'runtime',
+  'follow',
+  'print',
+  'report',
+];
 
 let lastError: string | null = null;
 const runtimeKeys = new Set<string>();

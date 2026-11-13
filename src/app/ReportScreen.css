@@ -1,0 +1,186 @@
+/* 执行报告：光场下的复盘页 */
+
+.Report {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: var(--paper);
+}
+
+.ReportHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background-color: var(--paper);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule-strong);
+}
+
+.ReportBack {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 44px;
+  padding-right: 14px;
+}
+
+.ReportBackText {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.ReportKicker {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+}
+
+.ReportScroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+}
+
+.ReportBody {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  width: 100%;
+  max-width: 860px;
+  box-sizing: border-box;
+  padding: 28px 24px 36px 24px;
+  animation: scRiseIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.ReportHead {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
+}
+
+.ReportName {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.ReportStatus {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.ReportStatusItem {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.ReportDate {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.ReportSection {
+  display: flex;
+  flex-direction: column;
+  margin-top: 24px;
+}
+
+.ReportSectionLabel {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+
+.ReportStatRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+}
+
+.ReportStat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 14px 16px 14px 0;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
+}
+
+.ReportStat--last {
+  padding-right: 0;
+}
+
+.ReportStatLabel {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.ReportStatValue {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.ReportStatValue--accent {
+  color: var(--amber-deep);
+}
+
+.ReportActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.ReportAction {
+  flex: 1;
+}
+
+.ReportActionPrimary {
+  margin-left: 12px;
+}
+
+.ReportMissing {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+}
+
+.ReportMissingTitle {
+  font-size: 17px;
+  color: var(--ink);
+}
+
+.ReportMissingAction {
+  margin-top: 20px;
+}

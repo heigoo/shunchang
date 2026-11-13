@@ -10,7 +10,9 @@ import { dispatchBack } from './app/backBus';
 import { applyLaunchHash, importErrorMessage } from './app/importFlow';
 import { ListScreen } from './app/ListScreen';
 import type { AppView } from './app/nav';
+import { viewForSheet } from './app/nav';
 import { PrintScreen } from './app/PrintScreen';
+import { ReportScreen } from './app/ReportScreen';
 import { RuntimeScreen } from './app/RuntimeScreen';
 import { SplashScreen } from './app/SplashScreen';
 import { isWeb, webLocation } from './app/share';
@@ -341,7 +343,7 @@ export function App() {
       navigate('follow', id);
       return;
     }
-    navigate(sheet.status === 'running' ? 'runtime' : 'editor', id);
+    navigate(viewForSheet(sheet.status), id);
   };
 
   const openPrint = (id: string) => {
@@ -396,12 +398,19 @@ export function App() {
       case 'editor':
         content = route.sheetId ? (
           <EditorScreen
+            key={route.sheetId}
             sheetId={route.sheetId}
             safeTop={insets.top}
             safeBottom={insets.bottom}
             onBack={back}
             onStartRuntime={(id) => {
               navigate('runtime', id);
+            }}
+            onOpenReport={(id) => {
+              navigate('report', id);
+            }}
+            onDuplicate={(id) => {
+              navigate('editor', id);
             }}
             onPrint={openPrint}
           />
@@ -463,6 +472,21 @@ export function App() {
           />
         ) : (
           <PlaceholderScreen title={t('打印')} subtitle={subtitle} onBack={back} />
+        );
+        break;
+      case 'report':
+        content = route.sheetId ? (
+          <ReportScreen
+            sheetId={route.sheetId}
+            safeTop={insets.top}
+            safeBottom={insets.bottom}
+            onBack={back}
+            onContinue={(id) => {
+              navigate('runtime', id);
+            }}
+          />
+        ) : (
+          <PlaceholderScreen title={t('执行报告')} subtitle={subtitle} onBack={back} />
         );
         break;
       default:

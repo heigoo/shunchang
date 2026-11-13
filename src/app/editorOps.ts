@@ -164,22 +164,80 @@ export interface PublishResult {
   ok: boolean;
   sheet: Sheet;
   errors: SheetError[];
+  /** 是否真的产生了新版本；内容未变化时为 false。 */
+  changed: boolean;
+}
+
+function hashText(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+/**
+ * 稳定的内容哈希：只包含手册名称、日期、起始时间与环节内容，
+ * 不含状态、版本号与更新时间，避免“打开面板/保存”被误判为内容变化。
+ */
+export function sheetContentHash(sheet: Sheet): string {
+  const parts: string[] = [sheet.name, sheet.date, String(sheet.startMin)];
+  for (const item of sheet.items) {
+    parts.push(
+      [
+        item.name,
+        String(item.durationMin),
+        item.owner,
+        item.note,
+        item.lockAt === null ? '' : String(item.lockAt),
+        item.locked === true ? '1' : '0',
+      ].join('\u001f'),
+    );
+  }
+  return hashText(parts.join('\u001e'));
 }
 
 export function publishSheet(sheet: Sheet): PublishResult {
+  if (sheet.status === 'done') {
+    return {
+      ok: false,
+      sheet,
+      errors: [{ field: 'status', message: '已完成的手册不能再次发布' }],
+      changed: false,
+    };
+  }
+
   const errors = validateForPublish(sheet);
   if (errors.length > 0) {
-    return { ok: false, sheet, errors };
+    return { ok: false, sheet, errors, changed: false };
   }
+
+  const hash = sheetContentHash(sheet);
+  const sameContent =
+    sheet.status === 'published' &&
+    (sheet.publishedHash === hash || (!sheet.dirty && sheet.publishedHash === undefined));
+
+  if (sameContent) {
+    // 已发布且内容没有变化：不生成新版本，只补齐哈希或清掉残留的 dirty。
+    const next =
+      sheet.publishedHash === hash && !sheet.dirty
+        ? sheet
+        : { ...sheet, publishedHash: hash, dirty: false };
+    return { ok: true, sheet: next, errors: [], changed: false };
+  }
+
   return {
     ok: true,
     sheet: {
       ...sheet,
       status: 'published',
       version: sheet.version + 1,
+      publishedHash: hash,
       dirty: false,
       updatedAt: Date.now(),
     },
     errors: [],
+    changed: true,
   };
 }

@@ -25,6 +25,8 @@ export interface Sheet {
   status: SheetStatus;
   version: number;
   updatedAt: number;
+  /** 最近一次发布时的内容哈希，用于判断重复发布是否真的产生了新版本。 */
+  publishedHash?: string;
   /**
    * 已发布手册存在未发布的修改。草稿不置该标记。
    */

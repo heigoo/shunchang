@@ -3,7 +3,7 @@ import { fireEvent, render } from '@lynx-js/react/testing-library';
 import { beforeEach, expect, test } from '@rstest/core';
 
 import type { Sheet } from '../../domain/types';
-import { clearAllForTest, saveSheet } from '../../store/repository';
+import { clearAllForTest, getSheet, saveSheet } from '../../store/repository';
 import { EditorScreen } from '../EditorScreen';
 
 const SHEET_ID = 'sheet-editor';
@@ -110,4 +110,103 @@ test('restores a deleted item with undo', async () => {
 
   fireEvent.tap(await findByText('撤销'));
   expect(container.querySelectorAll('.Row').length).toBe(3);
+});
+
+test('starts a published sheet directly without bumping the version', async () => {
+  saveSheet({ ...makeSheet(), status: 'published', version: 3 });
+
+  const started: string[] = [];
+  const { findByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={(id) => {
+        started.push(id);
+      }}
+      onPrint={() => {}}
+    />,
+  );
+
+  fireEvent.tap(await findByText('开始执行'));
+
+  expect(started).toEqual([SHEET_ID]);
+  const saved = getSheet(SHEET_ID);
+  expect(saved?.version).toBe(3);
+  expect(saved?.status).toBe('published');
+});
+
+test('blocks start execution when a published sheet has unpublished changes', async () => {
+  saveSheet({ ...makeSheet(), status: 'published', version: 2, dirty: true });
+
+  const started: string[] = [];
+  const { findByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={(id) => {
+        started.push(id);
+      }}
+      onPrint={() => {}}
+    />,
+  );
+
+  expect(await findByText('请先发布修改')).toBeInTheDocument();
+  fireEvent.tap(await findByText('开始执行'));
+  expect(started).toEqual([]);
+});
+
+test('asks for publishing before starting a draft', async () => {
+  saveSheet(makeSheet());
+
+  const started: string[] = [];
+  const { findByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={(id) => {
+        started.push(id);
+      }}
+      onPrint={() => {}}
+    />,
+  );
+
+  expect(await findByText('请先发布，再开始执行')).toBeInTheDocument();
+  fireEvent.tap(await findByText('开始执行'));
+  expect(started).toEqual([]);
+});
+
+test('renders a done sheet as read-only with report entry', async () => {
+  saveSheet({ ...makeSheet(), status: 'done', version: 4 });
+
+  const reports: string[] = [];
+  const copies: string[] = [];
+  const { container, findByText, queryByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={() => {}}
+      onPrint={() => {}}
+      onOpenReport={(id) => {
+        reports.push(id);
+      }}
+      onDuplicate={(id) => {
+        copies.push(id);
+      }}
+    />,
+  );
+
+  expect(
+    await findByText('这份手册已执行完成，不能编辑、发布或再次开始执行。'),
+  ).toBeInTheDocument();
+  expect(container.querySelectorAll('.Row').length).toBe(0);
+  expect(container.querySelectorAll('.EditorTable').length).toBe(0);
+  expect(queryByText('发布')).toBeNull();
+  expect(queryByText('添加环节')).toBeNull();
+
+  fireEvent.tap(await findByText('查看报告'));
+  expect(reports).toEqual([SHEET_ID]);
+
+  fireEvent.tap(await findByText('复制为新手册'));
+  expect(copies.length).toBe(1);
+  expect(copies[0]).not.toBe(SHEET_ID);
 });

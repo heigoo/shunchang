@@ -13,7 +13,7 @@ import {
   BREAKPOINT_TABLET,
   useIsWide,
 } from '../platform/viewport';
-import { getSheet, saveSheet } from '../store/repository';
+import { getSheet, duplicateSheet, saveSheet } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
 import { PublishPanel } from './PublishPanel';
@@ -38,6 +38,8 @@ export interface EditorScreenProps {
   onBack(): void;
   onStartRuntime(sheetId: string): void;
   onPrint(sheetId: string): void;
+  onOpenReport?(sheetId: string): void;
+  onDuplicate?(newSheetId: string): void;
   safeTop?: number;
   safeBottom?: number;
 }
@@ -175,12 +177,15 @@ export function EditorScreen(props: EditorScreenProps) {
     onBack,
     onStartRuntime,
     onPrint,
+    onOpenReport,
+    onDuplicate,
     safeTop = 0,
     safeBottom = 0,
   } = props;
 
   const [sheet, setSheet] = useState<Sheet | null>(() => getSheet(sheetId));
   const [errors, setErrors] = useState<SheetError[] | null>(null);
+  const [publishNote, setPublishNote] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(
     null,
   );
@@ -257,6 +262,7 @@ export function EditorScreen(props: EditorScreenProps) {
     }
     const saved = saveSheet(next);
     setSheet(saved);
+    setPublishNote(null);
   };
 
   const rememberUndo = (label: string, snapshot: Sheet) => {
@@ -300,6 +306,76 @@ export function EditorScreen(props: EditorScreenProps) {
               kind="tertiary"
               onTap={onBack}
             />
+          </view>
+        </view>
+      </view>
+    );
+  }
+
+  const handleDuplicate = () => {
+    const copy = duplicateSheet(sheet.id);
+    if (copy) {
+      onDuplicate?.(copy.id);
+    }
+  };
+
+  if (sheet.status === 'done') {
+    const doneTimeline = computeTimeline(sheet, 0);
+    return (
+      <view
+        className={
+          isWide && !isDesktop
+            ? 'Editor Editor--medium theme-light'
+            : isWide
+              ? 'Editor theme-light'
+              : 'Editor Editor--narrow theme-light'
+        }
+        style={{ paddingTop: safeTop, paddingBottom: safeBottom }}
+      >
+        <view className="EditorReadOnly">
+          <view className="EditorReadOnlyTop">
+            <view className="EditorBack" bindtap={onBack}>
+              <text className="EditorBackText">{tText('← 手册')}</text>
+            </view>
+          </view>
+          <text className="EditorReadOnlyKicker">{tText('已完成 · 只读')}</text>
+          <text className="EditorReadOnlyTitle">
+            {sheet.name.length > 0 ? sheet.name : tText('未命名手册')}
+          </text>
+          <text className="EditorReadOnlyBody">
+            {tText('这份手册已执行完成，不能编辑、发布或再次开始执行。')}
+          </text>
+          <text className="EditorReadOnlyMeta">
+            {`${sheet.date} · ${pad3(sheet.items.length)} ${tText('环节')} · ${formatDuration(
+              doneTimeline.totalPlanMin,
+            )}`}
+          </text>
+          <view className="EditorReadOnlyActions">
+            <view className="EditorReadOnlyAction">
+              <Button
+                label={tText('查看报告')}
+                block
+                onTap={() => {
+                  onOpenReport?.(sheet.id);
+                }}
+              />
+            </view>
+            <view className="EditorReadOnlyAction">
+              <Button
+                label={tText('复制为新手册')}
+                kind="secondary"
+                block
+                onTap={handleDuplicate}
+              />
+            </view>
+            <view className="EditorReadOnlyAction">
+              <Button
+                label={tText('返回手册列表')}
+                kind="tertiary"
+                block
+                onTap={onBack}
+              />
+            </view>
           </view>
         </view>
       </view>
@@ -433,7 +509,29 @@ export function EditorScreen(props: EditorScreenProps) {
     const saved = saveSheet(result.sheet);
     setSheet(saved);
     setErrors(null);
+    setPublishNote(
+      result.changed
+        ? null
+        : tText('内容未变化，仍为 V{n}', { n: saved.version }),
+    );
     setPublished({ version: saved.version });
+  };
+
+  // 发布只负责生成版本；开始执行直接进入执行台，不隐式发布。
+  let startBlock: string | null = null;
+  if (sheet.status === 'draft') {
+    startBlock = tText('请先发布，再开始执行');
+  } else if (sheet.status === 'published' && sheet.dirty) {
+    startBlock = tText('请先发布修改');
+  } else if (sheet.status !== 'published') {
+    startBlock = tText('当前状态不能开始执行');
+  }
+
+  const handleStart = () => {
+    if (startBlock !== null) {
+      return;
+    }
+    onStartRuntime(sheet.id);
   };
 
   const renderLockCell = (item: Item, index: number, conflicted: boolean) => {
@@ -851,6 +949,15 @@ export function EditorScreen(props: EditorScreenProps) {
           <view className="EditorTools">
             <view className="EditorToolBtn">
               <Button
+                label={tText('开始执行')}
+                kind="secondary"
+                className="EditorSmallBtn EditorStartBtn"
+                disabled={startBlock !== null}
+                onTap={handleStart}
+              />
+            </view>
+            <view className="EditorToolBtn">
+              <Button
                 label={tText('按时排序')}
                 kind="tertiary"
                 className="EditorSmallBtn"
@@ -883,6 +990,14 @@ export function EditorScreen(props: EditorScreenProps) {
               </view>
             ) : null}
           </view>
+
+          {startBlock ? (
+            <text className="EditorInlineHint">{startBlock}</text>
+          ) : null}
+
+          {publishNote ? (
+            <text className="EditorInlineHint">{publishNote}</text>
+          ) : null}
 
           {errors && errors.length > 0 ? (
             <view className="ErrorBar">

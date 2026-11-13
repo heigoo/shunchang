@@ -13,6 +13,7 @@ import {
   setSheetDate,
   setSheetName,
   setStartTime,
+  sheetContentHash,
   sortByPlanTime,
   toggleLock,
   updateItemField,
@@ -276,5 +277,77 @@ describe('发布状态', () => {
     expect(result.sheet.version).toBe(4);
     expect(result.sheet.dirty).toBe(false);
     expect(sheet.version).toBe(3);
+  });
+});
+
+describe('发布内容哈希', () => {
+  it('内容未变化时重复发布不增版本', () => {
+    const first = publishSheet(makeSheet([makeItem('a', 30)]));
+
+    expect(first.ok).toBe(true);
+    expect(first.changed).toBe(true);
+    expect(first.sheet.version).toBe(2);
+    expect(first.sheet.publishedHash).toBeDefined();
+
+    const second = publishSheet(first.sheet);
+
+    expect(second.ok).toBe(true);
+    expect(second.changed).toBe(false);
+    expect(second.sheet.version).toBe(2);
+    expect(second.sheet).toBe(first.sheet);
+  });
+
+  it('内容变化后发布增版本', () => {
+    const first = publishSheet(makeSheet([makeItem('a', 30)]));
+    const edited = setItemDuration(first.sheet, 0, '45');
+
+    expect(edited).not.toBeNull();
+    if (!edited) return;
+    expect(edited.dirty).toBe(true);
+
+    const second = publishSheet(edited);
+
+    expect(second.changed).toBe(true);
+    expect(second.sheet.version).toBe(3);
+    expect(second.sheet.dirty).toBe(false);
+    expect(second.sheet.publishedHash).not.toBe(first.sheet.publishedHash);
+  });
+
+  it('改回原内容后发布不增版本', () => {
+    const first = publishSheet(makeSheet([makeItem('a', 30)]));
+    const edited = setItemDuration(first.sheet, 0, '45');
+    if (!edited) return;
+    const reverted = setItemDuration(edited, 0, '30');
+
+    expect(reverted).not.toBeNull();
+    if (!reverted) return;
+    expect(reverted.dirty).toBe(true);
+
+    const second = publishSheet(reverted);
+
+    expect(second.changed).toBe(false);
+    expect(second.sheet.version).toBe(2);
+    expect(second.sheet.dirty).toBe(false);
+  });
+
+  it('内容哈希不包含状态、版本与更新时间', () => {
+    const sheet = makeSheet([makeItem('a', 30)]);
+    const decorated: Sheet = {
+      ...sheet,
+      status: 'published',
+      version: 9,
+      updatedAt: 123456789,
+      dirty: true,
+      publishedHash: 'old',
+    };
+
+    expect(sheetContentHash(decorated)).toBe(sheetContentHash(sheet));
+  });
+
+  it('已完成的手册不能再次发布', () => {
+    const result = publishSheet(makeSheet([makeItem('a', 30)], 'done'));
+
+    expect(result.ok).toBe(false);
+    expect(result.changed).toBe(false);
   });
 });
