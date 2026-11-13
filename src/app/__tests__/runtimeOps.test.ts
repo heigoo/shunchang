@@ -1,9 +1,11 @@
 import { describe, expect, it } from '@rstest/core';
 
 import type { Item, RuntimeState, Sheet } from '../../domain/types';
+import { normalizeRuntime } from '../../store/repository';
 import {
   applyShift,
   buildRuntimeView,
+  clearManualShift,
   completeCurrent,
   createRuntime,
   skipCurrent,
@@ -68,7 +70,7 @@ describe('completeCurrent', () => {
 describe('skipCurrent', () => {
   it('跳过不改偏移，实际时长为 0', () => {
     const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
-    const runtime: RuntimeState = { ...createRuntime(sheet, 480), offsetMin: 5 };
+    const runtime: RuntimeState = { ...createRuntime(sheet, 480), offsetMin: 5, autoOffsetMin: 5 };
     const next = skipCurrent(sheet, runtime, 500);
 
     expect(next.offsetMin).toBe(5);
@@ -101,8 +103,16 @@ describe('buildRuntimeView', () => {
         b: { start: 550, end: 570, result: 'done' },
       },
       offsetMin: 0,
+      autoOffsetMin: 0,
+      manualOffsetMin: 0,
       execVersion: 3,
       lastSyncAt: 0,
+      ownerEpoch: 0,
+      ownerDeviceId: '',
+      lastSyncMode: 'full',
+      insertedItems: [],
+      lockOverrides: {},
+      audit: [],
     };
     const view = buildRuntimeView(sheet, runtime);
 
@@ -120,5 +130,90 @@ describe('buildRuntimeView', () => {
     expect(view.currentRow?.displayStart).toBe(710);
     expect(view.countdownTargetMin).toBe(728);
     expect(view.countdownIsLock).toBe(true);
+  });
+});
+
+describe('normalizeRuntime', () => {
+  it('旧运行时补齐 v2 默认值', () => {
+    const runtime = normalizeRuntime({
+      sheetId: 'sheet-legacy',
+      currentIndex: 1,
+      actuals: {},
+      offsetMin: 12,
+      execVersion: 3,
+      lastSyncAt: 99,
+    });
+
+    expect(runtime.offsetMin).toBe(12);
+    expect(runtime.autoOffsetMin).toBe(12);
+    expect(runtime.manualOffsetMin).toBe(0);
+    expect(runtime.ownerEpoch).toBe(0);
+    expect(runtime.ownerDeviceId).toBe('');
+    expect(runtime.lastSyncMode).toBe('full');
+    expect(runtime.insertedItems).toEqual([]);
+    expect(runtime.lockOverrides).toEqual({});
+    expect(runtime.audit).toEqual([]);
+  });
+
+  it('有效偏移始终等于自动偏移加手动偏移', () => {
+    const runtime = normalizeRuntime({
+      sheetId: 'sheet-v2',
+      offsetMin: 0,
+      autoOffsetMin: 10,
+      manualOffsetMin: 5,
+    });
+
+    expect(runtime.offsetMin).toBe(15);
+  });
+});
+
+describe('偏移拆分', () => {
+  it('完成只更新自动偏移，手动顺延保留', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime: RuntimeState = {
+      ...createRuntime(sheet, 480),
+      manualOffsetMin: 30,
+      offsetMin: 30,
+    };
+
+    const next = completeCurrent(sheet, runtime, 550);
+
+    expect(next.autoOffsetMin).toBe(10);
+    expect(next.manualOffsetMin).toBe(30);
+    expect(next.offsetMin).toBe(40);
+  });
+
+  it('顺延只更新手动偏移，自动偏移不变', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime: RuntimeState = {
+      ...createRuntime(sheet, 480),
+      autoOffsetMin: 10,
+      offsetMin: 10,
+    };
+
+    // b 计划开始 540，顺延到 570 → 目标偏移 30，手动偏移 30 - 10 = 20。
+    const next = applyShift(sheet, runtime, 570);
+
+    expect(next.autoOffsetMin).toBe(10);
+    expect(next.manualOffsetMin).toBe(20);
+    expect(next.offsetMin).toBe(30);
+  });
+
+  it('清除手动顺延只保留自动偏移', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime: RuntimeState = {
+      ...createRuntime(sheet, 480),
+      autoOffsetMin: 10,
+      manualOffsetMin: 20,
+      offsetMin: 30,
+    };
+
+    const next = clearManualShift(runtime);
+
+    expect(next.autoOffsetMin).toBe(10);
+    expect(next.manualOffsetMin).toBe(0);
+    expect(next.offsetMin).toBe(10);
+    expect(next.execVersion).toBe(runtime.execVersion + 1);
+    expect(clearManualShift(next)).toBe(next);
   });
 });

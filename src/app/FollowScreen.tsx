@@ -2,6 +2,7 @@ import './FollowScreen.css';
 
 import { useEffect, useState } from '@lynx-js/react';
 
+import { buildExecutionSheet } from '../domain/execution';
 import {
   computeTimeline,
   formatClockDisplay,
@@ -181,12 +182,13 @@ export function FollowScreen(props: FollowScreenProps) {
 
   const trail = buildSyncTrail(runtime, now);
   const offsetMin = runtime ? runtime.offsetMin : 0;
-  const timeline = computeTimeline(sheet, offsetMin);
-  const total = sheet.items.length;
+  const execSheet = runtime ? buildExecutionSheet(sheet, runtime) : sheet;
+  const timeline = computeTimeline(execSheet, offsetMin);
+  const total = execSheet.items.length;
   const inProgress =
     runtime !== null && runtime.currentIndex >= 0 && runtime.currentIndex < total;
   const currentIndex = inProgress && runtime ? runtime.currentIndex : -1;
-  const currentItem = currentIndex >= 0 ? sheet.items[currentIndex] : null;
+  const currentItem = currentIndex >= 0 ? execSheet.items[currentIndex] : null;
   const currentRow = currentIndex >= 0 ? timeline.rows[currentIndex] : null;
   const ended = runtime !== null && runtime.currentIndex >= total;
 
@@ -208,8 +210,8 @@ export function FollowScreen(props: FollowScreenProps) {
     currentMeta = owner.length > 0 ? `${range} · ${owner}` : range;
   }
 
-  const owners = ownerOptions(sheet);
-  const allRows = sheet.items.map((item, index) => ({
+  const owners = ownerOptions(execSheet);
+  const allRows = execSheet.items.map((item, index) => ({
     item,
     index,
     row: timeline.rows[index],

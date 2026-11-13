@@ -1,3 +1,4 @@
+import { buildExecutionSheet } from '../domain/execution';
 import {
   computeTimeline,
   formatClockDisplay,
@@ -13,8 +14,16 @@ export function createRuntime(sheet: Sheet, nowMin: number): RuntimeState {
     currentIndex: 0,
     actuals: {},
     offsetMin: 0,
+    autoOffsetMin: 0,
+    manualOffsetMin: 0,
     execVersion: 1,
     lastSyncAt: 0,
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
   };
 
   const first = sheet.items[0];
@@ -30,12 +39,13 @@ export function completeCurrent(
   runtime: RuntimeState,
   nowMin: number,
 ): RuntimeState {
+  const execSheet = buildExecutionSheet(sheet, runtime);
   const index = runtime.currentIndex;
-  if (index < 0 || index >= sheet.items.length) {
+  if (index < 0 || index >= execSheet.items.length) {
     return runtime;
   }
 
-  const item = sheet.items[index];
+  const item = execSheet.items[index];
   const actuals: RuntimeState['actuals'] = {
     ...runtime.actuals,
     [item.id]: {
@@ -45,11 +55,13 @@ export function completeCurrent(
     },
   };
 
-  const offsetMin = offsetAfterDone(sheet, index, nowMin);
+  // 完成只重算自动偏移；手动顺延保留，有效偏移为两者之和。
+  const autoOffsetMin = offsetAfterDone(execSheet, index, nowMin);
+  const offsetMin = autoOffsetMin + runtime.manualOffsetMin;
   const nextIndex = index + 1;
 
-  if (nextIndex < sheet.items.length) {
-    const nextItem = sheet.items[nextIndex];
+  if (nextIndex < execSheet.items.length) {
+    const nextItem = execSheet.items[nextIndex];
     actuals[nextItem.id] = {
       ...(actuals[nextItem.id] ?? {}),
       start: nowMin,
@@ -61,6 +73,7 @@ export function completeCurrent(
     currentIndex: nextIndex,
     actuals,
     offsetMin,
+    autoOffsetMin,
     execVersion: runtime.execVersion + 1,
   };
 }
@@ -70,12 +83,13 @@ export function skipCurrent(
   runtime: RuntimeState,
   nowMin: number,
 ): RuntimeState {
+  const execSheet = buildExecutionSheet(sheet, runtime);
   const index = runtime.currentIndex;
-  if (index < 0 || index >= sheet.items.length) {
+  if (index < 0 || index >= execSheet.items.length) {
     return runtime;
   }
 
-  const item = sheet.items[index];
+  const item = execSheet.items[index];
   const start = runtime.actuals[item.id]?.start ?? nowMin;
   const actuals: RuntimeState['actuals'] = {
     ...runtime.actuals,
@@ -84,8 +98,8 @@ export function skipCurrent(
 
   const nextIndex = index + 1;
 
-  if (nextIndex < sheet.items.length) {
-    const nextItem = sheet.items[nextIndex];
+  if (nextIndex < execSheet.items.length) {
+    const nextItem = execSheet.items[nextIndex];
     actuals[nextItem.id] = {
       ...(actuals[nextItem.id] ?? {}),
       start: nowMin,
@@ -105,24 +119,46 @@ export function applyShift(
   runtime: RuntimeState,
   nextStartMin: number,
 ): RuntimeState {
+  const execSheet = buildExecutionSheet(sheet, runtime);
   const nextIndex = runtime.currentIndex + 1;
-  if (nextIndex < 0 || nextIndex >= sheet.items.length) {
+  if (nextIndex < 0 || nextIndex >= execSheet.items.length) {
     return runtime;
   }
 
-  const nextItem = sheet.items[nextIndex];
+  const nextItem = execSheet.items[nextIndex];
   if (nextItem.locked === true || nextItem.lockAt !== null) {
     return runtime;
   }
 
-  const offsetMin = offsetAfterShift(sheet, nextIndex, nextStartMin);
-  if (offsetMin === null) {
+  const targetOffsetMin = offsetAfterShift(execSheet, nextIndex, nextStartMin);
+  if (targetOffsetMin === null) {
+    return runtime;
+  }
+
+  // 顺延只写手动偏移；自动偏移保持完成环节推导出的值。
+  const manualOffsetMin = targetOffsetMin - runtime.autoOffsetMin;
+
+  return {
+    ...runtime,
+    offsetMin: runtime.autoOffsetMin + manualOffsetMin,
+    manualOffsetMin,
+    execVersion: runtime.execVersion + 1,
+  };
+}
+
+/** 清除手动顺延，只保留自动偏移。 */
+export function clearManualShift(runtime: RuntimeState): RuntimeState {
+  if (
+    runtime.manualOffsetMin === 0 &&
+    runtime.offsetMin === runtime.autoOffsetMin
+  ) {
     return runtime;
   }
 
   return {
     ...runtime,
-    offsetMin,
+    offsetMin: runtime.autoOffsetMin,
+    manualOffsetMin: 0,
     execVersion: runtime.execVersion + 1,
   };
 }
@@ -163,23 +199,24 @@ function isTerminal(result: 'done' | 'skipped' | undefined): boolean {
 }
 
 export function buildRuntimeView(sheet: Sheet, runtime: RuntimeState): RuntimeView {
-  const timeline = computeTimeline(sheet, runtime.offsetMin);
-  const total = sheet.items.length;
+  const execSheet = buildExecutionSheet(sheet, runtime);
+  const timeline = computeTimeline(execSheet, runtime.offsetMin);
+  const total = execSheet.items.length;
   const finished = runtime.currentIndex >= total;
   const currentIndex = runtime.currentIndex;
 
   const currentItem =
-    !finished && currentIndex >= 0 ? sheet.items[currentIndex] ?? null : null;
+    !finished && currentIndex >= 0 ? execSheet.items[currentIndex] ?? null : null;
   const currentRow =
     currentItem !== null ? timeline.rows[currentIndex] ?? null : null;
 
   const nextIndex = currentIndex + 1;
   const nextItem =
-    !finished && nextIndex < total ? sheet.items[nextIndex] ?? null : null;
+    !finished && nextIndex < total ? execSheet.items[nextIndex] ?? null : null;
   const nextRow = nextItem !== null ? timeline.rows[nextIndex] ?? null : null;
 
   let actualTotalMin = 0;
-  for (const item of sheet.items) {
+  for (const item of execSheet.items) {
     const actual = runtime.actuals[item.id];
     if (!actual || !isTerminal(actual.result)) {
       continue;
@@ -203,7 +240,7 @@ export function buildRuntimeView(sheet: Sheet, runtime: RuntimeState): RuntimeVi
   if (!finished && currentRow) {
     let lockTarget: number | null = null;
     for (let i = currentIndex + 1; i < total; i += 1) {
-      const lockAt = sheet.items[i].lockAt;
+      const lockAt = execSheet.items[i].lockAt;
       if (lockAt !== null) {
         lockTarget = lockAt;
         break;

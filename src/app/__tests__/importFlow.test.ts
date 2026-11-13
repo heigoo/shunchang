@@ -60,8 +60,16 @@ function makeRuntime(
     currentIndex: 1,
     actuals: { 'item-a': { start: 480, end: 540, result: 'done' } },
     offsetMin: 5,
+    autoOffsetMin: 5,
+    manualOffsetMin: 0,
     execVersion: 2,
     lastSyncAt: NOW - 1000,
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
     ...overrides,
   };
 }

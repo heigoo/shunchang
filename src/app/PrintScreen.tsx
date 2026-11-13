@@ -3,6 +3,7 @@ import './PrintScreen.css';
 import { useState } from '@lynx-js/react';
 
 import { encodePayload } from '../domain/codec';
+import { buildExecutionSheet } from '../domain/execution';
 import { useT } from '../i18n';
 import { isDesktopRuntime } from '../platform/desktop';
 import {
@@ -91,12 +92,13 @@ export function PrintScreen(props: PrintScreenProps) {
     );
   }
 
+  const execSheet = runtime ? buildExecutionSheet(sheet, runtime) : sheet;
   const rows = buildPrintRows(sheet, runtime);
   const pages = paginateRows(rows);
   const summary = printSummary(sheet, runtime);
   const url = buildShareUrl(encodePayload(sheet, runtime ?? undefined));
   const showQr =
-    !desktop && sheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
+    !desktop && execSheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
   const stamp = stampText(printedAt);
 
   const handlePrint = () => {

@@ -31,13 +31,46 @@ export interface Sheet {
   dirty?: boolean;
 }
 
+export type SyncMode = 'full' | 'short';
+
+/** 现场插入的环节：仅可插入到 afterId 对应环节之后。 */
+export interface InsertedItem {
+  id: string;
+  afterId: string;
+  createdAt: number;
+  item: Item;
+}
+
+/** 现场操作记录，最多保留 100 条。 */
+export interface AuditEntry {
+  id: string;
+  at: number;
+  type: string;
+  label: string;
+  itemId?: string;
+}
+
 export interface RuntimeState {
   sheetId: string;
   currentIndex: number;
   actuals: Record<string, { start?: number; end?: number; result?: 'done' | 'skipped' }>;
+  /** 展示用有效偏移；等于 autoOffsetMin + manualOffsetMin。 */
   offsetMin: number;
+  /** 由最近完成环节的实际结束时间推导的自动偏移。 */
+  autoOffsetMin: number;
+  /** 督导手动顺延产生的附加偏移。 */
+  manualOffsetMin: number;
   execVersion: number;
   lastSyncAt: number;
+  /** 主控代次，接管主控时 +1。 */
+  ownerEpoch: number;
+  /** 当前主控设备短标识。 */
+  ownerDeviceId: string;
+  lastSyncMode: SyncMode;
+  insertedItems: InsertedItem[];
+  /** 环节 id → 覆盖后的锁定时刻；null 表示解除锁定。 */
+  lockOverrides: Record<string, number | null>;
+  audit: AuditEntry[];
 }
 
 function createId(): string {

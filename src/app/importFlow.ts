@@ -11,6 +11,7 @@ import {
   getRuntime,
   getSheet,
   listSheets,
+  normalizeRuntime,
   saveRuntime,
   saveSheet,
   setRole,
@@ -44,14 +45,14 @@ export function importErrorMessage(error: ImportError): string {
 }
 
 function baseRuntime(sheetId: string): RuntimeState {
-  return {
+  return normalizeRuntime({
     sheetId,
     currentIndex: 0,
     actuals: {},
     offsetMin: 0,
     execVersion: 0,
     lastSyncAt: 0,
-  };
+  });
 }
 
 function storeRuntime(
@@ -59,7 +60,7 @@ function storeRuntime(
   sheetId: string,
   now: number,
 ): void {
-  saveRuntime({ ...incoming, sheetId, lastSyncAt: now });
+  saveRuntime(normalizeRuntime({ ...incoming, sheetId, lastSyncAt: now }));
 }
 
 function ensureBaseline(sheetId: string, now: number): void {
@@ -68,14 +69,16 @@ function ensureBaseline(sheetId: string, now: number): void {
     saveRuntime({ ...existing, lastSyncAt: now });
     return;
   }
-  saveRuntime({
-    sheetId,
-    currentIndex: -1,
-    actuals: {},
-    offsetMin: 0,
-    execVersion: 0,
-    lastSyncAt: now,
-  });
+  saveRuntime(
+    normalizeRuntime({
+      sheetId,
+      currentIndex: -1,
+      actuals: {},
+      offsetMin: 0,
+      execVersion: 0,
+      lastSyncAt: now,
+    }),
+  );
 }
 
 function applyPayload(payload: SheetPayload, now: number): ImportResult {
@@ -138,6 +141,9 @@ function applyShort(payload: ShortPayload, now: number): ImportResult {
     sheetId: match.id,
     currentIndex: payload.currentIndex,
     offsetMin: payload.offsetMin,
+    // 短码只携带有效偏移，本机按自动偏移吸收，手动偏移归零。
+    autoOffsetMin: payload.offsetMin,
+    manualOffsetMin: 0,
     execVersion: payload.execVersion,
     lastSyncAt: now,
   };

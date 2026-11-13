@@ -1,4 +1,10 @@
-import type { RuntimeState, Sheet } from '../domain/types';
+import { MAX_INSERTED_ITEMS } from '../domain/execution';
+import type {
+  AuditEntry,
+  InsertedItem,
+  RuntimeState,
+  Sheet,
+} from '../domain/types';
 import { t } from '../i18n';
 
 import { storage } from './storage';
@@ -157,6 +163,82 @@ export function duplicateSheet(id: string): Sheet | null {
   return saveSheet(copy);
 }
 
+function isInsertedItem(value: unknown): value is InsertedItem {
+  const entry = value as InsertedItem;
+  return (
+    !!entry &&
+    typeof entry === 'object' &&
+    typeof entry.id === 'string' &&
+    typeof entry.afterId === 'string' &&
+    !!entry.item &&
+    typeof entry.item === 'object' &&
+    typeof entry.item.id === 'string'
+  );
+}
+
+function isAuditEntry(value: unknown): value is AuditEntry {
+  const entry = value as AuditEntry;
+  return (
+    !!entry &&
+    typeof entry === 'object' &&
+    typeof entry.id === 'string' &&
+    typeof entry.at === 'number' &&
+    typeof entry.type === 'string' &&
+    typeof entry.label === 'string'
+  );
+}
+
+function normalizeLockOverrides(value: unknown): Record<string, number | null> {
+  const overrides: Record<string, number | null> = {};
+  if (!value || typeof value !== 'object') {
+    return overrides;
+  }
+
+  Object.keys(value as Record<string, unknown>).forEach((itemId) => {
+    const entry = (value as Record<string, unknown>)[itemId];
+    if (entry === null || (typeof entry === 'number' && Number.isFinite(entry))) {
+      overrides[itemId] = entry;
+    }
+  });
+
+  return overrides;
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+/** 把旧版运行时补齐为 v2 字段；offsetMin 始终等于自动偏移 + 手动偏移。 */
+export function normalizeRuntime(
+  raw: Partial<RuntimeState> & { sheetId: string },
+): RuntimeState {
+  const storedOffset = finiteNumber(raw.offsetMin, 0);
+  const autoOffsetMin =
+    typeof raw.autoOffsetMin === 'number' && Number.isFinite(raw.autoOffsetMin)
+      ? raw.autoOffsetMin
+      : storedOffset;
+  const manualOffsetMin = finiteNumber(raw.manualOffsetMin, 0);
+
+  return {
+    sheetId: raw.sheetId,
+    currentIndex: Math.trunc(finiteNumber(raw.currentIndex, 0)),
+    actuals: raw.actuals && typeof raw.actuals === 'object' ? raw.actuals : {},
+    offsetMin: autoOffsetMin + manualOffsetMin,
+    autoOffsetMin,
+    manualOffsetMin,
+    execVersion: finiteNumber(raw.execVersion, 1),
+    lastSyncAt: finiteNumber(raw.lastSyncAt, 0),
+    ownerEpoch: Math.trunc(finiteNumber(raw.ownerEpoch, 0)),
+    ownerDeviceId: typeof raw.ownerDeviceId === 'string' ? raw.ownerDeviceId : '',
+    lastSyncMode: raw.lastSyncMode === 'short' ? 'short' : 'full',
+    insertedItems: Array.isArray(raw.insertedItems)
+      ? raw.insertedItems.filter(isInsertedItem).slice(0, MAX_INSERTED_ITEMS)
+      : [],
+    lockOverrides: normalizeLockOverrides(raw.lockOverrides),
+    audit: Array.isArray(raw.audit) ? raw.audit.filter(isAuditEntry).slice(-100) : [],
+  };
+}
+
 export function getRuntime(sheetId: string): RuntimeState | null {
   let raw: string | null = null;
   try {
@@ -184,7 +266,7 @@ export function getRuntime(sheetId: string): RuntimeState | null {
       setCorruptError();
       return null;
     }
-    return parsed;
+    return normalizeRuntime(parsed);
   } catch {
     setCorruptError();
     return null;

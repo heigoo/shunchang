@@ -254,8 +254,16 @@ function parseCompactRuntime(
     currentIndex,
     actuals: actuals as RuntimeState['actuals'],
     offsetMin,
+    autoOffsetMin: offsetMin,
+    manualOffsetMin: 0,
     execVersion,
     lastSyncAt,
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
   };
 }
 

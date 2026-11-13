@@ -64,8 +64,16 @@ test('renders the follower view with sync trail and item states', async () => {
       'item-b': { start: 510 },
     },
     offsetMin: 0,
+    autoOffsetMin: 0,
+    manualOffsetMin: 0,
     execVersion: 3,
     lastSyncAt: Date.now(),
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
   });
 
   const { findByText, queryByText } = render(

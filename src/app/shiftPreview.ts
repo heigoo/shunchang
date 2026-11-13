@@ -1,3 +1,4 @@
+import { buildExecutionSheet } from '../domain/execution';
 import {
   computeTimeline,
   formatClockDisplay,
@@ -51,11 +52,12 @@ export function buildShiftPreview(
   startMin: number,
   nowMin: number,
 ): ShiftPreview {
+  const execSheet = buildExecutionSheet(sheet, runtime);
   const nextIndex = runtime.currentIndex + 1;
   const baseOffsetMin = runtime.offsetMin;
   const earlierThanNow = startMin < nowMin;
 
-  if (nextIndex < 0 || nextIndex >= sheet.items.length) {
+  if (nextIndex < 0 || nextIndex >= execSheet.items.length) {
     return {
       ok: false,
       reason: 'last',
@@ -72,7 +74,7 @@ export function buildShiftPreview(
     };
   }
 
-  const nextItem = sheet.items[nextIndex];
+  const nextItem = execSheet.items[nextIndex];
   const nextName = nextItem.name.length > 0 ? nextItem.name : t('未命名环节');
 
   if (nextItem.locked === true || nextItem.lockAt !== null) {
@@ -92,7 +94,7 @@ export function buildShiftPreview(
     };
   }
 
-  const nextOffsetMin = offsetAfterShift(sheet, nextIndex, startMin);
+  const nextOffsetMin = offsetAfterShift(execSheet, nextIndex, startMin);
   if (nextOffsetMin === null) {
     return {
       ok: false,
@@ -110,19 +112,19 @@ export function buildShiftPreview(
     };
   }
 
-  const timeline = computeTimeline(sheet, nextOffsetMin);
+  const timeline = computeTimeline(execSheet, nextOffsetMin);
 
   const locks: ShiftPreviewLock[] = timeline.locks
     .filter((lock) => lock.index >= nextIndex)
     .sort((a, b) => a.index - b.index)
     .map((lock) => ({
       index: lock.index,
-      name: itemName(sheet, lock.itemId),
+      name: itemName(execSheet, lock.itemId),
       state: lock.state,
       diffMin: lock.diffMin,
       waitMin: lock.waitMin,
       compressed: lock.compressed.map((entry) => ({
-        name: itemName(sheet, entry.itemId),
+        name: itemName(execSheet, entry.itemId),
         lostMin: entry.lostMin,
       })),
     }));
@@ -131,7 +133,7 @@ export function buildShiftPreview(
     .slice(nextIndex, nextIndex + MAX_ROWS)
     .map((row) => ({
       index: row.index,
-      name: itemName(sheet, row.itemId),
+      name: itemName(execSheet, row.itemId),
       time: formatClockDisplay(row.displayStart),
     }));
 

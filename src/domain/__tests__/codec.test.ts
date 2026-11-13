@@ -55,8 +55,16 @@ function makeRuntime(sheet: Sheet): RuntimeState {
     currentIndex: 10,
     actuals,
     offsetMin: 7,
+    autoOffsetMin: 7,
+    manualOffsetMin: 0,
     execVersion: 4,
     lastSyncAt: 1762700123456,
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
   };
 }
 

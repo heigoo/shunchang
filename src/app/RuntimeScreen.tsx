@@ -2,6 +2,7 @@ import './RuntimeScreen.css';
 
 import { runOnBackground, runOnMainThread, useEffect, useRef, useState } from '@lynx-js/react';
 
+import { buildExecutionSheet } from '../domain/execution';
 import { computeTimeline, formatClockDisplay, formatDuration } from '../domain/timeline';
 import { encodeShortCode } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
@@ -271,15 +272,16 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   }
 
   const view = buildRuntimeView(sheet, runtime);
+  const execSheet = buildExecutionSheet(sheet, runtime);
   const finished = view.finished;
-  const timeline = computeTimeline(sheet, runtime.offsetMin);
-  const total = sheet.items.length;
+  const timeline = computeTimeline(execSheet, runtime.offsetMin);
+  const total = execSheet.items.length;
   const doneCount = Math.min(Math.max(runtime.currentIndex, 0), total);
 
   const commit = (next: RuntimeState) => {
     saveRuntime(next);
     setRuntime(next);
-    if (next.currentIndex >= sheet.items.length) {
+    if (next.currentIndex >= execSheet.items.length) {
       setSheet(saveSheet({ ...sheet, status: 'done' }));
     }
   };
@@ -319,10 +321,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     syncCode.length === 6 ? `${syncCode.slice(0, 3)}-${syncCode.slice(3)}` : syncCode;
 
   if (finished) {
-    const completedCount = sheet.items.filter(
+    const completedCount = execSheet.items.filter(
       (item) => runtime.actuals[item.id]?.result === 'done',
     ).length;
-    const skippedCount = sheet.items.filter(
+    const skippedCount = execSheet.items.filter(
       (item) => runtime.actuals[item.id]?.result === 'skipped',
     ).length;
 
@@ -521,7 +523,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               scroll-orientation="vertical"
             >
               {timeline.rows.map((row, index) => {
-                const item = sheet.items[row.index];
+                const item = execSheet.items[row.index];
                 const state =
                   index < runtime.currentIndex
                     ? 'done'

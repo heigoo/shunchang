@@ -1,3 +1,4 @@
+import { buildExecutionSheet } from '../domain/execution';
 import {
   computeTimeline,
   formatClock,
@@ -44,9 +45,10 @@ export function buildPrintRows(
   sheet: Sheet,
   runtime: RuntimeState | null,
 ): PrintRow[] {
-  const timeline = computeTimeline(sheet, runtime ? runtime.offsetMin : 0);
+  const execSheet = runtime ? buildExecutionSheet(sheet, runtime) : sheet;
+  const timeline = computeTimeline(execSheet, runtime ? runtime.offsetMin : 0);
 
-  return sheet.items.map((item, index) => {
+  return execSheet.items.map((item, index) => {
     const row = timeline.rows[index];
     const displayStart = runtime ? row.displayStart : row.planStart;
     const effectiveMin = runtime ? row.effectiveDurationMin : item.durationMin;
@@ -102,7 +104,10 @@ export function printSummary(
       : offsetMin < 0
         ? t('提前 {n} 分钟', { n: Math.abs(offsetMin) })
         : t('未偏移');
-  const totalPlanMin = computeTimeline(sheet, offsetMin).totalPlanMin;
+  const totalPlanMin = computeTimeline(
+    runtime ? buildExecutionSheet(sheet, runtime) : sheet,
+    offsetMin,
+  ).totalPlanMin;
 
   return {
     title: sheet.name.trim().length > 0 ? sheet.name : t('未命名手册'),

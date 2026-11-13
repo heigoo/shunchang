@@ -12,8 +12,16 @@ function makeRuntime(patch: Partial<RuntimeState> = {}): RuntimeState {
     currentIndex: 0,
     actuals: {},
     offsetMin: 0,
+    autoOffsetMin: 0,
+    manualOffsetMin: 0,
     execVersion: 3,
     lastSyncAt: NOW,
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
     ...patch,
   };
 }

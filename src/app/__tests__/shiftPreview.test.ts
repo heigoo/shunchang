@@ -47,8 +47,16 @@ function makeRuntime(
     currentIndex,
     actuals: {},
     offsetMin,
+    autoOffsetMin: offsetMin,
+    manualOffsetMin: 0,
     execVersion: 1,
     lastSyncAt: 0,
+    ownerEpoch: 0,
+    ownerDeviceId: '',
+    lastSyncMode: 'full',
+    insertedItems: [],
+    lockOverrides: {},
+    audit: [],
   };
 }
 
