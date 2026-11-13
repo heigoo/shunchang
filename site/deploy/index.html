@@ -48,6 +48,33 @@
       syncWidth();
       window.addEventListener('resize', syncWidth);
 
+      // 产品 Web 工作台入口：官网里的「开始编排」与主 CTA 直接打开可用的 Web 版。
+      var WEB_APP_URL = 'https://37jgejb7nyniuhch9uk.traesite.cn/';
+      function isWebEntryTarget(event) {
+        var path = event.composedPath ? event.composedPath() : [];
+        for (var i = 0; i < path.length; i += 1) {
+          var el = path[i];
+          if (!el || !el.classList) continue;
+          if (
+            el.classList.contains('DeckCta') ||
+            (el.classList.contains('Btn') && el.classList.contains('BtnAmber'))
+          ) {
+            return true;
+          }
+        }
+        return false;
+      }
+      document.addEventListener(
+        'click',
+        function (event) {
+          if (!isWebEntryTarget(event)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          window.open(WEB_APP_URL, '_blank', 'noopener');
+        },
+        true,
+      );
+
       // 幻灯片导航：滚轮 / 键盘 → 点击 Lynx 视图内的翻页控件
       var navLock = 0;
       function deckNav(action, index) {

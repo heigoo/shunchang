@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F1EEE6">
+  <meta name="description" content="顺场 · Web 工作台。编排、发布、执行与复盘，直接在浏览器使用。">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>顺场 · Web 工作台</title>
+  <script>
+    // 部分静态托管会把 .wasm 返回成 application/octet-stream，
+    // 导致 compileStreaming 因 MIME 校验失败。改为先取 ArrayBuffer 再编译。
+    if (typeof WebAssembly !== 'undefined' && WebAssembly.compileStreaming) {
+      WebAssembly.compileStreaming = function (source) {
+        return Promise.resolve(source)
+          .then(function (response) {
+            return response && typeof response.arrayBuffer === 'function'
+              ? response.arrayBuffer()
+              : response;
+          })
+          .then(function (buffer) {
+            return WebAssembly.compile(buffer);
+          });
+      };
+    }
+  </script>
+  <script defer src="/static/js/index.js"></script>
+  <link rel="stylesheet" href="/static/css/index.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #F1EEE6; overflow: hidden; }
+    lynx-view { display: block; width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <lynx-view id="app" url="/main.web.bundle"></lynx-view>
+  <script>
+    (function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) { reg.unregister(); });
+        }).catch(function () {});
+      }
+
+      var view = document.getElementById('app');
+      function syncWidth() {
+        view.setAttribute('global-props', JSON.stringify({ siteWidth: window.innerWidth }));
+      }
+      syncWidth();
+      window.addEventListener('resize', syncWidth);
+    })();
+  </script>
+</body>
+</html>
