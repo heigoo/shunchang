@@ -62,7 +62,7 @@
 .ThemePreviewNo,
 .ThemePreviewTime {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   color: var(--ink-3);
 }
@@ -78,7 +78,7 @@
 
 .ThemePreviewOwner {
   margin-top: 3px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ink-3);
 }
 
@@ -97,8 +97,8 @@
 
 .ThemePreviewStampText {
   font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 0.08em;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
   color: var(--vermilion);
 }
 
@@ -128,17 +128,17 @@
 
 .ThemeSwatchTagline {
   margin-top: 2px;
-  min-height: 32px;
-  font-size: 11px;
-  line-height: 16px;
+  min-height: 34px;
+  font-size: 12px;
+  line-height: 17px;
   color: var(--ink-3);
 }
 
 .ThemeSwatchState {
   margin-top: 8px;
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.1em;
   color: var(--ink-3);
 }
 

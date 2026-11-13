@@ -1,6 +1,6 @@
 import './Badge.css';
 
-export type BadgeKind = 'reverse' | 'outline' | 'stamp';
+export type BadgeKind = 'reverse' | 'outline' | 'stamp' | 'amber';
 
 export interface BadgeProps {
   label: string;

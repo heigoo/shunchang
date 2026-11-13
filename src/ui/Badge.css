@@ -17,8 +17,21 @@
 
 .BadgeText {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+/* 琥珀底：只用于时间状态，如执行中、有未发布修改 */
+.Badge--amber {
+  padding: 4px 8px;
+  background-color: var(--amber-deep);
+  border-color: var(--amber-deep);
+}
+
+.Badge--amber .BadgeText {
+  color: var(--paper);
+  font-weight: 700;
   letter-spacing: 0.08em;
 }
 
@@ -54,9 +67,9 @@
 
 .Badge--stamp .BadgeText {
   color: var(--vermilion);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
 }
 
 .theme-dark .Badge--stamp {
@@ -65,12 +78,4 @@
 
 .theme-dark .Badge--stamp .BadgeText {
   color: var(--bright);
-}
-
-.theme-xishi .theme-light .Badge--outline {
-  border-color: var(--xishi-red);
-}
-
-.theme-xishi .theme-light .Badge--outline .BadgeText {
-  color: var(--xishi-red);
 }

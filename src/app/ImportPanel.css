@@ -167,6 +167,21 @@
   color: var(--ink);
 }
 
+/* ---------- 可读性校正 ---------- */
+
+.ImportStepNo {
+  font-size: 10px;
+}
+
+.ImportLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+}
+
+.ImportSubtitle {
+  font-size: 12px;
+}
+
 .ImportAction {
   margin-top: 10px;
 }

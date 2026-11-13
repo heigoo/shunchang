@@ -7,7 +7,7 @@
   --paper-3: #D6CCB6;
   --ink: #14120B;
   --ink-2: #474336;
-  --ink-3: #756F5C;
+  --ink-3: #5F5A4B;
   --rule-strong: #B4AA92;
   --amber-deep: #A4660C;
   --amber-wash: #F4E1B4;
@@ -44,7 +44,7 @@
   --fs-h3: 18px;
   --fs-body: 14px;
   --fs-meta: 12px;
-  --fs-micro: 10px;
+  --fs-micro: 11px;
 
   /* 字体：标题用衬线，正文无衬线，数据等宽 */
   --sans: -apple-system, 'PingFang SC', 'HarmonyOS Sans', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
@@ -57,7 +57,7 @@
   --bg: #F2EDE1;
   --fg: #14120B;
   --fg-2: #474336;
-  --fg-3: #756F5C;
+  --fg-3: #5F5A4B;
   --rule: #D6CCB6;
   --accent: #A4660C;
 }
@@ -81,7 +81,7 @@
   --paper-3: #E0D5BF;
   --ink: #1A160F;
   --ink-2: #4D4739;
-  --ink-3: #736A56;
+  --ink-3: #625A49;
   --rule-strong: #C9B99C;
   --amber-deep: #A4660C;
   --amber-wash: #F4E1B4;
@@ -104,7 +104,7 @@
   --bg: #F7F2E6;
   --fg: #1A160F;
   --fg-2: #4D4739;
-  --fg-3: #736A56;
+  --fg-3: #625A49;
   --rule: #E0D5BF;
   --accent: #BC2A20;
 }
@@ -134,28 +134,28 @@
 
 .label {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.2em;
+  font-size: 10px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 /* 表单微标：出现在每个区块左上角 */
 .u-micro {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.2em;
+  font-size: 10px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 
 .u-kicker {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.24em;
+  font-size: 10px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 .u-9px {
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
 }
