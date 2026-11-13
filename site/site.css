@@ -4206,6 +4206,101 @@ page {
   letter-spacing: 0.12em;
 }
 
+/* ============================================================
+   中文微标显示修正：含中文的标注统一用系统无衬线，避免等宽
+   回退在小数缩放下发虚；同时收字距、提高深色面板上的对比度
+   ============================================================ */
+
+.Eyebrow,
+.HeroEyebrow,
+.DarkEyebrow,
+.QuoteEyebrow,
+.CardNo,
+.FeatureNo {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.LangText,
+.PhoneLabel,
+.PosterCaption,
+.CtaNote,
+.BrandSpec,
+.DeckMenuBtnText,
+.DeckMenuTitle,
+.DeckMenuHint,
+.DeckMenuNow {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.DeckMenuNow {
+  font-size: 11px;
+}
+
+.PhoneLabel,
+.PosterCaption,
+.CtaNote,
+.BrandSpec {
+  color: var(--ink2);
+}
+
+.RailLabel {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink2);
+}
+
+.BoardMeta,
+.BoardStat,
+.BoardTag,
+.BoardHint,
+.BoardOrig {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.BoardMeta,
+.BoardStat,
+.BoardHint,
+.BoardNote,
+.BoardOwner {
+  color: #c6c1b2;
+}
+
+.BoardOrig {
+  color: #b3ae9e;
+}
+
+.BoardTag {
+  color: #c6c1b2;
+  border-color: #454335;
+}
+
+.SlideFootCopy,
+.MarqueeText {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink2);
+}
+
+.QuoteHint {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: rgba(245, 242, 232, 0.78);
+}
+
+.TinyStampSub {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
 
 
 
