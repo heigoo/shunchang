@@ -23,6 +23,8 @@ export interface FollowScreenProps {
   onBack(): void;
   safeTop?: number;
   safeBottom?: number;
+  /** 免安装跟随页（?follow=1）：隐藏退出与返回手册列表入口。 */
+  followOnly?: boolean;
 }
 
 const MINUS = '\u2212';
@@ -60,7 +62,13 @@ function rowSubText(item: Item): string {
 }
 
 export function FollowScreen(props: FollowScreenProps) {
-  const { sheetId, onBack, safeTop = 0, safeBottom = 0 } = props;
+  const {
+    sheetId,
+    onBack,
+    safeTop = 0,
+    safeBottom = 0,
+    followOnly = false,
+  } = props;
   const t = useT();
 
   const [activeId, setActiveId] = useState<string | undefined>(sheetId);
@@ -138,34 +146,42 @@ export function FollowScreen(props: FollowScreenProps) {
             </view>
             <text className="FollowPassTitle">{t('跟随现场')}</text>
             <text className="FollowPassText">
-              {t('扫描督导的二维码，或输入六位短码载入手册')}
+              {followOnly
+                ? t('打开督导分享的跟随链接，载入后即可查看现场进度')
+                : t('扫描督导的二维码，或输入短码载入手册')}
             </text>
             <view className="FollowPassRule" />
-            <view className="FollowStep" bindtap={openImport}>
-              <text className="FollowStepNo">01</text>
-              <text className="FollowStepText">{t('扫码')}</text>
-              <text className="FollowStepArrow">→</text>
-            </view>
-            <view className="FollowStep" bindtap={openImport}>
-              <text className="FollowStepNo">02</text>
-              <text className="FollowStepText">{t('六位短码')}</text>
-              <text className="FollowStepArrow">→</text>
-            </view>
-            {canPickFile ? (
-              <view className="FollowStep" bindtap={openImport}>
-                <text className="FollowStepNo">03</text>
-                <text className="FollowStepText">{t('文件')}</text>
-                <text className="FollowStepArrow">→</text>
-              </view>
-            ) : null}
+            {followOnly ? null : (
+              <>
+                <view className="FollowStep" bindtap={openImport}>
+                  <text className="FollowStepNo">01</text>
+                  <text className="FollowStepText">{t('扫码')}</text>
+                  <text className="FollowStepArrow">→</text>
+                </view>
+                <view className="FollowStep" bindtap={openImport}>
+                  <text className="FollowStepNo">02</text>
+                  <text className="FollowStepText">{t('短码')}</text>
+                  <text className="FollowStepArrow">→</text>
+                </view>
+                {canPickFile ? (
+                  <view className="FollowStep" bindtap={openImport}>
+                    <text className="FollowStepNo">03</text>
+                    <text className="FollowStepText">{t('文件')}</text>
+                    <text className="FollowStepArrow">→</text>
+                  </view>
+                ) : null}
+              </>
+            )}
             <view className="FollowPassAction">
               <Button label={t('载入手册')} block onTap={openImport} />
             </view>
             <text className="FollowPassNote">{t('只读 · 不能推进环节')}</text>
           </view>
-          <view className="FollowGuideBack" bindtap={exitFollow}>
-            <text className="FollowGuideBackText">{t('返回手册列表')}</text>
-          </view>
+          {followOnly ? null : (
+            <view className="FollowGuideBack" bindtap={exitFollow}>
+              <text className="FollowGuideBackText">{t('返回手册列表')}</text>
+            </view>
+          )}
         </view>
 
         {importPresence.mounted ? (
@@ -421,9 +437,11 @@ export function FollowScreen(props: FollowScreenProps) {
 
       <view className="FollowFooter">
         <text className="FollowFooterNote">{t('只读 · 不能推进环节')}</text>
-        <view className="FollowFooterAction" bindtap={exitFollow}>
-          <text className="FollowFooterActionText">{t('退出跟随')}</text>
-        </view>
+        {followOnly ? null : (
+          <view className="FollowFooterAction" bindtap={exitFollow}>
+            <text className="FollowFooterActionText">{t('退出跟随')}</text>
+          </view>
+        )}
       </view>
 
       {importPresence.mounted ? (

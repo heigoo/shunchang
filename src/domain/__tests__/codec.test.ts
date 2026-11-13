@@ -130,6 +130,42 @@ describe('payload codec', () => {
       error: 'bad-format',
     });
   });
+
+  it('truncates long notes only for the compact payload', () => {
+    const sheet = makeSheet();
+    const longNote = '请与酒店确认灯光、音乐与上菜节奏，并提前五分钟提醒所有负责人'.repeat(4);
+    sheet.items[0].note = longNote;
+
+    const compact = decodePayload(
+      encodePayload(sheet, undefined, { compactNotes: true }),
+    );
+    expect(compact.ok).toBe(true);
+    if (compact.ok) {
+      const note = compact.payload.sheet.items[0].note;
+      expect(note.endsWith('（备注已截断）')).toBe(true);
+      expect(Array.from(note).slice(0, -7).length).toBe(40);
+    }
+
+    const full = decodePayload(encodePayload(sheet));
+    expect(full.ok).toBe(true);
+    if (full.ok) {
+      expect(full.payload.sheet.items[0].note).toBe(longNote);
+    }
+  });
+
+  it('keeps short notes unchanged in the compact payload', () => {
+    const sheet = makeSheet();
+    sheet.items[0].note = '与酒店确认灯光';
+
+    const decoded = decodePayload(
+      encodePayload(sheet, undefined, { compactNotes: true }),
+    );
+
+    expect(decoded.ok).toBe(true);
+    if (decoded.ok) {
+      expect(decoded.payload.sheet.items[0].note).toBe('与酒店确认灯光');
+    }
+  });
 });
 
 describe('file codec', () => {

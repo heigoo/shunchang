@@ -4,15 +4,17 @@ import {
   isDesktopRuntime,
   resetDesktopRuntimeForTest,
 } from '../../platform/desktop';
+import { setFollowUrlForTest } from '../../platform/followConfig';
 import { callDesktopBridge, desktopOpenPrintHtml } from '../desktopBridge';
 import {
+  buildFollowUrl,
   buildShareUrl,
+  buildShortFollowUrl,
   buildShortUrl,
   canUseNativeFiles,
   downloadTextFile,
   isWeb,
   pickJsonFile,
-  shareBaseUrl,
 } from '../share';
 
 type BridgeCall = (
@@ -72,16 +74,31 @@ afterEach(() => {
 });
 
 describe('share urls', () => {
-  it('builds the base url from the worker location', () => {
-    expect(shareBaseUrl()).toBe('https://example.com/app?x=1');
+  afterEach(() => {
+    setFollowUrlForTest(null);
   });
 
-  it('appends the payload to the base url', () => {
-    expect(buildShareUrl('abc')).toBe('https://example.com/app?x=1#d=abc');
+  it('falls back to the current web page when no follow site is configured', () => {
+    expect(buildFollowUrl('abc')).toBe('https://example.com/app#d=abc');
   });
 
-  it('appends the short code to the base url', () => {
-    expect(buildShortUrl('ABC-DEF').endsWith('#s=ABC-DEF')).toBe(true);
+  it('uses the configured follow page for links', () => {
+    setFollowUrlForTest('https://follow.example.com/follow.html?follow=1');
+
+    expect(buildShareUrl('abc')).toBe(
+      'https://follow.example.com/follow.html?follow=1#d=abc',
+    );
+    expect(buildShortUrl('ABC-DEF')).toBe(
+      'https://follow.example.com/follow.html?follow=1#s=ABC-DEF',
+    );
+  });
+
+  it('forces read-only follow mode when the configured url is follow.html', () => {
+    setFollowUrlForTest('https://follow.example.com/follow.html');
+
+    expect(buildShortFollowUrl('ABC-DEF')).toBe(
+      'https://follow.example.com/follow.html?follow=1#s=ABC-DEF',
+    );
   });
 });
 

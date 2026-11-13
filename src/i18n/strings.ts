@@ -227,10 +227,8 @@ export const EN: Record<string, string> = {
   // 跟随
   跟随: 'Follow',
   载入手册: 'Load sheet',
-  '扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件':
-    'Scan to load automatically; data stays on this device. Use a link, short code, or file to move across devices',
-  '扫码自动载入；数据保存在本设备，跨端请用链接 / 短码':
-    'Scan to load automatically; data stays on this device. Use a link or short code across devices',
+  '用相机扫码打开跟随页；短码仅用于已持有同一手册的设备':
+    'Scan the follow page with your camera app; the code only works on devices that already have this sheet',
   锁定冲突: 'Lock conflict',
   已全部结束: 'All done',
   尚未开始: 'Not started yet',
@@ -240,8 +238,10 @@ export const EN: Record<string, string> = {
   '偏移 {value}': 'Offset {value}',
   现场跟随: 'Live follow',
   跟随现场: 'Follow on site',
-  '扫描督导的二维码，或输入六位短码载入手册':
-    "Scan the coordinator's QR code or enter the 6-character code to load the sheet",
+  '扫描督导的二维码，或输入短码载入手册':
+    "Scan the coordinator's QR code or enter the short code to load the sheet",
+  '打开督导分享的跟随链接，载入后即可查看现场进度':
+    'Open the follow link shared by the coordinator to see live progress',
   更新: 'Update',
   '可能已过期，请向督导确认':
     'May be out of date; check with the coordinator',
@@ -272,21 +272,43 @@ export const EN: Record<string, string> = {
   '已发布 · 第 {n} 版': 'Published · Version {n}',
   '扫码即用 · 接收方打开后进入跟随视图':
     'Scan to use · Recipients open the follow view',
+  '复制跟随链接，或在手机上扫码':
+    'Copy the follow link, or scan it on a phone',
+  '未配置在线跟随，请用文件分发':
+    'Online follow is not configured; share a file instead',
+  '未配置在线跟随，请用文件或短码分发':
+    'Online follow is not configured; share a file or the short code',
   '扫码跟随 · {n} 字节': 'Scan to follow · {n} bytes',
-  '环节较多，请使用文件分发': 'Too many segments; use file sharing',
-  '执行开始后提供，用于已持有手册的设备对齐状态':
-    'Provided after the run starts, to sync devices that already have the sheet',
+  '环节较多，请用链接或文件分发':
+    'Too many segments; share the link or a file',
+  '环节较多，请用链接或文件同步':
+    'Too many segments; sync with the link or a file',
+  '未配置在线跟随，请用短码或文件同步':
+    'Online follow is not configured; sync with the short code or a file',
+  '复制完整链接': 'Copy full link',
+  系统分享: 'Share',
+  '已复制完整链接': 'Full link copied',
+  '复制失败，请手动选择链接': 'Copy failed; select the link manually',
+  '复制失败，请用短码或文件': 'Copy failed; use the short code or a file',
+  '分享不可用，请手动复制链接':
+    'Sharing is unavailable; copy the link manually',
+  '分享不可用，请用短码或文件':
+    'Sharing is unavailable; use the short code or a file',
+  '已打开系统分享': 'System share opened',
+  同步短码: 'Sync code',
+  '执行开始后提供，仅用于已持有同一手册的设备':
+    'Provided after the run starts; only for devices that already have this sheet',
   '文件含完整备注，适合环节较多或无法扫码时':
     'Includes full notes; use when there are many segments or scanning is not possible',
   使用文件或六位短码分发: 'Share with a file or the 6-character code',
   导出文件: 'Export file',
   扫码: 'Scan',
   文件: 'File',
-  六位短码: '6-character code',
+  短码: 'Short code',
   '分享链接 / 备份内容': 'Share link / backup text',
   粘贴分享链接或备份内容: 'Paste a share link or backup text',
   载入链接: 'Load link',
-  输入六位短码: 'Enter the 6-character code',
+  输入短码: 'Enter the short code',
   用短码载入: 'Load with code',
   选择文件: 'Choose file',
   确认顺延: 'Confirm shift',

@@ -17,6 +17,14 @@ export interface SheetPayload {
   runtime?: RuntimeState;
 }
 
+export interface EncodeOptions {
+  /** 二维码等容量受限场景：备注截断到 40 字并标注截断。 */
+  compactNotes?: boolean;
+}
+
+export const COMPACT_NOTE_LIMIT = 40;
+export const NOTE_TRUNCATED_MARK = '（备注已截断）';
+
 export type DecodeResult =
   | { ok: true; payload: SheetPayload }
   | { ok: false; error: 'bad-format' | 'unsupported-version' | 'bad-checksum' };
@@ -115,7 +123,23 @@ function checksum16(bytes: Uint8Array): number {
   return sum;
 }
 
-export function encodePayload(sheet: Sheet, runtime?: RuntimeState): string {
+function payloadNote(note: string, compact: boolean): string {
+  if (!compact) {
+    return note;
+  }
+  const chars = Array.from(note);
+  if (chars.length <= COMPACT_NOTE_LIMIT) {
+    return note;
+  }
+  return `${chars.slice(0, COMPACT_NOTE_LIMIT).join('')}${NOTE_TRUNCATED_MARK}`;
+}
+
+export function encodePayload(
+  sheet: Sheet,
+  runtime?: RuntimeState,
+  options?: EncodeOptions,
+): string {
+  const compactNotes = options?.compactNotes === true;
   const data: Record<string, unknown> = {
     v: 1,
     s: [
@@ -131,7 +155,7 @@ export function encodePayload(sheet: Sheet, runtime?: RuntimeState): string {
         item.name,
         item.durationMin,
         item.owner,
-        item.note,
+        payloadNote(item.note, compactNotes),
         item.lockAt,
         item.locked ? 1 : 0,
       ]),

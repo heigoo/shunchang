@@ -13,7 +13,7 @@ import type { AppView } from './app/nav';
 import { PrintScreen } from './app/PrintScreen';
 import { RuntimeScreen } from './app/RuntimeScreen';
 import { SplashScreen } from './app/SplashScreen';
-import { isWeb } from './app/share';
+import { isWeb, webLocation } from './app/share';
 import {
   EMPTY_INSETS,
   applyBarsStyle,
@@ -76,6 +76,11 @@ function applyLauncherTheme(theme: AppTheme): void {
   }
 }
 
+/** 免安装跟随页通过 ?follow=1 强制只读。 */
+function hasFollowFlag(search: string): boolean {
+  return typeof search === 'string' && search.indexOf('follow=1') >= 0;
+}
+
 function readInitialRoute(): Route {
   const last = getLastView();
   if (!last) {
@@ -133,6 +138,7 @@ export function App() {
   const t = useT();
   const [hydrated, setHydrated] = useState(false);
   const [route, setRoute] = useState<Route>({ view: 'list' });
+  const [followOnly, setFollowOnly] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [transition, setTransition] = useState<ScreenTransition | null>(null);
   const [insets, setInsets] = useState<SafeInsets>(EMPTY_INSETS);
@@ -142,6 +148,8 @@ export function App() {
 
   const routeRef = useRef<Route>(route);
   routeRef.current = route;
+  const followOnlyRef = useRef(followOnly);
+  followOnlyRef.current = followOnly;
   const printOriginRef = useRef<Route>({ view: 'list' });
   const navigateRef = useRef<(view: AppView, sheetId?: string) => void>(() => {});
   const lastBackAtRef = useRef(0);
@@ -224,7 +232,23 @@ export function App() {
       }
 
       const boot = applyLaunchHash();
-      if (boot && boot.ok) {
+      const location = webLocation();
+      const followRequested = hasFollowFlag(location ? location.search : '');
+
+      if (followRequested) {
+        // 免安装跟随页：忽略上次停留页面，首次即进入只读跟随。
+        setFollowOnly(true);
+        setRole('follower');
+        if (boot && !boot.ok) {
+          setNotice(importErrorMessage(boot.error));
+        }
+        const followId = boot && boot.ok ? boot.sheetId : undefined;
+        const followRoute: Route = followId
+          ? { view: 'follow', sheetId: followId }
+          : { view: 'follow' };
+        setRoute(followRoute);
+        setLastView(followRoute);
+      } else if (boot && boot.ok) {
         setRoute({ view: 'runtime', sheetId: boot.sheetId });
         setLastView({ view: 'runtime', sheetId: boot.sheetId });
       } else {
@@ -286,6 +310,11 @@ export function App() {
   // 原生返回键：先让打开的浮层消费，再回退页面，最后才是双击退出。
   useLynxGlobalEventListener('shunchang:back', () => {
     if (dispatchBack()) {
+      return;
+    }
+    if (followOnlyRef.current) {
+      // 免安装跟随页没有手册列表，返回键直接退出。
+      getHostModule()?.exitApp?.();
       return;
     }
     if (routeRef.current.view !== 'list') {
@@ -406,6 +435,7 @@ export function App() {
             sheetId={route.sheetId}
             safeTop={insets.top}
             safeBottom={insets.bottom}
+            followOnly={followOnly}
             onBack={() => {
               navigate('list');
             }}

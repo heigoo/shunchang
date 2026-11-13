@@ -150,6 +150,56 @@
   color: var(--ink-2);
 }
 
+.PublishLink {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.PublishLinkActions {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.PublishLinkAction {
+  flex: 1;
+}
+
+.PublishLinkAction + .PublishLinkAction {
+  margin-left: 8px;
+}
+
+.PublishLinkHint {
+  margin-top: 6px;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+}
+
+.PublishLinkBox {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 72px;
+  margin-top: 6px;
+  padding: 8px;
+  background-color: var(--paper-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--paper-3);
+}
+
+.PublishLinkText {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 15px;
+  color: var(--ink-2);
+  word-break: break-all;
+}
+
 .PublishExport {
   display: flex;
   flex-direction: column;

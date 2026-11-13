@@ -107,6 +107,31 @@
   color: var(--fg-2);
 }
 
+/* ---------- 跟随链接 ---------- */
+
+.SyncLink {
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+}
+
+.SyncLinkAction {
+  flex: 1;
+}
+
+.SyncLinkAction + .SyncLinkAction {
+  margin-left: 8px;
+}
+
+.SyncLinkHint {
+  margin-top: 6px;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--dim);
+}
+
 /* ---------- 短码 ---------- */
 
 .SyncCodeBlock {

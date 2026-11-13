@@ -111,9 +111,7 @@ export function ImportPanel(props: ImportPanelProps) {
               <view className="ImportHeadText">
                 <text className="ImportTitle">{t('载入手册')}</text>
                 <text className="ImportSubtitle">
-                  {canPickFile
-                    ? t('扫码自动载入；数据保存在本设备，跨端请用链接 / 短码 / 文件')
-                    : t('扫码自动载入；数据保存在本设备，跨端请用链接 / 短码')}
+                  {t('用相机扫码打开跟随页；短码仅用于已持有同一手册的设备')}
                 </text>
               </view>
               <view className="ImportClose" bindtap={onClose}>
@@ -153,11 +151,11 @@ export function ImportPanel(props: ImportPanelProps) {
             <view className="ImportSection">
               <view className="ImportSectionHead">
                 <text className="ImportStepNo">02</text>
-                <text className="ImportLabel">{t('六位短码')}</text>
+                <text className="ImportLabel">{t('短码')}</text>
               </view>
               <input
                 className="ImportInput"
-                placeholder={t('输入六位短码')}
+                placeholder={t('输入短码')}
                 maxlength={8}
                 bindinput={(event) => {
                   setCodeText(inputValue(event));

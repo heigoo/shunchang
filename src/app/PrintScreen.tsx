@@ -98,7 +98,10 @@ export function PrintScreen(props: PrintScreenProps) {
   const summary = printSummary(sheet, runtime);
   const url = buildShareUrl(encodePayload(sheet, runtime ?? undefined));
   const showQr =
-    !desktop && execSheet.items.length <= MAX_QR_ITEMS && url.length <= MAX_QR_URL;
+    !desktop &&
+    url.length > 0 &&
+    execSheet.items.length <= MAX_QR_ITEMS &&
+    url.length <= MAX_QR_URL;
   const stamp = stampText(printedAt);
 
   const handlePrint = () => {
