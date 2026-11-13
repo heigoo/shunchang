@@ -913,7 +913,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               <text className={syncCodeText.length > 0 ? 'RuntimeSyncCode' : 'RuntimeSyncCodeFallback'}>
                 {syncCodeText.length > 0
                   ? syncCodeText
-                  : tText('请用二维码/链接')}
+                  : tText('当前版本无法用短码同步，请用二维码/链接')}
               </text>
               <text className="RuntimeSyncChevron">›</text>
             </view>
