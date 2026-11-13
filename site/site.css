@@ -3123,10 +3123,10 @@ page {
 }
 
 .DeckHint {
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.12em;
-  color: var(--ink3);
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--ink2);
   margin-right: 6px;
 }
 
@@ -4063,7 +4063,6 @@ page {
 .BoardTag,
 .BoardHint,
 .BoardOrig,
-.DeckHint,
 .DeckMenuBtnText,
 .RailLabel {
   font-size: 11px;
