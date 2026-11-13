@@ -195,8 +195,8 @@ const ZH: Copy = {
   },
   footer: {
     tagline: '有顺序，也能顺延',
-    copyright: '© 2026 顺场 · Cue',
-    marquee: '有顺序，也能顺延 · 让今天，按顺序发生 · 顺场 · CUE · ',
+    copyright: '© 2026 顺场 · Shunchang',
+    marquee: '有顺序，也能顺延 · 让今天，按顺序发生 · 顺场 · SHUNCHANG · ',
   },
   deck: {
     prev: '上一步',
@@ -215,7 +215,7 @@ const EN: Copy = {
     eyebrow: 'WEDDING DAY · LIVE',
     title: ['Let today happen', 'in order.'],
     lead:
-      'A wedding always has a plan. It just never lives in one place. Cue puts the day on one sheet — change one cell, and everyone sees the same version.',
+      'A wedding always has a plan. It just never lives in one place. Shunchang puts the day on one sheet — change one cell, and everyone sees the same version.',
     primary: 'Start the sheet',
     secondary: 'See the live board',
     standard: 'Standard',
@@ -313,7 +313,7 @@ const EN: Copy = {
   quote: {
     eyebrow: '05 · THE NAME',
     title: 'Shift, not control.',
-    body: 'Control pins people down. Cue keeps things connected.',
+    body: 'Control pins people down. Shunchang keeps things connected.',
     hint: 'TAP · PLAY IT AGAIN',
   },
   cta: {
@@ -327,8 +327,8 @@ const EN: Copy = {
   },
   footer: {
     tagline: 'Order, and shift',
-    copyright: '© 2026 Cue · 顺场',
-    marquee: 'ORDER, AND SHIFT · LET TODAY HAPPEN IN ORDER · CUE · SHUNCHANG · ',
+    copyright: '© 2026 Shunchang · 顺场',
+    marquee: 'ORDER, AND SHIFT · LET TODAY HAPPEN IN ORDER · SHUNCHANG · ',
   },
   deck: {
     prev: 'PREV',
@@ -337,7 +337,7 @@ const EN: Copy = {
     menu: 'INDEX',
     menuHint: 'JUMP TO ANY CHAPTER · USE ← → OR NUMBER KEYS',
     skip: 'SKIP INTRO · START NOW',
-    chapters: ['Home', 'Pain points', 'Features', 'Live demo', 'Brand', 'Why Cue', 'Start'],
+    chapters: ['Home', 'Pain points', 'Features', 'Live demo', 'Brand', 'Why Shunchang', 'Start'],
   },
 };
 

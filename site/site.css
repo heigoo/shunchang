@@ -1,27 +1,29 @@
 :root {
-  --paper: #f1eee6;
-  --paper2: #e7e2d5;
-  --ink: #15140f;
-  --ink2: #4b4941;
-  --ink3: #6e6b60;
-  --rule: #c6c0ae;
-  --rule2: #dcd7c8;
+  --paper: #f2ede1;
+  --paper2: #e8e1d0;
+  --ink: #14120b;
+  --ink2: #474336;
+  --ink3: #756f5c;
+  --rule: #b4aa92;
+  --rule2: #d6ccb6;
   --amber: #ffb020;
-  --deep: #a66a12;
-  --red: #be2a20;
-  --lit: #f5f2e8;
-  --screen: #0b0b09;
-  --screen2: #15140f;
-  --screen3: #2a2a22;
+  --deep: #a4660c;
+  --red: #bc2a20;
+  --lit: #f7f3e7;
+  --screen: #0a0a08;
+  --screen2: #131310;
+  --screen3: #2b2a22;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
   --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC",
     "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --sans-en: "Segoe UI", "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+  --serif: Georgia, "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC",
+    "Source Han Serif CN", STSong, SimSun, "Times New Roman", serif;
 }
 
 page {
-  background-color: #f1eee6;
+  background-color: #f2ede1;
 }
 
 * {
@@ -1672,15 +1674,15 @@ page {
 }
 
 .C2 {
-  background-color: #be2a20;
+  background-color: #bc2a20;
 }
 
 .C3 {
-  background-color: #15140f;
+  background-color: #14120b;
 }
 
 .C4 {
-  background-color: #a66a12;
+  background-color: #a4660c;
 }
 
 .ConfettiLayer {
@@ -3554,3 +3556,438 @@ page {
   font-size: 13px;
   color: var(--deep);
 }
+
+/* ============================================================
+   与 App 同步的纸面印刷语言
+   标题改用衬线、主操作改为墨色实心、控件去圆角、执行台加印章
+   ============================================================ */
+
+.HeroTitle,
+.Deck .HeroTitle,
+.SiteEn .HeroTitle {
+  font-family: var(--serif);
+  font-size: 76px;
+  line-height: 1.12;
+  letter-spacing: 0.015em;
+  font-weight: 700;
+}
+
+.HeroTitleNarrow,
+.Deck .HeroTitleNarrow,
+.SiteEn .HeroTitleNarrow {
+  font-size: 42px;
+  line-height: 1.16;
+  letter-spacing: 0.01em;
+}
+
+.SectionTitle,
+.Deck .SectionTitle,
+.SiteEn .SectionTitle {
+  font-family: var(--serif);
+  font-size: 46px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.SectionTitleNarrow,
+.Deck .SectionTitleNarrow,
+.SiteEn .SectionTitleNarrow {
+  font-size: 32px;
+}
+
+.DarkTitle,
+.Deck .DarkTitle,
+.SiteEn .DarkTitle {
+  font-family: var(--serif);
+  font-size: 36px;
+  line-height: 1.28;
+  letter-spacing: 0.02em;
+}
+
+.DarkTitleNarrow,
+.Deck .DarkTitleNarrow,
+.SiteEn .DarkTitleNarrow {
+  font-size: 28px;
+}
+
+.QuoteTitle,
+.Deck .QuoteTitle,
+.SiteEn .QuoteTitle {
+  font-family: var(--serif);
+  font-size: 54px;
+  line-height: 1.16;
+  letter-spacing: 0.03em;
+}
+
+.QuoteTitleNarrow,
+.Deck .QuoteTitleNarrow,
+.SiteEn .QuoteTitleNarrow {
+  font-size: 36px;
+}
+
+.PullText,
+.Deck .PullText,
+.SiteEn .PullText {
+  font-family: var(--serif);
+  font-size: 28px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+.PullTextNarrow,
+.Deck .PullTextNarrow,
+.SiteEn .PullTextNarrow {
+  font-size: 23px;
+}
+
+.CardTitle,
+.FeatureTitle,
+.SiteEn .CardTitle,
+.SiteEn .FeatureTitle {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.FeatureTitle,
+.SiteEn .FeatureTitle {
+  font-size: 19px;
+}
+
+.Wordmark,
+.SiteEn .Wordmark {
+  font-family: var(--serif);
+  font-size: 23px;
+  letter-spacing: 0.1em;
+}
+
+.FooterBrand,
+.SiteEn .FooterBrand {
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+}
+
+.StatValue,
+.CoverStatValue,
+.SiteEn .StatValue,
+.SiteEn .CoverStatValue {
+  font-family: var(--serif);
+  font-size: 26px;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+.CoverStatValue,
+.SiteEn .CoverStatValue {
+  font-size: 22px;
+}
+
+.BoardTitle,
+.SiteEn .BoardTitle {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.DeckMenuLabel,
+.SiteEn .DeckMenuLabel {
+  font-family: var(--serif);
+  letter-spacing: 0.02em;
+}
+
+.SlideGhost {
+  font-family: var(--serif);
+  letter-spacing: 0;
+}
+
+/* 微标：更小的字阶与更大的字距，贴近 App 里的表单标注 */
+.Eyebrow,
+.HeroEyebrow,
+.DarkEyebrow,
+.QuoteEyebrow {
+  font-size: 9.5px;
+  letter-spacing: 0.24em;
+}
+
+.CardNo,
+.FeatureNo {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+
+.PhoneLabel,
+.PosterCaption {
+  letter-spacing: 0.18em;
+}
+
+/* 主操作用墨色实心，琥珀只保留为标记色 */
+.Btn {
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 0;
+}
+
+.BtnAmber {
+  background-color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.BtnTextAmber {
+  color: var(--paper);
+}
+
+.BtnGhost {
+  border-color: var(--rule);
+}
+
+.BtnGhost:hover {
+  border-color: var(--ink);
+  background-color: transparent;
+}
+
+.BtnShine {
+  display: none;
+}
+
+.DeckCta {
+  background-color: var(--ink);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.DeckCta:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.DeckCtaText,
+.DeckCtaArrow {
+  color: var(--paper);
+}
+
+/* 控件去圆角，进度条改为印刷刻度 */
+.LangBtnOn {
+  background-color: var(--ink);
+}
+
+.LangTextOn {
+  color: var(--paper);
+}
+
+.DeckBtn {
+  border-radius: 0;
+}
+
+.DeckBtn:active {
+  transform: none;
+  opacity: 0.7;
+}
+
+.DeckDotInner {
+  width: 6px;
+  height: 3px;
+  border-radius: 0;
+}
+
+.DeckDotOn .DeckDotInner {
+  width: 18px;
+  animation: none;
+}
+
+/* 执行台预览：顶部重线、当前环节琥珀侧标、状态改为印章 */
+.Board {
+  border-top-width: 3px;
+  border-top-color: var(--lit);
+  transition: border-color 0.25s ease;
+}
+
+.Board:hover {
+  transform: none;
+  border-color: var(--screen3);
+}
+
+.BoardHead,
+.BoardRow,
+.BoardFoot {
+  border-color: var(--screen3);
+}
+
+.BoardRow {
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: transparent;
+  padding-left: 9px;
+}
+
+.BoardRowNow {
+  background-color: #1a1408;
+  border-left-color: var(--amber);
+  animation: none;
+}
+
+.BoardDotNow {
+  animation: none;
+}
+
+.BoardTag {
+  padding: 2px 6px;
+  border: 1px solid var(--screen3);
+  letter-spacing: 0.12em;
+}
+
+.BoardRowNow .BoardTag {
+  border-color: var(--amber);
+}
+
+.BoardMeta,
+.BoardTime,
+.BoardStat {
+  color: #918c7a;
+}
+
+.BoardOrig {
+  color: #756f5c;
+}
+
+.BoardFill {
+  background-image: none;
+  background-color: var(--amber);
+  animation: none;
+}
+
+/* 纸面卡片不做悬浮位移，保留顶部标记色变化 */
+.Card:hover,
+.Feature:hover {
+  transform: none;
+  border-top-color: var(--deep);
+}
+
+/* 海报与暖光收敛，避免漂浮的模板感 */
+.Poster {
+  animation: none;
+  box-shadow: none;
+  border-color: var(--rule);
+}
+
+.Orb {
+  opacity: 0.55;
+}
+
+.DeckMenuClose {
+  border-radius: 0;
+}
+
+.DeckMenuClose:active {
+  transform: none;
+  opacity: 0.6;
+}
+
+/* 窄屏页头：收紧品牌与操作区，避免目录、开始和语言切换互相挤压 */
+.DeckBarNarrow {
+  padding: 0 16px;
+}
+
+.DeckBarNarrow .Lockup {
+  gap: 8px;
+}
+
+.DeckBarNarrow .WordmarkAlt {
+  display: none;
+}
+
+.DeckBarNarrow .Wordmark {
+  font-size: 20px;
+  letter-spacing: 0.08em;
+}
+
+.DeckBarNarrow .DeckBarRight {
+  gap: 8px;
+}
+
+.DeckBarNarrow .DeckCta {
+  padding: 0 9px;
+}
+
+.DeckBarNarrow .LangBtn {
+  padding: 5px 7px;
+}
+
+/* 窄屏封面数据：改为 2×2，标签不再挤成一行 */
+.CoverStatsNarrow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  padding: 12px 20px 14px;
+}
+
+.CoverStatsNarrow .CoverStatValue {
+  font-size: 17px;
+}
+
+.CoverStatsNarrow .CoverStatLabel {
+  font-size: 9px;
+}
+
+/* 320pt 级窄屏：进一步压缩字阶与控件，并收起装饰手机 */
+.SiteTiny .DeckBarNarrow {
+  padding: 0 10px;
+}
+
+.SiteTiny .DeckBarNarrow .Wordmark {
+  font-size: 18px;
+}
+
+.SiteTiny .DeckBarNarrow .DeckCta {
+  padding: 0 8px;
+}
+
+.SiteTiny .DeckBarNarrow .LangBtn {
+  padding: 4px 6px;
+}
+
+.SiteTiny .HeroTitleNarrow {
+  font-size: 36px;
+  line-height: 1.14;
+}
+
+.SiteTiny .HeroLeadNarrow {
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.SiteTiny .ActionsNarrow {
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.SiteTiny .ActionsNarrow .Btn {
+  height: 44px;
+}
+
+.SiteTiny .PhonesNarrow {
+  display: none;
+}
+
+.SiteTiny .CoverStatsNarrow {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding: 8px 14px 10px;
+}
+
+.SiteTiny .CoverStatsNarrow .CoverStatValue {
+  font-size: 15px;
+}
+
+.SiteTiny .CoverStatsNarrow .CoverStatLabel {
+  font-size: 8px;
+}
+
+
+
+
+

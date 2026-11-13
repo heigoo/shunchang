@@ -112,6 +112,7 @@ export function App() {
   const touchStart = useRef({ x: 0, y: 0 });
   const wide = useIsWide(1000);
   const railWide = useIsWide(1340);
+  const tiny = !useIsWide(360);
   const c = COPY[lang];
 
   const goSlide = useCallback(
@@ -480,7 +481,7 @@ export function App() {
           <view className={wide ? 'QuoteInner' : 'QuoteInner QuoteInnerDeckNarrow'}>
             {wide ? (
               <text className={lang === 'en' ? 'QuoteGlyph QuoteGlyphEn T' : 'QuoteGlyph T'}>
-                {lang === 'zh' ? '顺' : 'Cue'}
+                顺
               </text>
             ) : null}
             <text className="Eyebrow QuoteEyebrow T">{c.quote.eyebrow}</text>
@@ -568,7 +569,11 @@ export function App() {
 
   return (
     <view
-      className={lang === 'en' ? 'Site SiteEn' : 'Site'}
+      className={[
+        'Site',
+        lang === 'en' ? 'SiteEn' : '',
+        tiny ? 'SiteTiny' : '',
+      ].join(' ')}
       bindlayoutchange={(event: any) => {
         const width = event?.detail?.width;
         if (typeof width === 'number') {
@@ -578,7 +583,7 @@ export function App() {
     >
       <view className="Boot">
         <BigMark />
-        <text className="BootWord T">{lang === 'zh' ? '顺场' : 'Cue'}</text>
+        <text className="BootWord T">{lang === 'zh' ? '顺场' : 'Shunchang'}</text>
       </view>
 
       <view className="Deck">
@@ -586,9 +591,9 @@ export function App() {
           <view className="Lockup" bindtap={() => goSlide(0)}>
             <Mark />
             <text className={lang === 'en' ? 'Wordmark WordmarkEn T' : 'Wordmark T'}>
-              {lang === 'zh' ? '顺场' : 'Cue'}
+              {lang === 'zh' ? '顺场' : 'Shunchang'}
             </text>
-            <text className="WordmarkAlt T">{lang === 'zh' ? 'CUE' : '顺场'}</text>
+            <text className="WordmarkAlt T">{lang === 'zh' ? 'SHUNCHANG' : '顺场'}</text>
           </view>
 
           {wide ? (
