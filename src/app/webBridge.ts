@@ -185,6 +185,123 @@ function clearHashMainThread(): void {
   }
 }
 
+function readStorageMainThread(keys: string[]): Record<string, string> {
+  'main thread';
+  const output: Record<string, string> = {};
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const localStorage = host ? host.localStorage : null;
+    if (!localStorage || !Array.isArray(keys)) {
+      return output;
+    }
+    for (const key of keys) {
+      const value = localStorage.getItem(key);
+      if (typeof value === 'string') {
+        output[key] = value;
+      }
+    }
+  } catch {
+    // The bridge is best-effort.
+  }
+  return output;
+}
+
+function writeStorageMainThread(key: string, value: string): void {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const localStorage = host ? host.localStorage : null;
+    if (localStorage) {
+      localStorage.setItem(key, value);
+    }
+  } catch {
+    // The bridge is best-effort.
+  }
+}
+
+function removeStorageMainThread(key: string): void {
+  'main thread';
+  try {
+    const doc: any = typeof globalThis.document !== 'undefined'
+      ? globalThis.document
+      : null;
+    const view: any = doc ? doc.defaultView : null;
+    const host: any = view && view.parent && view.parent !== view
+      ? view.parent
+      : view;
+    const localStorage = host ? host.localStorage : null;
+    if (localStorage) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // The bridge is best-effort.
+  }
+}
+
+async function readStorageWithRetry(
+  keys: string[],
+  attempts: number,
+): Promise<Record<string, string>> {
+  let result: Record<string, string> = {};
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const value = (await runOnMainThread(readStorageMainThread)(keys)) as
+        | Record<string, string>
+        | undefined;
+      result = value ?? {};
+    } catch {
+      result = {};
+    }
+    if (Object.keys(result).length > 0) {
+      return result;
+    }
+    if (i < attempts - 1) {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 60);
+      });
+    }
+  }
+  return result;
+}
+
+/** Web Worker 内的持久化读取：由主线程访问宿主 localStorage。 */
+export async function webStorageRead(
+  keys: string[],
+): Promise<Record<string, string>> {
+  return readStorageWithRetry(keys, 3);
+}
+
+/** Web Worker 内的持久化写入：内存立即可见，落盘异步完成。 */
+export function webStorageWrite(key: string, value: string): void {
+  try {
+    void runOnMainThread(writeStorageMainThread)(key, value).catch(
+      () => undefined,
+    );
+  } catch {
+    // The bridge is best-effort.
+  }
+}
+
+export function webStorageRemove(key: string): void {
+  try {
+    void runOnMainThread(removeStorageMainThread)(key).catch(() => undefined);
+  } catch {
+    // The bridge is best-effort.
+  }
+}
+
 function readLanguageMainThread(): string | null {
   'main thread';
   try {

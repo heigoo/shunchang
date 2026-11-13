@@ -298,7 +298,18 @@ function actualRange(row: ReportItemRow): string {
   if (row.actualStart === null || row.actualEnd === null) {
     return '—';
   }
-  return clockRange(row.actualStart, row.actualEnd);
+  const range = clockRange(row.actualStart, row.actualEnd);
+  if (
+    row.actualDurationMin !== null &&
+    row.actualDurationMin > 0 &&
+    row.actualDurationMin < 1
+  ) {
+    return t('{range}（{duration}）', {
+      range,
+      duration: formatDuration(row.actualDurationMin),
+    });
+  }
+  return range;
 }
 
 /** 复制到剪贴板的文字摘要：汇总 + 逐项 + 现场记录。 */
@@ -335,7 +346,7 @@ export function buildReportText(report: ReportData): string {
       const owner = row.owner.length > 0 ? `（${row.owner}）` : '';
       lines.push(`${row.no} ${row.name}${owner}`);
       lines.push(
-        `  ${t('计划')} ${clockRange(row.planStart, row.planEnd)} · ${t('展示')} ${clockRange(
+        `  ${t('计划')} ${clockRange(row.planStart, row.planEnd)} · ${t('顺延后')} ${clockRange(
           row.displayStart,
           row.displayEnd,
         )} · ${t('实际')} ${actualRange(row)}`,

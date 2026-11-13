@@ -233,6 +233,9 @@ export function PrintScreen(props: PrintScreenProps) {
                 {row.lockLabel.length > 0 ? (
                   <text className="PrintCellLock">{row.lockLabel}</text>
                 ) : null}
+                {row.actualLabel.length > 0 ? (
+                  <text className="PrintCellActual">{row.actualLabel}</text>
+                ) : null}
               </view>
               <view className="PrintColDur">
                 <text className="PrintCellMono">{row.duration}</text>

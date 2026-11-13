@@ -186,13 +186,49 @@
   color: var(--dim);
 }
 
+/* 开场迟到提醒：把“准点”与超时倒计时的矛盾摆出来，并给一次对齐操作 */
+.RuntimeLate {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px 16px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--screen-line-strong);
+  background-color: var(--screen-2);
+}
+
+.RuntimeLateText {
+  flex: 1;
+  font-size: 12px;
+  color: var(--amber);
+}
+
+.RuntimeLateAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  margin-left: 8px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line-strong);
+}
+
+.RuntimeLateActionText {
+  font-size: 12px;
+  color: var(--amber);
+}
+
 /* 屏幕常亮开关 */
 .RuntimeAwakeRow {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  height: 36px;
+  height: 44px;
   margin-bottom: 8px;
   padding-left: 12px;
   padding-right: 12px;
@@ -216,15 +252,11 @@
 }
 
 .RuntimeShiftToast {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 132px;
-  z-index: 30;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  margin: 0 16px 8px;
   pointer-events: none;
 }
 
@@ -238,18 +270,14 @@
   color: var(--bright);
 }
 
-/* 写操作后的 5 秒撤销条 */
+/* 写操作后的 5 秒撤销条：参与布局，避免覆盖完成/顺延按钮 */
 .RuntimeUndo {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 96px;
-  z-index: 40;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  margin: 0 16px 8px;
+  padding: 8px 12px;
   background-color: var(--screen-2);
   border-width: 1px;
   border-style: solid;
@@ -273,7 +301,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  height: 30px;
+  height: 44px;
   padding-left: 14px;
   padding-right: 14px;
   border-width: 1px;
@@ -545,7 +573,7 @@
 }
 
 .RailTime {
-  width: 52px;
+  width: 64px;
   flex-shrink: 0;
   font-family: var(--mono);
   font-size: 12px;
@@ -739,7 +767,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  height: 44px;
   margin-top: 2px;
   border-top-width: 1px;
   border-top-style: solid;

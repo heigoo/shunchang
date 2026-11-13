@@ -116,9 +116,21 @@
 
 /* ---------- 同步运营 ---------- */
 
+.SyncSectionLabel {
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+}
+
 .SyncOps {
   display: flex;
   flex-direction: row;
+  margin-top: 8px;
+}
+
+.SyncBoardEntry {
   margin-top: 10px;
 }
 

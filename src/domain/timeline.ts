@@ -3,6 +3,12 @@ import type { Sheet } from './types';
 
 export type LockState = 'wait' | 'absorb' | 'conflict';
 
+/**
+ * 吸收延迟后每个环节至少保留的时长。
+ * 低于该值的“压缩”在现实里等于删掉环节，不应由算法静默完成。
+ */
+export const MIN_EFFECTIVE_DURATION_MIN = 5;
+
 export interface CompressedItem {
   itemId: string;
   lostMin: number;
@@ -89,6 +95,14 @@ export function computeTimeline(sheet: Sheet, offsetMin = 0): TimelineResult {
     const capacity = items
       .slice(segStart, i)
       .reduce((sum, segmentItem) => sum + segmentItem.durationMin, 0);
+    // 可压缩量必须保证每个环节仍保留最小可执行时长。
+    const absorbable = items
+      .slice(segStart, i)
+      .reduce(
+        (sum, segmentItem) =>
+          sum + Math.max(0, segmentItem.durationMin - MIN_EFFECTIVE_DURATION_MIN),
+        0,
+      );
     const projectedEnd =
       i > segStart
         ? rows[i - 1].planStart + items[i - 1].durationMin + segOffset
@@ -102,12 +116,15 @@ export function computeTimeline(sheet: Sheet, offsetMin = 0): TimelineResult {
     } else if (diffMin === 0) {
       state = 'absorb';
       segOffset = 0;
-    } else if (diffMin <= capacity) {
+    } else if (diffMin <= capacity && diffMin <= absorbable) {
       state = 'absorb';
 
       let remaining = diffMin;
       for (let j = i - 1; j >= segStart && remaining > 0; j -= 1) {
-        const lostMin = Math.min(items[j].durationMin, remaining);
+        const lostMin = Math.min(
+          Math.max(0, items[j].durationMin - MIN_EFFECTIVE_DURATION_MIN),
+          remaining,
+        );
         if (lostMin <= 0) {
           continue;
         }
@@ -133,6 +150,10 @@ export function computeTimeline(sheet: Sheet, offsetMin = 0): TimelineResult {
     rows[i].displayStart = item.lockAt;
     rows[i].displayEnd = item.lockAt + item.durationMin;
     rows[i].effectiveDurationMin = item.durationMin;
+
+    // 锁定时刻是硬边界：等待、吸收或冲突之后，后续环节都从锁定结束时间按计划继续。
+    // 若继续沿用锁前偏移，提前到场时会让后面的环节排到锁定环节开始之前。
+    segOffset = 0;
 
     locks.push({
       itemId: item.id,
@@ -199,8 +220,10 @@ function pad2(value: number): string {
 }
 
 function clockParts(min: number): { prefix: string; hour: number; minute: number } {
-  const dayOffset = Math.floor(min / 1440);
-  const inDay = ((min % 1440) + 1440) % 1440;
+  // 实际时间可能带秒（小数分钟），展示时向下取整到整分钟。
+  const whole = Math.floor(min);
+  const dayOffset = Math.floor(whole / 1440);
+  const inDay = ((whole % 1440) + 1440) % 1440;
   const prefix = dayOffset >= 1 ? t('次日 ') : dayOffset <= -1 ? t('前日 ') : '';
   return {
     prefix,
@@ -220,7 +243,11 @@ export function formatClockDisplay(min: number): string {
 }
 
 export function formatDuration(totalMin: number): string {
-  const total = Math.max(0, Math.round(totalMin));
+  const raw = Math.max(0, totalMin);
+  if (raw > 0 && raw < 1) {
+    return t('<1 分钟');
+  }
+  const total = Math.round(raw);
   if (total < 60) {
     return t('{n} 分钟', { n: total });
   }

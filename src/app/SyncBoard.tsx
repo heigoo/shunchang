@@ -60,8 +60,8 @@ export function SyncBoard(props: SyncBoardProps) {
       : currentIndex >= execSheet.items.length
         ? t('已结束')
         : t('尚未开始');
-  const lastSync =
-    runtime.lastSyncAt > 0 ? stampOf(runtime.lastSyncAt) : t('尚未同步');
+  // 主控端没有“最后同步”概念：这里展示同步牌自身的生成时刻，避免显示“尚未同步”。
+  const generatedAt = stampOf(Date.now());
 
   return (
     <view className={closing ? 'SyncBoard SyncBoard--out' : 'SyncBoard'}>
@@ -107,8 +107,8 @@ export function SyncBoard(props: SyncBoardProps) {
             <text className="SyncBoardMetaValue">{stage}</text>
           </view>
           <view className="SyncBoardMetaRow SyncBoardMetaRow--last">
-            <text className="SyncBoardMetaLabel">{t('最后同步')}</text>
-            <text className="SyncBoardMetaValue">{lastSync}</text>
+            <text className="SyncBoardMetaLabel">{t('生成于')}</text>
+            <text className="SyncBoardMetaValue">{generatedAt}</text>
           </view>
         </view>
       </view>

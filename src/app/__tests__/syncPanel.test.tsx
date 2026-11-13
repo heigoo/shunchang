@@ -104,7 +104,7 @@ test('explains that the short code is unavailable when out of range', async () =
   ).toBeInTheDocument();
 });
 
-test('renders the full-screen board with version, stage and last sync', async () => {
+test('renders the full-screen board with version, stage and generated time', async () => {
   const { findByText } = render(
     <SyncBoard sheet={makeSheet()} runtime={makeRuntime()} onClose={() => {}} />,
   );
@@ -113,6 +113,6 @@ test('renders the full-screen board with version, stage and last sync', async ()
   expect(await findByText('秋季婚礼流程')).toBeInTheDocument();
   expect(await findByText('第 4 版')).toBeInTheDocument();
   expect(await findByText('合影')).toBeInTheDocument();
-  expect(await findByText(/同步于|最后同步/)).toBeInTheDocument();
+  expect(await findByText('生成于')).toBeInTheDocument();
   expect(await findByText('退出')).toBeInTheDocument();
 });

@@ -25,7 +25,7 @@ import {
 import type { SafeInsets } from './app/systemBars';
 import { webSyncLocation, installMainThreadBridge } from './app/webBridge';
 import type { WebLocationSnapshot } from './app/webBridge';
-import { hydrateLang, useT } from './i18n';
+import { getLang, hydrateLang, useT } from './i18n';
 import { isDesktopRuntime } from './platform/desktop';
 import { reportViewportWidth } from './platform/viewport';
 import {
@@ -518,6 +518,9 @@ export function App() {
   }
   if (theme === 'xishi') {
     backdropClasses.push('theme-xishi');
+  }
+  if (getLang() === 'en') {
+    backdropClasses.push('lang-en');
   }
 
   return (

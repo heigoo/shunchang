@@ -3,6 +3,7 @@ import { describe, expect, it } from '@rstest/core';
 import type { Item, RuntimeState, Sheet } from '../../domain/types';
 import { normalizeRuntime } from '../../store/repository';
 import {
+  alignFirstToNow,
   applyShift,
   buildRuntimeView,
   clearManualShift,
@@ -60,6 +61,31 @@ describe('createRuntime', () => {
     expect(runtime.ownerEpoch).toBe(0);
     expect(runtime.ownerDeviceId).toBe(getDeviceId());
     expect(runtime.ownerDeviceId).toMatch(/^D-[2-9A-HJ-NP-Z]{4}$/);
+  });
+});
+
+describe('alignFirstToNow', () => {
+  it('把首个环节与整条时间轴对齐到当前时刻', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime = createRuntime(sheet, 600);
+    const next = alignFirstToNow(sheet, runtime, 600.5);
+
+    expect(next.offsetMin).toBe(121);
+    expect(next.autoOffsetMin).toBe(121);
+    expect(next.actuals.a.start).toBe(600.5);
+    expect(next.execVersion).toBe(2);
+    expect(next.audit[next.audit.length - 1].type).toBe('align');
+  });
+
+  it('已经推进过环节时不再对齐', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime = completeCurrent(
+      sheet,
+      createRuntime(sheet, 480),
+      550,
+    );
+
+    expect(alignFirstToNow(sheet, runtime, 700)).toBe(runtime);
   });
 });
 

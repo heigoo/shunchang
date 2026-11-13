@@ -129,8 +129,19 @@ test('restores a deleted item with undo', async () => {
   expect(container.querySelectorAll('.Row').length).toBe(3);
 });
 
+function todayKey(): string {
+  const now = new Date();
+  const pad = (value: number) => (value < 10 ? `0${value}` : String(value));
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 test('starts a published sheet directly without bumping the version', async () => {
-  saveSheet({ ...makeSheet(), status: 'published', version: 3 });
+  saveSheet({
+    ...makeSheet(),
+    date: todayKey(),
+    status: 'published',
+    version: 3,
+  });
 
   const started: string[] = [];
   const { findByText } = render(
@@ -150,6 +161,31 @@ test('starts a published sheet directly without bumping the version', async () =
   const saved = getSheet(SHEET_ID);
   expect(saved?.version).toBe(3);
   expect(saved?.status).toBe('published');
+});
+
+test('warns before starting a sheet dated another day', async () => {
+  saveSheet({ ...makeSheet(), status: 'published', version: 3 });
+
+  const started: string[] = [];
+  const { findByText } = render(
+    <EditorScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onStartRuntime={(id) => {
+        started.push(id);
+      }}
+      onPrint={() => {}}
+    />,
+  );
+
+  fireEvent.tap(await findByText('开始执行'));
+  expect(
+    await findByText('这份手册的日期是 2026-11-10，不是今天。仍要开始执行？'),
+  ).toBeInTheDocument();
+  expect(started).toEqual([]);
+
+  fireEvent.tap(await findByText('继续执行'));
+  expect(started).toEqual([SHEET_ID]);
 });
 
 test('blocks start execution when a published sheet has unpublished changes', async () => {

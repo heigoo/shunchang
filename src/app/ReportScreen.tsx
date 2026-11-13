@@ -4,7 +4,7 @@ import { useState } from '@lynx-js/react';
 
 import { formatDuration } from '../domain/timeline';
 import type { SheetStatus } from '../domain/types';
-import { useT } from '../i18n';
+import { segmentCountText, useT } from '../i18n';
 import { isDesktopRuntime } from '../platform/desktop';
 import { getRuntime, getSheet, saveSheet } from '../store/repository';
 import { Badge, Button } from '../ui';
@@ -208,7 +208,7 @@ export function ReportScreen(props: ReportScreenProps) {
         </view>
         <text className="ReportRowLine">
           {`${tText('计划')} ${clockRange(row.planStart, row.planEnd)} · ${tText(
-            '展示',
+            '顺延后',
           )} ${clockRange(row.displayStart, row.displayEnd)}`}
         </text>
         <text className="ReportRowLine">
@@ -253,18 +253,17 @@ export function ReportScreen(props: ReportScreenProps) {
             <view className="ReportStatus">
               <view className="ReportStatusItem">
                 <Badge
-                  kind="outline"
-                  label={tText(STATUS_LABEL[sheet.status])}
+                  kind={allTerminal ? 'outline' : 'amber'}
+                  label={
+                    allTerminal
+                      ? tText(STATUS_LABEL[sheet.status])
+                      : tText('已归档 · 未全部完成')
+                  }
                 />
               </view>
-              {!allTerminal ? (
-                <view className="ReportStatusItem">
-                  <Badge kind="amber" label={tText('未全部完成')} />
-                </view>
-              ) : null}
             </view>
             <text className="ReportDate">
-              {`${sheet.date} · ${pad3(rows.length)} ${tText('环节')}`}
+              {`${sheet.date} · ${segmentCountText(rows.length)}`}
             </text>
           </view>
 

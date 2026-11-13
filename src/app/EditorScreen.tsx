@@ -6,7 +6,7 @@ import { computeTimeline, formatClock, formatDuration } from '../domain/timeline
 import type { Item, Sheet, SheetStatus } from '../domain/types';
 import type { SheetError } from '../domain/validate';
 import { findPlanConflicts } from '../domain/validate';
-import { t, useT } from '../i18n';
+import { segmentCountText, t, useT } from '../i18n';
 import { isDesktopRuntime } from '../platform/desktop';
 import {
   BREAKPOINT_DESKTOP,
@@ -205,6 +205,7 @@ export function EditorScreen(props: EditorScreenProps) {
     name: string;
   } | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [startWarnOpen, setStartWarnOpen] = useState(false);
   const [published, setPublished] = useState<{ version: number } | null>(null);
   const [nowMin, setNowMin] = useState<number>(currentMinuteOfDay);
   const [undo, setUndo] = useState<string | null>(null);
@@ -217,6 +218,7 @@ export function EditorScreen(props: EditorScreenProps) {
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const deletePresence = usePresence(deleteOpen);
+  const startPresence = usePresence(startWarnOpen);
   const publishPresence = usePresence(published !== null);
 
   useEffect(() => {
@@ -243,12 +245,16 @@ export function EditorScreen(props: EditorScreenProps) {
     }
   }, [deletePresence.mounted]);
 
-  // 返回键优先关闭删除确认或发布面板。
+  // 返回键优先关闭删除确认、日期提醒或发布面板。
   useEffect(() => {
-    if (!deleteOpen && !published) {
+    if (!deleteOpen && !published && !startWarnOpen) {
       return;
     }
     return registerBackHandler(() => {
+      if (startWarnOpen) {
+        setStartWarnOpen(false);
+        return true;
+      }
       if (deleteOpen) {
         setDeleteOpen(false);
         return true;
@@ -259,7 +265,7 @@ export function EditorScreen(props: EditorScreenProps) {
       }
       return false;
     });
-  }, [deleteOpen, published]);
+  }, [deleteOpen, published, startWarnOpen]);
 
   const apply = (next: Sheet | null) => {
     if (!next) {
@@ -546,6 +552,10 @@ export function EditorScreen(props: EditorScreenProps) {
 
   const handleStart = () => {
     if (startBlock !== null) {
+      return;
+    }
+    if (sheet.date !== todayKey()) {
+      setStartWarnOpen(true);
       return;
     }
     onStartRuntime(sheet.id);
@@ -1063,8 +1073,17 @@ export function EditorScreen(props: EditorScreenProps) {
                   <text className="ErrorBarCount">{`× ${errors.length}`}</text>
                 </view>
                 {errors.slice(0, 3).map((error, position) => (
-                  <text className="ErrorLine" key={`${error.field}-${position}`}>
-                    {errorLine(error)}
+                  <text
+                    className="ErrorLine ErrorLine--link"
+                    key={`${error.field}-${position}`}
+                    bindtap={() => {
+                      if (typeof error.index === 'number') {
+                        setExpanded(error.index);
+                        setErrors(null);
+                      }
+                    }}
+                  >
+                    {`${errorLine(error)} ›`}
                   </text>
                 ))}
               </view>
@@ -1086,7 +1105,7 @@ export function EditorScreen(props: EditorScreenProps) {
         <view className="EditorSectionHead">
           <text className="EditorSectionLabel">{tText('流程编排')}</text>
           <text className="EditorSectionCount">
-            {`${pad2(sheet.items.length)} ${tText('环节')} · ${formatDuration(
+            {`${segmentCountText(sheet.items.length)} · ${formatDuration(
               timeline.totalPlanMin,
             )}`}
           </text>
@@ -1149,6 +1168,53 @@ export function EditorScreen(props: EditorScreenProps) {
       </view>
       </scroll-view>
 
+      {startPresence.mounted ? (
+        <view
+          className={
+            startPresence.closing ? 'EditorOverlay OverlayOut' : 'EditorOverlay'
+          }
+          bindtap={() => {
+            setStartWarnOpen(false);
+          }}
+        >
+          <view
+            className={
+              startPresence.closing ? 'EditorPanel PanelOut' : 'EditorPanel'
+            }
+            catchtap={() => {}}
+          >
+            <view className="EditorPanelRule" />
+            <text className="EditorPanelTitle">{tText('开始执行')}</text>
+            <text className="EditorPanelBody">
+              {tText('这份手册的日期是 {date}，不是今天。仍要开始执行？', {
+                date: sheet.date,
+              })}
+            </text>
+            <view className="EditorPanelActions">
+              <view className="EditorPanelAction">
+                <Button
+                  label={tText('取消')}
+                  kind="tertiary"
+                  onTap={() => {
+                    setStartWarnOpen(false);
+                  }}
+                />
+              </view>
+              <view className="EditorPanelAction">
+                <Button
+                  label={tText('继续执行')}
+                  kind="secondary"
+                  onTap={() => {
+                    setStartWarnOpen(false);
+                    onStartRuntime(sheet.id);
+                  }}
+                />
+              </view>
+            </view>
+          </view>
+        </view>
+      ) : null}
+
       {deletePresence.mounted && pendingDelete ? (
         <view
           className={
@@ -1202,7 +1268,14 @@ export function EditorScreen(props: EditorScreenProps) {
           onClose={() => {
             setPublished(null);
           }}
-          onStart={onStartRuntime}
+          onStart={() => {
+            if (sheet.date !== todayKey()) {
+              setPublished(null);
+              setStartWarnOpen(true);
+              return;
+            }
+            onStartRuntime(sheet.id);
+          }}
         />
       ) : null}
 

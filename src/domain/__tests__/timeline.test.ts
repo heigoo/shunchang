@@ -132,6 +132,25 @@ describe('computeTimeline R4 锁定吸收', () => {
     expect(result.hasConflict).toBe(false);
   });
 
+  it('等待后偏移归零：锁定之后的环节不得排到锁定之前', () => {
+    const sheet = makeSheet(600, [
+      makeItem('a', 30),
+      makeItem('lock', 10, 660),
+      makeItem('next', 20),
+    ]);
+
+    const result = computeTimeline(sheet, -20);
+    const lock = result.locks[0];
+
+    expect(lock.state).toBe('wait');
+    expect(result.rows[0].displayStart).toBe(580);
+    expect(result.rows[1].displayStart).toBe(660);
+    expect(result.rows[1].displayEnd).toBe(670);
+    // 锁前提前 20 分钟，锁后仍应按 670 开始，而不是 650。
+    expect(result.rows[2].displayStart).toBe(670);
+    expect(result.rows[2].displayEnd).toBe(690);
+  });
+
   it('吸收：按分区偏移压缩末尾环节至锁定时刻', () => {
     const sheet = makeSheet(540, [
       makeItem('a', 60),
@@ -160,7 +179,7 @@ describe('computeTimeline R4 锁定吸收', () => {
     expect(result.displayEndMin).toBe(763);
   });
 
-  it('跨多条压缩：从后往前逐条扣减', () => {
+  it('跨多条压缩：从后往前逐条扣减，但保留最小时长', () => {
     const sheet = makeSheet(600, [
       makeItem('a', 30),
       makeItem('b', 10),
@@ -173,13 +192,32 @@ describe('computeTimeline R4 锁定吸收', () => {
     expect(lock.state).toBe('absorb');
     expect(lock.diffMin).toBe(20);
     expect(lock.compressed).toEqual([
-      { itemId: 'b', lostMin: 10 },
-      { itemId: 'a', lostMin: 10 },
+      { itemId: 'b', lostMin: 5 },
+      { itemId: 'a', lostMin: 15 },
     ]);
-    expect(result.rows[0].effectiveDurationMin).toBe(20);
-    expect(result.rows[1].effectiveDurationMin).toBe(0);
+    expect(result.rows[0].effectiveDurationMin).toBe(15);
+    expect(result.rows[1].effectiveDurationMin).toBe(5);
+    expect(result.rows[0].displayStart).toBe(640);
+    expect(result.rows[1].displayStart).toBe(655);
     expect(result.rows[1].displayEnd).toBe(660);
     expect(result.rows[2].displayStart).toBe(660);
+  });
+
+  it('压缩会低于最小时长时转为冲突，不产生 0 分钟环节', () => {
+    const sheet = makeSheet(600, [
+      makeItem('a', 35),
+      makeItem('b', 10),
+      makeItem('lock', 10, 660),
+    ]);
+
+    const result = computeTimeline(sheet, 60);
+    const lock = result.locks[0];
+
+    expect(lock.state).toBe('conflict');
+    expect(lock.compressed).toEqual([]);
+    expect(result.hasConflict).toBe(true);
+    expect(result.rows[0].effectiveDurationMin).toBe(35);
+    expect(result.rows[1].effectiveDurationMin).toBe(10);
   });
 
   it('冲突：超出区段总容量时不压缩', () => {
@@ -223,6 +261,12 @@ describe('computeTimeline R4 锁定吸收', () => {
 });
 
 describe('跨日与格式化', () => {
+  it('小数分钟按整分钟展示', () => {
+    expect(formatClockDisplay(17 * 60 + 19.9)).toBe('17\u223619');
+    expect(formatClock(17 * 60 + 19.9)).toBe('17:19');
+    expect(formatDuration(0.4)).toBe('<1 分钟');
+  });
+
   it('跨零点展示与格式化', () => {
     const sheet = makeSheet(1380, [makeItem('a', 90)]);
 

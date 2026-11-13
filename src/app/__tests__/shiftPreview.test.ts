@@ -91,6 +91,21 @@ describe('buildShiftPreview', () => {
     expect(preview.hasConflict).toBe(false);
   });
 
+  it('所选时刻会被锁定吸收时标记 blocked，禁止确认', () => {
+    const sheet = makeSheet([
+      makeItem('a', '开场', 60),
+      makeItem('b', '致辞', 30),
+      makeItem('c', '仪式', 30),
+      makeItem('lock', '开席', 20, 600, true),
+    ]);
+    const runtime = makeRuntime(sheet, 1);
+    const preview = buildShiftPreview(sheet, runtime, 600, 590);
+
+    expect(preview.ok).toBe(false);
+    expect(preview.reason).toBe('blocked');
+    expect(preview.rows[0].time).not.toBe('10\u223600');
+  });
+
   it('已是最后一个环节时不可顺延', () => {
     const sheet = makeSheet([makeItem('a', '开场', 60)]);
     const runtime = makeRuntime(sheet, 0);

@@ -219,7 +219,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
             </view>
 
             <text className="ShiftOffset">
-              {t('整体顺延 {from} → {to} 分钟', {
+              {t('整体偏移 {from} → {to} 分钟', {
                 from: signedText(preview.baseOffsetMin),
                 to: signedText(preview.nextOffsetMin),
               })}
@@ -228,10 +228,12 @@ export function ShiftPanel(props: ShiftPanelProps) {
             <scroll-view className="ShiftBody" scroll-orientation="vertical">
               {preview.rows.length > 0 ? (
                 <view className="ShiftRows">
-                  {preview.rows.map((row) => (
+                  {preview.rows.map((row, position) => (
                     <view className="ShiftRow" key={`row-${row.index}`}>
                       <text className="ShiftRowName">
-                        {t('下一环节 · {name}', { name: row.name })}
+                        {position === 0
+                          ? t('下一环节 · {name}', { name: row.name })
+                          : t('后续环节 · {name}', { name: row.name })}
                       </text>
                       <text className="ShiftRowTime">{row.time}</text>
                     </view>
@@ -296,6 +298,13 @@ export function ShiftPanel(props: ShiftPanelProps) {
             {preview.reason === 'locked' ? (
               <text className="ShiftNote">
                 {t('下一环节为锁定时刻，不可顺延')}
+              </text>
+            ) : null}
+            {preview.reason === 'blocked' ? (
+              <text className="ShiftNote">
+                {t('受锁定时刻限制，下一环节只能排在 {time}', {
+                  time: preview.rows[0] ? preview.rows[0].time : '',
+                })}
               </text>
             ) : null}
 

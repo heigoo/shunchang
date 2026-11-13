@@ -39,16 +39,16 @@ afterEach(() => {
   resetDesktopRuntimeForTest();
 });
 
-test('keeps the launcher icon copy on android and web', async () => {
+test('uses the no-restart copy on web', async () => {
   const { findByText, queryByText } = renderPanel();
 
   expect(
-    await findByText('切换后自动重启并更换桌面图标'),
+    await findByText('切换仅影响界面配色，应用不会重启'),
   ).toBeInTheDocument();
   expect(
-    await findByText('桌面图标会在切换后自动更新，部分机型需几秒生效。'),
+    await findByText('桌面图标在安装包中固定，运行时不更换'),
   ).toBeInTheDocument();
-  expect(queryByText('切换仅影响界面配色，应用不会重启')).toBeNull();
+  expect(queryByText('切换后自动重启并更换桌面图标')).toBeNull();
 });
 
 test('shows desktop copy when the lynxtron bridge exists', async () => {

@@ -150,6 +150,7 @@ export function SyncPanel(props: SyncPanelProps) {
                 </view>
               )}
 
+              <text className="SyncSectionLabel">{t('发到群里')}</text>
               <view className="SyncOps">
                 <view className="SyncOpsAction">
                   <Button
@@ -159,16 +160,6 @@ export function SyncPanel(props: SyncPanelProps) {
                     onTap={handleCopySync}
                   />
                 </view>
-                {onOpenBoard ? (
-                  <view className="SyncOpsAction">
-                    <Button
-                      label={t('全屏同步牌')}
-                      kind="tertiary"
-                      block
-                      onTap={onOpenBoard}
-                    />
-                  </view>
-                ) : null}
               </view>
 
               {hasLink ? (
@@ -192,6 +183,17 @@ export function SyncPanel(props: SyncPanelProps) {
                 </view>
               ) : null}
               {note ? <text className="SyncLinkHint">{note}</text> : null}
+
+              {onOpenBoard ? (
+                <view className="SyncBoardEntry">
+                  <Button
+                    label={t('全屏同步牌')}
+                    kind="tertiary"
+                    block
+                    onTap={onOpenBoard}
+                  />
+                </view>
+              ) : null}
 
               {owners.length > 0 ? (
                 <view className="SyncOwners">

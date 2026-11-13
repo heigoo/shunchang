@@ -1564,3 +1564,30 @@
   line-height: 16px;
   color: var(--ink-2);
 }
+
+/* 英文窄屏：品牌与四个导航项必须能并排放下 */
+.lang-en .ListBrand {
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.lang-en .ListGuideText,
+.lang-en .ListLoadText,
+.lang-en .ListFollowText {
+  font-size: 12px;
+}
+
+.lang-en .ListGuide,
+.lang-en .ListLoad {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.lang-en .ListFollow {
+  padding-left: 10px;
+}
+
+.lang-en .ListHeaderRight {
+  min-width: 0;
+}

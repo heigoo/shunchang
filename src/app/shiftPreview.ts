@@ -25,7 +25,7 @@ export interface ShiftPreviewRow {
 
 export interface ShiftPreview {
   ok: boolean;
-  reason: 'last' | 'locked' | null;
+  reason: 'last' | 'locked' | 'blocked' | null;
   nextIndex: number;
   nextName: string;
   baseOffsetMin: number;
@@ -201,9 +201,14 @@ export function buildShiftPreview(
       time: formatClockDisplay(row.displayStart),
     }));
 
+  // 所选时间可能被更早的锁定时刻吸收掉：此时下一环节并不会真的排在所选时刻。
+  const blocked =
+    timeline.rows[nextIndex] !== undefined &&
+    timeline.rows[nextIndex].displayStart !== startMin;
+
   return {
-    ok: true,
-    reason: null,
+    ok: !blocked,
+    reason: blocked ? 'blocked' : null,
     nextIndex,
     nextName,
     baseOffsetMin,

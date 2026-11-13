@@ -20,6 +20,7 @@ import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
 import { formatCountdown, secondsUntil } from './countdown';
 import {
+  alignFirstToNow,
   applyLockOverride,
   applyShift,
   buildRuntimeView,
@@ -108,6 +109,17 @@ function minuteOfDay(ms: number): number {
   return date.getHours() * 60 + date.getMinutes();
 }
 
+/** 实际执行记录保留秒级精度，避免同一分钟内完成多个环节时实际时长变成 0。 */
+function preciseMinuteOfDay(ms: number): number {
+  const date = new Date(ms);
+  return (
+    date.getHours() * 60 +
+    date.getMinutes() +
+    date.getSeconds() / 60 +
+    date.getMilliseconds() / 60000
+  );
+}
+
 function clockOf(ms: number): string {
   const date = new Date(ms);
   return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
@@ -155,7 +167,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     if (!loaded) {
       return null;
     }
-    return getRuntime(sheetId) ?? createRuntime(loaded, minuteOfDay(Date.now()));
+    return getRuntime(sheetId) ?? createRuntime(loaded, preciseMinuteOfDay(Date.now()));
   });
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
   const [role] = useState<'owner' | 'follower'>(() => getRole());
@@ -453,7 +465,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       return;
     }
     lastDoneAt.current = stamp;
-    const next = completeCurrent(sheet, runtime, minuteOfDay(stamp));
+    const next = completeCurrent(sheet, runtime, preciseMinuteOfDay(stamp));
     if (next === runtime) {
       return;
     }
@@ -467,7 +479,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   };
 
   const doSkip = () => {
-    const next = skipCurrent(sheet, runtime, minuteOfDay(Date.now()));
+    const next = skipCurrent(sheet, runtime, preciseMinuteOfDay(Date.now()));
     if (next === runtime) {
       return;
     }
@@ -500,6 +512,24 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       setShiftToast(null);
       shiftToastTimer.current = null;
     }, 2400);
+  };
+
+  /** 迟到开场：把整条时间轴对齐到当前时刻。 */
+  const alignToNow = () => {
+    const next = alignFirstToNow(
+      sheet,
+      runtime,
+      preciseMinuteOfDay(Date.now()),
+    );
+    if (next === runtime) {
+      return;
+    }
+    const label = tText('按现在开始');
+    recordSnapshot(label);
+    saveRuntime(next);
+    setRuntime(next);
+    showUndo(label);
+    showShiftToast(tText('已按现在开始，后续环节已重排'));
   };
 
   /** 清除手动顺延，回到只由完成环节推导的自动偏移。 */
@@ -680,6 +710,17 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const currentRow = view.currentRow;
   const nextItem = view.nextItem;
 
+  // 开场即迟到：尚未推进任何环节、也从未手动顺延，但当前已晚于计划开始。
+  const startLagMin =
+    runtime.currentIndex === 0 && terminalCount === 0 && currentRow
+      ? Math.max(0, minuteOfDay(nowMs) - currentRow.displayStart)
+      : 0;
+  const lateStart =
+    startLagMin >= 1 &&
+    runtime.offsetMin === 0 &&
+    runtime.manualOffsetMin === 0;
+  const badgeOffsetMin = lateStart ? startLagMin : runtime.offsetMin;
+
   const secondsLeft =
     view.countdownTargetMin === null
       ? null
@@ -727,7 +768,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             ) : null}
             <Badge
               kind="amber"
-              label={offsetLabel(runtime.offsetMin)}
+              label={offsetLabel(badgeOffsetMin)}
             />
             {onPrint ? (
               <view
@@ -775,6 +816,17 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               }}
             >
               <text className="RuntimeBatteryCloseText">×</text>
+            </view>
+          </view>
+        ) : null}
+
+        {lateStart ? (
+          <view className="RuntimeLate">
+            <text className="RuntimeLateText">
+              {tText('已晚于计划 {n} 分钟', { n: startLagMin })}
+            </text>
+            <view className="RuntimeLateAction" bindtap={alignToNow}>
+              <text className="RuntimeLateActionText">{tText('按现在开始')}</text>
             </view>
           </view>
         ) : null}
@@ -853,6 +905,9 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                         ? 'active'
                         : 'next';
                 const owner = item.owner.trim();
+                const actualStart = runtime.actuals[item.id]?.start;
+                const showActual =
+                  typeof actualStart === 'number' && state !== 'next';
                 return (
                   <view
                     className={`RailRow RailRow--${state}`}
@@ -861,7 +916,9 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                     <view className="RailDot" />
                     <text className="RailNo">{pad3(index + 1)}</text>
                     <text className="RailTime">
-                      {formatClockDisplay(row.displayStart)}
+                      {showActual
+                        ? `${tText('实')} ${formatClockDisplay(actualStart as number)}`
+                        : formatClockDisplay(row.displayStart)}
                     </text>
                     <view className="RailMain">
                       <text className="RailName">
@@ -1245,11 +1302,13 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               setRuntime(next);
               setShiftOpen(false);
               showUndo(label);
-              if (delta !== 0) {
+              if (delta > 0) {
                 showShiftToast(
-                  tText('已顺延 {n} 分钟，后续环节已重排', {
-                    n: Math.abs(delta),
-                  }),
+                  tText('已推迟 {n} 分钟，后续环节已重排', { n: delta }),
+                );
+              } else if (delta < 0) {
+                showShiftToast(
+                  tText('已提前 {n} 分钟，后续环节已重排', { n: -delta }),
                 );
               }
             }}

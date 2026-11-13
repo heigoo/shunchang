@@ -90,7 +90,7 @@ test('summarises plan, actual, diff and completion counts', async () => {
   );
 
   expect(await findByText('秋季婚礼流程')).toBeInTheDocument();
-  expect(await findByText('未全部完成')).toBeInTheDocument();
+  expect(await findByText('已归档 · 未全部完成')).toBeInTheDocument();
   expect(await findByText('1 小时 30 分钟')).toBeInTheDocument();
   expect(await findByText('1 小时 10 分钟')).toBeInTheDocument();
   expect(await findByText('−20 分钟')).toBeInTheDocument();

@@ -2,6 +2,11 @@ import pipe from 'sparkling-method';
 import { getItem, setItem } from 'sparkling-storage';
 
 import {
+  webStorageRead,
+  webStorageRemove,
+  webStorageWrite,
+} from '../app/webBridge';
+import {
   getDesktopStorage,
   isDesktopRuntime,
   resetDesktopRuntimeForTest,
@@ -18,6 +23,7 @@ export interface KVStore {
 
 type Backend =
   | 'web'
+  | 'web-bridge'
   | 'desktop'
   | 'sparkling-storage'
   | 'lynx-sync'
@@ -73,6 +79,18 @@ function detectBackend(): Backend {
     }
   } catch {
     // Accessing localStorage may throw in privacy mode.
+  }
+
+  // 浏览器把 React 跑在 Worker 里，拿不到 window；通过主线程桥读写宿主 localStorage。
+  try {
+    const worker =
+      typeof (globalThis as any).WorkerGlobalScope !== 'undefined' ||
+      typeof (globalThis as any).importScripts === 'function';
+    if (worker) {
+      return 'web-bridge';
+    }
+  } catch {
+    // Ignore broken globals.
   }
 
   try {
@@ -151,6 +169,31 @@ function writeWeb(key: string, value: string): boolean {
     // Keep the in-memory copy when persistence is unavailable.
     return false;
   }
+}
+
+function readWebBridge(key: string): string | null {
+  return memory.get(key) ?? null;
+}
+
+function writeWebBridge(key: string, value: string): boolean {
+  memory.set(key, value);
+  webStorageWrite(key, value);
+  return true;
+}
+
+function removeWebBridge(key: string): void {
+  memory.delete(key);
+  webStorageRemove(key);
+}
+
+async function hydrateWebBridge(keys: string[]): Promise<void> {
+  const values = await webStorageRead(keys);
+  keys.forEach((key) => {
+    const value = values[key];
+    if (!memory.has(key) && typeof value === 'string') {
+      memory.set(key, value);
+    }
+  });
 }
 
 function unwrapSparkling(response: unknown): string | null {
@@ -541,6 +584,9 @@ export const storage: KVStore = {
       if (backend === 'web') {
         return readWeb(key);
       }
+      if (backend === 'web-bridge') {
+        return readWebBridge(key);
+      }
       if (backend === 'sparkling-storage') {
         return readSparkling(key);
       }
@@ -567,6 +613,9 @@ export const storage: KVStore = {
       const backend = currentBackend();
       if (backend === 'web') {
         return writeWeb(key, value);
+      }
+      if (backend === 'web-bridge') {
+        return writeWebBridge(key, value);
       }
       if (backend === 'sparkling-storage') {
         return writeSparkling(key, value);
@@ -616,6 +665,8 @@ export const storage: KVStore = {
         if (localStorage) {
           localStorage.removeItem(key);
         }
+      } else if (backend === 'web-bridge') {
+        removeWebBridge(key);
       } else if (backend === 'sparkling-storage') {
         removeSparkling(key);
       } else if (backend === 'desktop') {
@@ -640,6 +691,9 @@ export const storage: KVStore = {
 
   hydrate(keys: string[]): Promise<void> {
     const backend = currentBackend();
+    if (backend === 'web-bridge') {
+      return hydrateWebBridge(keys);
+    }
     if (backend === 'sparkling-storage') {
       return hydrateSparkling(keys);
     }

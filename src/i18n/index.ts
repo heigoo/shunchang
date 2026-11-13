@@ -94,6 +94,14 @@ export function t(zh: string, vars?: Vars): string {
   return translateFor(current, zh, vars);
 }
 
+/** 英文按单复数输出环节数；中文保持“10 环节”。 */
+export function segmentCountText(count: number): string {
+  if (current === 'en') {
+    return `${count} ${count === 1 ? 'segment' : 'segments'}`;
+  }
+  return `${count} ${t('环节')}`;
+}
+
 /** 组件内使用；语言变化时触发重渲染。 */
 export function useT(): (zh: string, vars?: Vars) => string {
   const [lang, setLangState] = useState<Lang>(current);

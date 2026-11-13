@@ -186,7 +186,9 @@ export function buildReportHtml(
   const report = buildReport(sheet, runtime);
   const stamp = stampText(printedAt);
   const title = escapeHtml(report.title);
-  const status = report.summary.allTerminal ? t('已全部结束') : t('未全部完成');
+  const status = report.summary.allTerminal
+    ? t('已全部结束')
+    : t('已归档 · 未全部完成');
   const offset = offsetText(report.summary.effectiveOffsetMin);
 
   return `<!doctype html>
@@ -233,7 +235,7 @@ ${renderSummary(report)}
           <th class="col-name">${escapeHtml(t('环节'))}</th>
           <th class="col-owner">${escapeHtml(t('负责人'))}</th>
           <th class="col-time">${escapeHtml(t('计划'))}</th>
-          <th class="col-time">${escapeHtml(t('展示'))}</th>
+          <th class="col-time">${escapeHtml(t('顺延后'))}</th>
           <th class="col-time">${escapeHtml(t('实际'))}</th>
           <th class="col-result">${escapeHtml(t('结果'))}</th>
           <th class="col-diff">${escapeHtml(t('偏差'))}</th>

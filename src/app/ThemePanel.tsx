@@ -3,6 +3,7 @@ import './ThemePanel.css';
 import { getLang, setLang, useT } from '../i18n';
 import { isDesktopRuntime } from '../platform/desktop';
 import type { AppTheme } from '../store/repository';
+import { isWeb } from './share';
 
 export interface ThemePanelProps {
   theme: AppTheme;
@@ -35,6 +36,8 @@ export function ThemePanel(props: ThemePanelProps) {
   const t = useT();
   const lang = getLang();
   const desktop = isDesktopRuntime();
+  // Web 端没有“重启并更换桌面图标”的能力，不能沿用 Android 壳的说明。
+  const noRestart = desktop || isWeb();
 
   return (
     <view className={closing ? 'Overlay OverlayOut' : 'Overlay'} bindtap={onClose}>
@@ -46,7 +49,7 @@ export function ThemePanel(props: ThemePanelProps) {
           <view className="PanelHeaderText">
             <text className="PanelTitle">{t('外观与语言')}</text>
             <text className="PanelSubtitle">
-              {desktop
+              {noRestart
                 ? t('切换仅影响界面配色，应用不会重启')
                 : t('切换后自动重启并更换桌面图标')}
             </text>
@@ -162,7 +165,7 @@ export function ThemePanel(props: ThemePanelProps) {
 
         <view className="ThemeNote">
           <text className="ThemeNoteText">
-            {desktop
+            {noRestart
               ? t('桌面图标在安装包中固定，运行时不更换')
               : t('桌面图标会在切换后自动更新，部分机型需几秒生效。')}
           </text>

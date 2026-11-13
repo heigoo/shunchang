@@ -340,6 +340,49 @@ export function createRuntime(sheet: Sheet, nowMin: number): RuntimeState {
   return runtime;
 }
 
+/**
+ * 迟到开场：把首个环节的实际开始和整条时间轴对齐到当前时刻。
+ * 仅允许在尚未推进任何环节时使用。
+ */
+export function alignFirstToNow(
+  sheet: Sheet,
+  runtime: RuntimeState,
+  nowMin: number,
+): RuntimeState {
+  if (runtime.currentIndex !== 0) {
+    return runtime;
+  }
+
+  const execSheet = buildExecutionSheet(sheet, runtime);
+  const first = execSheet.items[0];
+  if (!first) {
+    return runtime;
+  }
+
+  const planStart = computeTimeline(execSheet, 0).rows[0]?.planStart;
+  if (planStart === undefined) {
+    return runtime;
+  }
+
+  const autoOffsetMin = Math.round(nowMin - planStart);
+  if (autoOffsetMin === 0) {
+    return runtime;
+  }
+
+  const actual = runtime.actuals[first.id] ?? {};
+  return {
+    ...runtime,
+    offsetMin: autoOffsetMin + runtime.manualOffsetMin,
+    autoOffsetMin,
+    actuals: {
+      ...runtime.actuals,
+      [first.id]: { ...actual, start: nowMin },
+    },
+    audit: appendAudit(runtime, 'align', t('按现在开始'), first.id, Date.now()),
+    execVersion: runtime.execVersion + 1,
+  };
+}
+
 export function completeCurrent(
   sheet: Sheet,
   runtime: RuntimeState,
@@ -361,8 +404,9 @@ export function completeCurrent(
     },
   };
 
+  // 实际时间可带秒（见 nowMin），但偏移保持整数分钟，避免展示时间出现小数。
   // 完成只重算自动偏移；手动顺延保留，有效偏移为两者之和。
-  const autoOffsetMin = offsetAfterDone(execSheet, index, nowMin);
+  const autoOffsetMin = Math.round(offsetAfterDone(execSheet, index, nowMin));
   const offsetMin = autoOffsetMin + runtime.manualOffsetMin;
   const nextIndex = index + 1;
 

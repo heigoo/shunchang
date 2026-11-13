@@ -294,6 +294,10 @@
   color: var(--ink-2);
 }
 
+.ErrorLine--link:active {
+  opacity: 0.6;
+}
+
 .ErrorClose {
   display: flex;
   flex-direction: row;
@@ -1267,4 +1271,36 @@
 
 .CardSub {
   font-size: 12px;
+}
+
+/* 英文窄屏：长标题和长按钮标签不能截断或换行 */
+.lang-en .EditorName {
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+.lang-en .Btn.EditorPublishBtn {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.lang-en .EditorTools {
+  flex-wrap: wrap;
+}
+
+.lang-en .EditorToolBtn {
+  width: 48%;
+  margin-right: 2%;
+  margin-bottom: 8px;
+}
+
+.lang-en .Btn.EditorSmallBtn {
+  width: 100%;
+  height: 44px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.lang-en .Btn.EditorSmallBtn .BtnLabel {
+  white-space: nowrap;
 }

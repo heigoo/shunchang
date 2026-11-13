@@ -183,7 +183,7 @@ export function FollowScreen(props: FollowScreenProps) {
               <>
                 <view className="FollowStep" bindtap={openImport}>
                   <text className="FollowStepNo">01</text>
-                  <text className="FollowStepText">{t('扫码')}</text>
+                  <text className="FollowStepText">{t('相机扫码')}</text>
                   <text className="FollowStepArrow">→</text>
                 </view>
                 <view className="FollowStep" bindtap={openImport}>
@@ -286,9 +286,20 @@ export function FollowScreen(props: FollowScreenProps) {
     currentIndex,
     total,
   );
-  const countdown = countdownTarget
-    ? formatCountdown(secondsUntil(countdownTarget.targetMin, now))
+  const countdownSeconds = countdownTarget
+    ? secondsUntil(countdownTarget.targetMin, now)
     : null;
+  const countdown =
+    countdownSeconds !== null ? formatCountdown(countdownSeconds) : null;
+  // 尚未开始时，如果计划开始时间已过，直接说“已开始多久”，不显示负倒计时。
+  const plannedStarted =
+    countdownTarget?.kind === 'next' &&
+    countdownSeconds !== null &&
+    countdownSeconds < 0;
+  const plannedPassedMin =
+    countdownSeconds !== null
+      ? Math.max(1, Math.ceil(-countdownSeconds / 60))
+      : 0;
 
   return (
     <view
@@ -384,7 +395,13 @@ export function FollowScreen(props: FollowScreenProps) {
           </text>
         )}
 
-        {countdown && countdownTarget ? (
+        {plannedStarted ? (
+          <view className="FollowCountdown">
+            <text className="FollowCountdownLabel">
+              {t('计划已开始 {n} 分钟', { n: plannedPassedMin })}
+            </text>
+          </view>
+        ) : countdown && countdownTarget ? (
           <view className="FollowCountdown">
             <text className="FollowCountdownLabel">
               {countdownTarget.kind === 'next'

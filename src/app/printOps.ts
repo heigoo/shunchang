@@ -16,6 +16,8 @@ export interface PrintRow {
   owner: string;
   note: string;
   lockLabel: string;
+  /** 执行后的实际开始/结束；未执行时为空。 */
+  actualLabel: string;
 }
 
 export interface PrintPage {
@@ -52,6 +54,16 @@ export function buildPrintRows(
     const row = timeline.rows[index];
     const displayStart = runtime ? row.displayStart : row.planStart;
     const effectiveMin = runtime ? row.effectiveDurationMin : item.durationMin;
+    const actual = runtime ? runtime.actuals[item.id] : undefined;
+    let actualLabel = '';
+    if (actual && typeof actual.start === 'number') {
+      actualLabel =
+        typeof actual.end === 'number'
+          ? t('实际 {range}', {
+              range: `${formatClock(actual.start)}–${formatClock(actual.end)}`,
+            })
+          : t('实际开始 {time}', { time: formatClock(actual.start) });
+    }
 
     return {
       no: pad3(index + 1),
@@ -64,6 +76,7 @@ export function buildPrintRows(
       owner: item.owner,
       note: item.note,
       lockLabel: lockLabelOf(item),
+      actualLabel,
     };
   });
 }

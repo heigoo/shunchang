@@ -438,4 +438,46 @@ export const EN: Record<string, string> = {
   晚宴: 'Dinner',
   餐饮: 'Catering',
   散场: 'Wrap-up',
+
+  // 锁定 / 顺延 / 实际时间
+  '后续环节 · {name}': 'Following segment · {name}',
+  '整体偏移 {from} → {to} 分钟': 'Offset {from} → {to} min',
+  '受锁定时刻限制，下一环节只能排在 {time}':
+    'Because of the lock, the next segment can only start at {time}',
+  '已推迟 {n} 分钟，后续环节已重排':
+    'Delayed {n} min; following segments rescheduled',
+  '已提前 {n} 分钟，后续环节已重排':
+    'Advanced {n} min; following segments rescheduled',
+  '<1 分钟': '<1 min',
+  实: 'Act',
+  '已晚于计划 {n} 分钟': '{n} min past the planned start',
+  按现在开始: 'Start now',
+  '已按现在开始，后续环节已重排':
+    'Started now; following segments rescheduled',
+  '计划已开始 {n} 分钟': 'Planned start passed {n} min ago',
+
+  // 备份 / 开始执行
+  备份: 'Backup',
+  '请先发布，再开始执行': 'Publish first, then start the run',
+  请先发布修改: 'Publish your changes first',
+  当前状态不能开始执行: 'This status cannot start a run',
+  '查看完整使用说明书': 'Open the full guide',
+  已打开使用说明书: 'Guide opened',
+  '说明书链接已复制，请在浏览器打开':
+    'Guide link copied; open it in a browser',
+  '打开失败，请访问 {url}': 'Could not open; visit {url}',
+
+  // 报告
+  '已归档 · 未全部完成': 'Archived · Not all completed',
+  顺延后: 'After shift',
+  生成于: 'Generated',
+  '实际 {range}': 'Actual {range}',
+  '实际开始 {time}': 'Actual start {time}',
+  '这份手册的日期是 {date}，不是今天。仍要开始执行？':
+    'This sheet is dated {date}, not today. Start the run anyway?',
+  相机扫码: 'Camera scan',
+  '用系统相机扫码会自动打开跟随页；也可粘贴链接、输入短码或选择文件':
+    'Scan with the system camera to open the follow page; you can also paste a link, enter a code, or choose a file',
+  发到群里: 'Send to group',
+  '{range}（{duration}）': '{range} ({duration})',
 };
