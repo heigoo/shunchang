@@ -32,10 +32,20 @@ import {
   getRuntime,
   listSheets,
   saveSheet,
+  consumeWriteError,
 } from '../store/repository';
 import type { AppTheme } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
-import { exportSheetFile } from './share';
+import type { BackupPayload, BackupPreview } from './backupOps';
+import {
+  applyBackup,
+  backupErrorMessage,
+  backupFileName,
+  encodeBackup,
+  parseBackup,
+  previewBackup,
+} from './backupOps';
+import { downloadTextFile, exportSheetFile, pickJsonFile } from './share';
 
 export interface ListScreenProps {
   onOpenSheet(id: string): void;
@@ -140,6 +150,13 @@ export function ListScreen(props: ListScreenProps) {
   const [pendingDelete, setPendingDelete] = useState<Sheet | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
+  const [backupPreview, setBackupPreview] = useState<{
+    backup: BackupPayload;
+    preview: BackupPreview;
+  } | null>(null);
+  const [writeError, setWriteError] = useState(false);
   const tText = useT();
 
   const createPresence = usePresence(createOpen);
@@ -188,11 +205,21 @@ export function ListScreen(props: ListScreenProps) {
       !themeOpen &&
       !moreOpen &&
       !manageTemplates &&
-      !templateDeleteOpen
+      !templateDeleteOpen &&
+      !backupOpen &&
+      !backupPreview
     ) {
       return;
     }
     return registerBackHandler(() => {
+      if (backupPreview) {
+        setBackupPreview(null);
+        return true;
+      }
+      if (backupOpen) {
+        setBackupOpen(false);
+        return true;
+      }
       if (templateDeleteOpen) {
         closeTemplateDelete();
         return true;
@@ -231,10 +258,15 @@ export function ListScreen(props: ListScreenProps) {
     moreOpen,
     manageTemplates,
     templateDeleteOpen,
+    backupOpen,
+    backupPreview,
   ]);
 
   const reload = () => {
     setSheets(listSheets());
+    if (consumeWriteError()) {
+      setWriteError(true);
+    }
   };
 
   const visible = filterSheets(sheets, query, status);
@@ -354,6 +386,57 @@ export function ListScreen(props: ListScreenProps) {
       setToast(null);
       toastTimer.current = null;
     }, 2000);
+  };
+
+  const exportAllBackup = () => {
+    void downloadTextFile(backupFileName(), encodeBackup()).then((ok) => {
+      showToast(ok ? tText('已导出全量备份') : tText('当前环境无法导出文件'));
+    });
+  };
+
+  const openBackup = () => {
+    setBackupError(null);
+    setBackupOpen(true);
+  };
+
+  const closeBackup = () => {
+    setBackupError(null);
+    setBackupOpen(false);
+  };
+
+  const handleBackupFile = () => {
+    pickJsonFile((text) => {
+      const parsed = parseBackup(text);
+      if (!parsed.ok) {
+        setBackupError(backupErrorMessage(parsed.error));
+        return;
+      }
+      setBackupError(null);
+      setBackupPreview({
+        backup: parsed.backup,
+        preview: previewBackup(parsed.backup),
+      });
+    });
+  };
+
+  const confirmBackup = () => {
+    if (!backupPreview) {
+      return;
+    }
+    const result = applyBackup(backupPreview.backup, {
+      confirmConflicts: true,
+    });
+    if (!result.ok) {
+      setBackupError(tText('运行中手册存在冲突，请确认后再导入'));
+      return;
+    }
+    setBackupPreview(null);
+    setBackupOpen(false);
+    if (result.writeFailed) {
+      setWriteError(true);
+    }
+    reload();
+    showToast(tText('已导入备份'));
   };
 
   const handleDuplicate = (id: string) => {
@@ -633,6 +716,32 @@ export function ListScreen(props: ListScreenProps) {
         </view>
       ) : null}
 
+      {writeError ? (
+        <view className="WriteErrorBar">
+          <view className="WriteErrorBody">
+            <text className="WriteErrorTitle">
+              {tText('保存失败，请立即导出备份')}
+            </text>
+            <text className="WriteErrorHint">
+              {tText('本地存储写入失败，当前内容仍在内存中；导出后可换设备恢复。')}
+            </text>
+          </view>
+          <view className="WriteErrorAction" bindtap={exportAllBackup}>
+            <text className="WriteErrorActionText">
+              {tText('导出全量备份')}
+            </text>
+          </view>
+          <view
+            className="WriteErrorClose"
+            bindtap={() => {
+              setWriteError(false);
+            }}
+          >
+            <text className="WriteErrorCloseText">{tText('关闭')}</text>
+          </view>
+        </view>
+      ) : null}
+
       <view className="ListHeader">
         <view className="ListBrandRow">
           <text className="ListBrand">{tText('顺场')}</text>
@@ -654,6 +763,9 @@ export function ListScreen(props: ListScreenProps) {
             }}
           >
             <text className="ListGuideText">{tText('说明')}</text>
+          </view>
+          <view className="ListBackup" bindtap={openBackup}>
+            <text className="ListBackupText">{tText('备份')}</text>
           </view>
           <view
             className="ListLoad"
@@ -855,6 +967,142 @@ export function ListScreen(props: ListScreenProps) {
                   setGuideOpen(false);
                 }}
               />
+            </view>
+          </view>
+        </view>
+      ) : null}
+
+      {backupOpen ? (
+        <view className="Overlay" bindtap={closeBackup}>
+          <view className="Panel Panel--confirm BackupPanel" catchtap={() => {}}>
+            <view className="PanelHeader">
+              <view className="PanelHeaderText">
+                <text className="PanelTitle">{tText('全量备份 / 恢复')}</text>
+                <text className="PanelSubtitle">
+                  {tText('手册 · 执行记录 · 自定义模板')}
+                </text>
+              </view>
+              <view className="PanelClose" bindtap={closeBackup}>
+                <text className="PanelCloseText">{tText('取消')}</text>
+              </view>
+            </view>
+
+            <view className="BackupBody">
+              <text className="BackupHint">
+                {tText(
+                  '导出包含全部手册、执行记录与自定义模板，不含主题等本机偏好。导入时按更新时间合并。',
+                )}
+              </text>
+              <view className="BackupAction">
+                <Button
+                  label={tText('导出全量备份')}
+                  block
+                  onTap={exportAllBackup}
+                />
+              </view>
+              <view className="BackupAction">
+                <Button
+                  label={tText('选择备份文件导入')}
+                  kind="secondary"
+                  block
+                  onTap={handleBackupFile}
+                />
+              </view>
+              {backupError ? (
+                <text className="BackupError">{backupError}</text>
+              ) : null}
+            </view>
+          </view>
+        </view>
+      ) : null}
+
+      {backupPreview ? (
+        <view
+          className="Overlay"
+          bindtap={() => {
+            setBackupPreview(null);
+          }}
+        >
+          <view className="Panel Panel--confirm BackupPanel" catchtap={() => {}}>
+            <view className="PanelHeader">
+              <view className="PanelHeaderText">
+                <text className="PanelTitle">{tText('导入预览')}</text>
+                <text className="PanelSubtitle">
+                  {tText('确认后写入本机')}
+                </text>
+              </view>
+            </view>
+
+            <view className="PanelBody">
+              <view className="BackupStats">
+                <view className="BackupStatRow">
+                  <text className="BackupStatLabel">{tText('新增')}</text>
+                  <text className="BackupStatValue">
+                    {backupPreview.preview.added}
+                  </text>
+                </view>
+                <view className="BackupStatRow">
+                  <text className="BackupStatLabel">{tText('覆盖')}</text>
+                  <text className="BackupStatValue">
+                    {backupPreview.preview.overwritten}
+                  </text>
+                </view>
+                <view className="BackupStatRow">
+                  <text className="BackupStatLabel">{tText('跳过')}</text>
+                  <text className="BackupStatValue">
+                    {backupPreview.preview.skipped}
+                  </text>
+                </view>
+                <view className="BackupStatRow">
+                  <text className="BackupStatLabel">{tText('冲突')}</text>
+                  <text className="BackupStatValue">
+                    {backupPreview.preview.conflicts}
+                  </text>
+                </view>
+              </view>
+
+              {backupPreview.preview.conflicts > 0 ? (
+                <view className="BackupConflict">
+                  <text className="BackupConflictTitle">
+                    {tText('以下运行中手册将被覆盖')}
+                  </text>
+                  {backupPreview.preview.conflictNames.map((name) => (
+                    <text key={name} className="BackupConflictName">
+                      {name}
+                    </text>
+                  ))}
+                  <text className="BackupConflictHint">
+                    {tText('确认后会连同执行记录一起替换，不可撤销。')}
+                  </text>
+                </view>
+              ) : null}
+
+              {backupError ? (
+                <text className="PanelError">{backupError}</text>
+              ) : null}
+            </view>
+
+            <view className="PanelActions">
+              <view className="PanelAction">
+                <Button
+                  label={tText('取消')}
+                  kind="tertiary"
+                  onTap={() => {
+                    setBackupPreview(null);
+                  }}
+                />
+              </view>
+              <view className="PanelAction">
+                <Button
+                  label={
+                    backupPreview.preview.conflicts > 0
+                      ? tText('确认覆盖并导入')
+                      : tText('确认导入')
+                  }
+                  kind="secondary"
+                  onTap={confirmBackup}
+                />
+              </view>
             </view>
           </view>
         </view>

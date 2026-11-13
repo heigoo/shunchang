@@ -13,10 +13,17 @@ import {
   BREAKPOINT_TABLET,
   useIsWide,
 } from '../platform/viewport';
-import { getSheet, duplicateSheet, saveSheet } from '../store/repository';
+import {
+  getSheet,
+  duplicateSheet,
+  saveSheet,
+  consumeWriteError,
+} from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
+import { backupFileName, encodeBackup } from './backupOps';
 import { registerBackHandler } from './backBus';
 import { PublishPanel } from './PublishPanel';
+import { downloadTextFile } from './share';
 import {
   MAX_ITEMS,
   addItem,
@@ -201,6 +208,7 @@ export function EditorScreen(props: EditorScreenProps) {
   const [published, setPublished] = useState<{ version: number } | null>(null);
   const [nowMin, setNowMin] = useState<number>(currentMinuteOfDay);
   const [undo, setUndo] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState(false);
   const isWide = useIsWide(BREAKPOINT_TABLET);
   const isDesktop = useIsWide(BREAKPOINT_DESKTOP);
   const tText = useT();
@@ -261,6 +269,9 @@ export function EditorScreen(props: EditorScreenProps) {
       return;
     }
     const saved = saveSheet(next);
+    if (consumeWriteError()) {
+      setSaveError(true);
+    }
     setSheet(saved);
     setPublishNote(null);
   };
@@ -315,6 +326,9 @@ export function EditorScreen(props: EditorScreenProps) {
   const handleDuplicate = () => {
     const copy = duplicateSheet(sheet.id);
     if (copy) {
+      if (consumeWriteError()) {
+        setSaveError(true);
+      }
       onDuplicate?.(copy.id);
     }
   };
@@ -507,6 +521,9 @@ export function EditorScreen(props: EditorScreenProps) {
       return;
     }
     const saved = saveSheet(result.sheet);
+    if (consumeWriteError()) {
+      setSaveError(true);
+    }
     setSheet(saved);
     setErrors(null);
     setPublishNote(
@@ -532,6 +549,14 @@ export function EditorScreen(props: EditorScreenProps) {
       return;
     }
     onStartRuntime(sheet.id);
+  };
+
+  const exportAllBackup = () => {
+    void downloadTextFile(backupFileName(), encodeBackup()).then((ok) => {
+      if (ok) {
+        setSaveError(false);
+      }
+    });
   };
 
   const renderLockCell = (item: Item, index: number, conflicted: boolean) => {
@@ -997,6 +1022,37 @@ export function EditorScreen(props: EditorScreenProps) {
 
           {publishNote ? (
             <text className="EditorInlineHint">{publishNote}</text>
+          ) : null}
+
+          {saveError ? (
+            <view className="EditorSaveError">
+              <view className="EditorSaveErrorBody">
+                <text className="EditorSaveErrorTitle">
+                  {tText('保存失败，请立即导出备份')}
+                </text>
+                <text className="EditorSaveErrorHint">
+                  {tText('本地存储写入失败，当前编辑内容仍在内存中。')}
+                </text>
+              </view>
+              <view
+                className="EditorSaveErrorAction"
+                bindtap={exportAllBackup}
+              >
+                <text className="EditorSaveErrorActionText">
+                  {tText('导出全量备份')}
+                </text>
+              </view>
+              <view
+                className="EditorSaveErrorClose"
+                bindtap={() => {
+                  setSaveError(false);
+                }}
+              >
+                <text className="EditorSaveErrorCloseText">
+                  {tText('关闭')}
+                </text>
+              </view>
+            </view>
           ) : null}
 
           {errors && errors.length > 0 ? (

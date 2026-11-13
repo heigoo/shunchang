@@ -9,7 +9,8 @@ import {
 
 export interface KVStore {
   get(key: string): string | null;
-  set(key: string, value: string): void;
+  /** 返回是否真正落到持久化后端；仅内存兜底时返回 false。 */
+  set(key: string, value: string): boolean;
   setAsync?(key: string, value: string): Promise<void>;
   remove(key: string): void;
   hydrate?(keys: string[]): Promise<void>;
@@ -137,16 +138,18 @@ function readWeb(key: string): string | null {
   }
 }
 
-function writeWeb(key: string, value: string): void {
+function writeWeb(key: string, value: string): boolean {
   memory.set(key, value);
   try {
     const localStorage = getLocalStorage();
     if (!localStorage) {
-      return;
+      return false;
     }
     localStorage.setItem(key, value);
+    return true;
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
+    return false;
   }
 }
 
@@ -180,12 +183,14 @@ function readSparkling(key: string): string | null {
   return null;
 }
 
-function writeSparkling(key: string, value: string): void {
+function writeSparkling(key: string, value: string): boolean {
   memory.set(key, value);
   try {
     setItem({ key, data: value }, () => undefined);
+    return true;
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
+    return false;
   }
 }
 
@@ -266,15 +271,18 @@ function readDesktop(key: string): string | null {
   return memory.get(key) ?? null;
 }
 
-function writeDesktop(key: string, value: string): void {
+function writeDesktop(key: string, value: string): boolean {
   memory.set(key, value);
   try {
     const bridge = getDesktopStorage();
-    if (bridge) {
-      bridge.set(key, value).catch(() => undefined);
+    if (!bridge) {
+      return false;
     }
+    bridge.set(key, value).catch(() => undefined);
+    return true;
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
+    return false;
   }
 }
 
@@ -382,12 +390,14 @@ function readLynxSync(key: string): string | null {
   }
 }
 
-function writeLynxSync(key: string, value: string): void {
+function writeLynxSync(key: string, value: string): boolean {
   memory.set(key, value);
   try {
     getLynx().setStorageSync(key, value);
+    return true;
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
+    return false;
   }
 }
 
@@ -417,7 +427,7 @@ function readLynxAsync(key: string): string | null {
   return null;
 }
 
-function writeLynxAsync(key: string, value: string): void {
+function writeLynxAsync(key: string, value: string): boolean {
   memory.set(key, value);
   try {
     const lynx = getLynx();
@@ -426,8 +436,10 @@ function writeLynxAsync(key: string, value: string): void {
     } catch {
       lynx.setStorage(key, value);
     }
+    return true;
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
+    return false;
   }
 }
 
@@ -449,12 +461,14 @@ function readLynxSession(key: string): string | null {
   return memory.get(key) ?? null;
 }
 
-function writeLynxSession(key: string, value: string): void {
+function writeLynxSession(key: string, value: string): boolean {
   memory.set(key, value);
   try {
     getLynx().setSessionStorageItem(key, value);
+    return true;
   } catch {
     // Keep the in-memory copy when persistence is unavailable.
+    return false;
   }
 }
 
@@ -548,26 +562,32 @@ export const storage: KVStore = {
     }
   },
 
-  set(key: string, value: string): void {
+  set(key: string, value: string): boolean {
     try {
       const backend = currentBackend();
       if (backend === 'web') {
-        writeWeb(key, value);
-      } else if (backend === 'sparkling-storage') {
-        writeSparkling(key, value);
-      } else if (backend === 'desktop') {
-        writeDesktop(key, value);
-      } else if (backend === 'lynx-sync') {
-        writeLynxSync(key, value);
-      } else if (backend === 'lynx-async') {
-        writeLynxAsync(key, value);
-      } else if (backend === 'lynx-session') {
-        writeLynxSession(key, value);
-      } else {
-        memory.set(key, value);
+        return writeWeb(key, value);
       }
+      if (backend === 'sparkling-storage') {
+        return writeSparkling(key, value);
+      }
+      if (backend === 'desktop') {
+        return writeDesktop(key, value);
+      }
+      if (backend === 'lynx-sync') {
+        return writeLynxSync(key, value);
+      }
+      if (backend === 'lynx-async') {
+        return writeLynxAsync(key, value);
+      }
+      if (backend === 'lynx-session') {
+        return writeLynxSession(key, value);
+      }
+      memory.set(key, value);
+      return true;
     } catch {
       memory.set(key, value);
+      return false;
     }
   },
 

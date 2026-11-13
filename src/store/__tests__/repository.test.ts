@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from '@rstest/core';
+import { beforeEach, describe, expect, it, rstest } from '@rstest/core';
 
 import type { RuntimeState, Sheet } from '../../domain/types';
 import { formatDateKey } from '../../domain/types';
 import {
   clearAllForTest,
   consumeStorageError,
+  consumeWriteError,
   deleteSheet,
   duplicateSheet,
   getLastView,
@@ -269,5 +270,33 @@ describe('corrupt storage', () => {
 
     expect(listSheets()).toEqual([]);
     expect(consumeStorageError()).toBe('本地数据损坏，已忽略');
+  });
+});
+
+describe('write failures', () => {
+  it('reports a failed sheet write once until consumed', () => {
+    const spy = rstest.spyOn(storage, 'set').mockReturnValue(false);
+
+    saveSheet(makeSheet());
+
+    expect(consumeWriteError()).toBe(true);
+    expect(consumeWriteError()).toBe(false);
+    spy.mockRestore();
+  });
+
+  it('reports a failed runtime write', () => {
+    const spy = rstest.spyOn(storage, 'set').mockReturnValue(false);
+
+    saveRuntime(makeRuntime('sheet-1'));
+
+    expect(consumeWriteError()).toBe(true);
+    spy.mockRestore();
+  });
+
+  it('does not report a write failure when persistence succeeds', () => {
+    saveSheet(makeSheet());
+    saveRuntime(makeRuntime('sheet-1'));
+
+    expect(consumeWriteError()).toBe(false);
   });
 });

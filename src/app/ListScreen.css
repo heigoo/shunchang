@@ -1372,3 +1372,175 @@
   font-size: 12px;
   letter-spacing: 0.03em;
 }
+
+/* ---------- 全量备份 ---------- */
+
+.ListBackup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding-left: 10px;
+  padding-right: 10px;
+  flex-shrink: 0;
+}
+
+.ListBackupText {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.WriteErrorBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 18px;
+  background-color: var(--amber-wash);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: var(--vermilion);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
+}
+
+.WriteErrorBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-right: 12px;
+}
+
+.WriteErrorTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vermilion);
+}
+
+.WriteErrorHint {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ink-2);
+}
+
+.WriteErrorAction {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 36px;
+  padding-left: 12px;
+  padding-right: 12px;
+  background-color: var(--ink);
+}
+
+.WriteErrorActionText {
+  font-size: 12px;
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+.WriteErrorClose {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 36px;
+  padding-left: 10px;
+}
+
+.WriteErrorCloseText {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.BackupPanel {
+  max-width: 440px;
+}
+
+.BackupBody {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 22px 20px 22px;
+}
+
+.BackupHint {
+  margin-bottom: 14px;
+  font-size: 12px;
+  line-height: 19px;
+  color: var(--ink-3);
+}
+
+.BackupAction {
+  margin-bottom: 10px;
+}
+
+.BackupError {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--vermilion);
+}
+
+.BackupStats {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--rule);
+}
+
+.BackupStatRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
+}
+
+.BackupStatLabel {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.BackupStatValue {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.BackupConflict {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  background-color: var(--amber-wash);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: var(--amber-deep);
+}
+
+.BackupConflictTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber-deep);
+}
+
+.BackupConflictName {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.BackupConflictHint {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ink-2);
+}

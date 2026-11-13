@@ -38,11 +38,17 @@ const VIEWS: AppView[] = [
 ];
 
 let lastError: string | null = null;
+let writeError = false;
 const runtimeKeys = new Set<string>();
 const snapshotKeys = new Set<string>();
 
 function setCorruptError(): void {
   lastError = CORRUPT_MESSAGE;
+}
+
+/** 记忆一次持久化失败；界面用 consumeWriteError() 取走并显示错误条。 */
+function noteWriteError(): void {
+  writeError = true;
 }
 
 function createId(): string {
@@ -112,9 +118,15 @@ function readSheets(): Sheet[] {
 
 function writeSheets(sheets: Sheet[]): void {
   try {
-    storage.set(SHEETS_KEY, JSON.stringify({ v: 1, sheets }));
+    const persisted = storage.set(
+      SHEETS_KEY,
+      JSON.stringify({ v: 1, sheets }),
+    );
+    if (!persisted) {
+      noteWriteError();
+    }
   } catch {
-    // The storage layer already degrades gracefully; keep the API non-throwing.
+    noteWriteError();
   }
 }
 
@@ -297,9 +309,15 @@ export function getRuntime(sheetId: string): RuntimeState | null {
 export function saveRuntime(runtime: RuntimeState): void {
   runtimeKeys.add(runtime.sheetId);
   try {
-    storage.set(runtimeKey(runtime.sheetId), JSON.stringify(runtime));
+    const persisted = storage.set(
+      runtimeKey(runtime.sheetId),
+      JSON.stringify(runtime),
+    );
+    if (!persisted) {
+      noteWriteError();
+    }
   } catch {
-    // Ignore persistence failures.
+    noteWriteError();
   }
 }
 
@@ -505,6 +523,28 @@ export function consumeStorageError(): string | null {
   return error ? t(error) : null;
 }
 
+/**
+ * 消费一次持久化失败标记。返回 true 表示最近一次保存没有真正落盘，
+ * 界面应显示“保存失败，请立即导出备份”并提供导出入口。
+ */
+export function consumeWriteError(): boolean {
+  const failed = writeError;
+  writeError = false;
+  return failed;
+}
+
+/** 备份恢复专用：按导入内容原样写入，保留 imported 的 updatedAt 供后续合并比较。 */
+export function importSheet(sheet: Sheet): void {
+  const sheets = readSheets();
+  const index = sheets.findIndex((item) => item.id === sheet.id);
+  if (index >= 0) {
+    sheets[index] = sheet;
+  } else {
+    sheets.unshift(sheet);
+  }
+  writeSheets(sheets);
+}
+
 export async function hydrateStorage(): Promise<void> {
   if (!storage.hydrate) {
     return;
@@ -558,4 +598,5 @@ export function clearAllForTest(): void {
   );
 
   lastError = null;
+  writeError = false;
 }
