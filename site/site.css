@@ -3,7 +3,7 @@
   --paper2: #e8e1d0;
   --ink: #14120b;
   --ink2: #474336;
-  --ink3: #756f5c;
+  --ink3: #5f5a4b;
   --rule: #b4aa92;
   --rule2: #d6ccb6;
   --amber: #ffb020;
@@ -3972,6 +3972,10 @@ page {
   display: none;
 }
 
+.SiteTiny .ConfettiLayer {
+  display: none;
+}
+
 .SiteTiny .CoverStatsNarrow {
   display: flex;
   flex-direction: row;
@@ -3984,8 +3988,188 @@ page {
 }
 
 .SiteTiny .CoverStatsNarrow .CoverStatLabel {
-  font-size: 8px;
+  font-size: 10.5px;
 }
+
+/* ============================================================
+   可读性校正：小字整体上调一档，正文与标注不再依赖放大
+   保留印刷刻度感，但把说明性文字从 8–10px 提升到 11–14px
+   ============================================================ */
+
+/* 说明性微标 */
+.Eyebrow,
+.HeroEyebrow,
+.DarkEyebrow,
+.QuoteEyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+}
+
+.CardNo,
+.FeatureNo {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+
+.WordmarkAlt,
+.LangText {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.PhoneLabel,
+.PosterCaption,
+.FooterCopy,
+.SlideFootCopy,
+.BoardMeta,
+.BoardStat,
+.BoardTag,
+.BoardHint,
+.BoardOrig,
+.DeckHint,
+.DeckMenuBtnText,
+.RailLabel {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.BrandSpec,
+.CtaNote,
+.MarqueeText,
+.DeckCounter,
+.DeckNavNo,
+.DeckMenuTitle,
+.DeckMenuNo,
+.DeckMenuNow,
+.DeckMenuHint {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.BoardTickText {
+  font-size: 12px;
+}
+
+/* 正文与卡片说明 */
+.CardBody,
+.FeatureBody,
+.Deck .CardBody,
+.Deck .FeatureBody,
+.SiteEn .CardBody,
+.SiteEn .FeatureBody {
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+.DarkBody,
+.Deck .DarkBody,
+.SiteEn .DarkBody {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.BoardNote,
+.Deck .BoardNote {
+  font-size: 13px;
+  color: #a8a290;
+}
+
+.BoardOwner {
+  font-size: 12px;
+  color: #a8a290;
+}
+
+.BoardMeta,
+.BoardStat,
+.BoardHint {
+  color: #a8a290;
+}
+
+.BoardOrig {
+  color: #8f8a7a;
+}
+
+.ToastText {
+  font-size: 13px;
+}
+
+/* 执行台预览：时间与环节名更清楚 */
+.BoardTitle,
+.SiteEn .BoardTitle {
+  font-size: 17px;
+}
+
+.BoardDay,
+.BoardTime {
+  font-size: 14px;
+}
+
+.BoardTag {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+/* 导航、页脚与按钮 */
+.NavItem {
+  font-size: 14px;
+}
+
+.DeckNavLabel {
+  font-size: 14px;
+}
+
+.DeckBtnText {
+  font-size: 14px;
+}
+
+.DeckCtaText {
+  font-size: 13px;
+}
+
+.DeckCtaArrow {
+  font-size: 13px;
+}
+
+.DeckMenuSkipText,
+.DeckMenuSkipArrow {
+  font-size: 14px;
+}
+
+.FooterBrand,
+.SiteEn .FooterBrand {
+  font-size: 14px;
+}
+
+.FooterTag {
+  font-size: 13px;
+}
+
+.SlideFootBrand {
+  font-size: 12.5px;
+}
+
+.FileStatLabel,
+.StatLabel {
+  font-size: 13px;
+}
+
+.CoverStatLabel {
+  font-size: 12px;
+}
+
+.CoverStatsNarrow .CoverStatLabel {
+  font-size: 11px;
+}
+
+.SiteTiny .CoverStatsNarrow .CoverStatLabel {
+  font-size: 10.5px;
+}
+
+.QuoteHint {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
 
 
 
