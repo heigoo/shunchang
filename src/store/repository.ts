@@ -5,6 +5,7 @@ import type {
   RuntimeState,
   Sheet,
 } from '../domain/types';
+import { formatDateKey, isValidDateKey } from '../domain/types';
 import { t } from '../i18n';
 
 import { storage } from './storage';
@@ -104,7 +105,9 @@ function writeSheets(sheets: Sheet[]): void {
 
 export function listSheets(): Sheet[] {
   const sheets = readSheets();
-  sheets.sort((a, b) => b.updatedAt - a.updatedAt);
+  sheets.sort(
+    (a, b) => b.date.localeCompare(a.date) || b.updatedAt - a.updatedAt,
+  );
   return sheets;
 }
 
@@ -144,20 +147,22 @@ export function deleteSheet(id: string): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-export function duplicateSheet(id: string): Sheet | null {
+export function duplicateSheet(id: string, date?: string): Sheet | null {
   const source = getSheet(id);
   if (!source) {
     return null;
   }
 
+  const now = Date.now();
   const copy: Sheet = {
     ...source,
     id: createId(),
     name: `${source.name}${t('（副本）')}`,
+    date: date && isValidDateKey(date) ? date.trim() : formatDateKey(now),
     items: source.items.map((item) => ({ ...item, id: createId() })),
     status: 'draft',
     version: 1,
-    updatedAt: Date.now(),
+    updatedAt: now,
   };
 
   return saveSheet(copy);

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from '@rstest/core';
 
 import type { RuntimeState, Sheet } from '../../domain/types';
+import { formatDateKey } from '../../domain/types';
 import {
   clearAllForTest,
   consumeStorageError,
@@ -97,6 +98,23 @@ describe('sheets', () => {
     expect(listSheets().map((sheet) => sheet.id)).toEqual(['b', 'c', 'a']);
   });
 
+  it('sorts by event date descending, then updatedAt descending', () => {
+    storage.set(
+      SHEETS_KEY,
+      JSON.stringify({
+        v: 1,
+        sheets: [
+          makeSheet({ id: 'a', date: '2026-11-10', updatedAt: 500 }),
+          makeSheet({ id: 'b', date: '2026-11-23', updatedAt: 100 }),
+          makeSheet({ id: 'c', date: '2026-11-23', updatedAt: 300 }),
+          makeSheet({ id: 'd', date: '2026-11-01', updatedAt: 900 }),
+        ],
+      }),
+    );
+
+    expect(listSheets().map((sheet) => sheet.id)).toEqual(['c', 'b', 'a', 'd']);
+  });
+
   it('skips corrupt entries but keeps valid sheets', () => {
     storage.set(
       SHEETS_KEY,
@@ -162,6 +180,22 @@ describe('sheets', () => {
     expect(copy?.items[0].locked).toBe(true);
     expect(copy?.items[0].note).toBe('保留备注');
     expect(listSheets()).toHaveLength(2);
+  });
+
+  it('duplicates with today by default and accepts an explicit date', () => {
+    const source = saveSheet(makeSheet({ id: 'source', date: '2026-11-10' }));
+
+    const todayCopy = duplicateSheet(source.id);
+
+    expect(todayCopy?.date).toBe(formatDateKey(Date.now()));
+
+    const datedCopy = duplicateSheet(source.id, '2026-12-01');
+
+    expect(datedCopy?.date).toBe('2026-12-01');
+
+    const invalidCopy = duplicateSheet(source.id, '2026-13-01');
+
+    expect(invalidCopy?.date).toBe(formatDateKey(Date.now()));
   });
 
   it('returns null when duplicating a missing sheet', () => {

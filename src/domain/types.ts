@@ -81,6 +81,29 @@ function pad2(value: number): string {
   return value < 10 ? `0${value}` : String(value);
 }
 
+/** 把时间戳格式化为 YYYY-MM-DD，供活动日期与本地存储使用。 */
+export function formatDateKey(now: number): string {
+  const date = new Date(now);
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+/** 校验 YYYY-MM-DD 且必须是真实存在的日期（如 2026-02-30 非法）。 */
+export function isValidDateKey(text: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text.trim());
+  if (!match) {
+    return false;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 export function createEmptyItem(): Item {
   return {
     id: createId(),
@@ -92,13 +115,13 @@ export function createEmptyItem(): Item {
   };
 }
 
-export function createEmptySheet(now: number): Sheet {
-  const date = new Date(now);
+export function createEmptySheet(now: number, date?: string): Sheet {
+  const today = new Date(now);
   return {
     id: createId(),
     name: t('未命名手册'),
-    date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
-    startMin: date.getHours() * 60,
+    date: date && isValidDateKey(date) ? date.trim() : formatDateKey(now),
+    startMin: today.getHours() * 60,
     items: [createEmptyItem()],
     status: 'draft',
     version: 1,

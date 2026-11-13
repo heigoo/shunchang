@@ -25,6 +25,7 @@ import {
   removeItem,
   setItemDuration,
   setItemLockAt,
+  setSheetDate,
   setSheetName,
   setStartTime,
   sortByPlanTime,
@@ -184,6 +185,7 @@ export function EditorScreen(props: EditorScreenProps) {
     null,
   );
   const [startError, setStartError] = useState(false);
+  const [dateError, setDateError] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [lockEdit, setLockEdit] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{
@@ -318,6 +320,17 @@ export function EditorScreen(props: EditorScreenProps) {
 
   const handleName = (text: string) => {
     apply(setSheetName(sheet, text));
+  };
+
+  const handleDateCommit = (text: string): boolean => {
+    const next = setSheetDate(sheet, text);
+    if (!next) {
+      setDateError(true);
+      return false;
+    }
+    setDateError(false);
+    apply(next);
+    return true;
   };
 
   const handleStartCommit = (text: string): boolean => {
@@ -775,7 +788,13 @@ export function EditorScreen(props: EditorScreenProps) {
           <view className="EditorMetaStrip">
             <view className="MetaItem">
               <text className="MetaLabel">{tText('日期')}</text>
-              <text className="MetaValue">{sheet.date}</text>
+              <DraftInput
+                className="StartInput DateInput"
+                maxlength={10}
+                placeholder="YYYY-MM-DD"
+                value={sheet.date}
+                onCommit={(text) => handleDateCommit(text)}
+              />
             </view>
             <view className="MetaItem">
               <text className="MetaLabel">{tText('开始')}</text>
@@ -816,6 +835,12 @@ export function EditorScreen(props: EditorScreenProps) {
               </view>
             ) : null}
           </view>
+
+          {dateError ? (
+            <text className="EditorInlineError">
+              {tText('日期格式应为 YYYY-MM-DD')}
+            </text>
+          ) : null}
 
           {startError ? (
             <text className="EditorInlineError">

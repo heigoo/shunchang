@@ -1,5 +1,6 @@
 import { t } from '../i18n';
 import type { Item, Sheet } from './types';
+import { formatDateKey, isValidDateKey } from './types';
 
 export interface TemplateItem {
   name: string;
@@ -19,10 +20,6 @@ export interface WeddingTemplate {
 
 function createId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-}
-
-function pad2(value: number): string {
-  return value < 10 ? `0${value}` : String(value);
 }
 
 function item(
@@ -104,13 +101,13 @@ export const TEMPLATES: WeddingTemplate[] = [
 export function createSheetFromTemplate(
   id: WeddingTemplate['id'],
   now: number,
+  date?: string,
 ): Sheet | null {
   const template = TEMPLATES.find((entry) => entry.id === id);
   if (!template) {
     return null;
   }
 
-  const date = new Date(now);
   let cursor = template.startMin;
   const items: Item[] = template.items.map((entry) => {
     const locked = entry.locked === true;
@@ -132,7 +129,7 @@ export function createSheetFromTemplate(
   return {
     id: createId(),
     name: t('{name}流程', { name: t(template.name) }),
-    date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
+    date: date && isValidDateKey(date) ? date.trim() : formatDateKey(now),
     startMin: template.startMin,
     items,
     status: 'draft',

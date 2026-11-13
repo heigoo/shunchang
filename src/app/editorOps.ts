@@ -1,5 +1,5 @@
 import type { Item, Sheet } from '../domain/types';
-import { createEmptyItem } from '../domain/types';
+import { createEmptyItem, isValidDateKey } from '../domain/types';
 import { computeTimeline, parseClock } from '../domain/timeline';
 import type { SheetError } from '../domain/validate';
 import { validateForPublish } from '../domain/validate';
@@ -90,6 +90,17 @@ export function sortByPlanTime(sheet: Sheet): Sheet {
 
 export function setSheetName(sheet: Sheet, name: string): Sheet {
   return touch({ ...sheet, name: truncate(name, MAX_NAME_LENGTH) });
+}
+
+export function setSheetDate(sheet: Sheet, text: string): Sheet | null {
+  const trimmed = text.trim();
+  if (!isValidDateKey(trimmed)) {
+    return null;
+  }
+  if (trimmed === sheet.date) {
+    return sheet;
+  }
+  return touch({ ...sheet, date: trimmed });
 }
 
 export function setStartTime(sheet: Sheet, text: string): Sheet | null {

@@ -2,6 +2,7 @@ import { describe, expect, it } from '@rstest/core';
 
 import { TEMPLATES, createSheetFromTemplate } from '../templates';
 import type { WeddingTemplate } from '../templates';
+import { formatDateKey } from '../types';
 
 const NOW = 1762732800000;
 
@@ -65,6 +66,16 @@ describe('templates', () => {
 
     expect(created.items).not.toBe(TEMPLATES[0].items);
     expect(created.items[0]).not.toBe(TEMPLATES[0].items[0]);
+  });
+
+  it('uses the requested event date and falls back to today', () => {
+    const dated = createSheetFromTemplate('chinese', NOW, '2026-11-23');
+
+    expect(dated?.date).toBe('2026-11-23');
+
+    const fallback = createSheetFromTemplate('chinese', NOW, '2026-02-30');
+
+    expect(fallback?.date).toBe(formatDateKey(NOW));
   });
 
   it('returns null for an unknown template id', () => {

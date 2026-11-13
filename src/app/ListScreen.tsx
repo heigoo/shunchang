@@ -10,7 +10,7 @@ import { ThemePanel } from './ThemePanel';
 import { TEMPLATES, createSheetFromTemplate } from '../domain/templates';
 import { formatDuration } from '../domain/timeline';
 import type { Sheet, SheetStatus } from '../domain/types';
-import { createEmptySheet } from '../domain/types';
+import { createEmptySheet, formatDateKey } from '../domain/types';
 import { t, getLang, useT } from '../i18n';
 import { isDesktopRuntime } from '../platform/desktop';
 import {
@@ -111,6 +111,7 @@ export function ListScreen(props: ListScreenProps) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [createOpen, setCreateOpen] = useState(false);
+  const [createDate, setCreateDate] = useState(() => formatDateKey(Date.now()));
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
@@ -202,6 +203,7 @@ export function ListScreen(props: ListScreenProps) {
   };
 
   const openCreate = () => {
+    setCreateDate(formatDateKey(Date.now()));
     setCreateOpen(true);
   };
 
@@ -209,10 +211,17 @@ export function ListScreen(props: ListScreenProps) {
     setCreateOpen(false);
   };
 
+  const handleCreateDateInput = (event: any) => {
+    const detail = event && event.detail ? event.detail : null;
+    setCreateDate(detail && typeof detail.value === 'string' ? detail.value : '');
+  };
+
   const createFrom = (kind: 'blank' | (typeof TEMPLATES)[number]['id']) => {
     const now = Date.now();
     const sheet =
-      kind === 'blank' ? createEmptySheet(now) : createSheetFromTemplate(kind, now);
+      kind === 'blank'
+        ? createEmptySheet(now, createDate)
+        : createSheetFromTemplate(kind, now, createDate);
     if (!sheet) {
       return;
     }
@@ -239,7 +248,7 @@ export function ListScreen(props: ListScreenProps) {
       return;
     }
     reload();
-    showToast(tText('已复制为新手册'));
+    showToast(tText('已复制，请确认活动日期'));
   };
 
   const openMore = (sheet: Sheet) => {
@@ -849,6 +858,17 @@ export function ListScreen(props: ListScreenProps) {
               <view className="PanelClose" bindtap={closeCreate}>
                 <text className="PanelCloseText">{tText('取消')}</text>
               </view>
+            </view>
+
+            <view className="SheetRename">
+              <text className="SheetRenameLabel">{tText('活动日期')}</text>
+              <input
+                className="SheetRenameInput"
+                default-value={createDate}
+                placeholder="YYYY-MM-DD"
+                maxlength={10}
+                bindinput={handleCreateDateInput}
+              />
             </view>
 
             <scroll-view

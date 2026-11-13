@@ -10,6 +10,7 @@ import {
   removeItem,
   setItemDuration,
   setItemLockAt,
+  setSheetDate,
   setSheetName,
   setStartTime,
   sortByPlanTime,
@@ -179,6 +180,33 @@ describe('增删与排序', () => {
     const sheet = makeSheet([makeItem('a', 30), makeItem('b', 30)]);
 
     expect(sortByPlanTime(sheet)).toBe(sheet);
+  });
+});
+
+describe('活动日期', () => {
+  it('接受合法日期并更新时间戳', () => {
+    const sheet = makeSheet([makeItem('a', 30)]);
+    const next = setSheetDate(sheet, '2026-11-23');
+
+    expect(next).not.toBeNull();
+    expect(next?.date).toBe('2026-11-23');
+    expect(next?.updatedAt).toBeGreaterThan(sheet.updatedAt);
+    expect(sheet.date).toBe('2026-11-10');
+  });
+
+  it('拒绝不存在的日期和错误格式', () => {
+    const sheet = makeSheet([makeItem('a', 30)]);
+
+    expect(setSheetDate(sheet, '2026-02-30')).toBeNull();
+    expect(setSheetDate(sheet, '2026-13-01')).toBeNull();
+    expect(setSheetDate(sheet, '2026-2-3')).toBeNull();
+    expect(setSheetDate(sheet, '')).toBeNull();
+  });
+
+  it('日期未变化时返回原对象', () => {
+    const sheet = makeSheet([makeItem('a', 30)]);
+
+    expect(setSheetDate(sheet, '2026-11-10')).toBe(sheet);
   });
 });
 

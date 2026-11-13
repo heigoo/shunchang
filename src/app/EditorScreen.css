@@ -161,6 +161,10 @@
   color: var(--ink);
 }
 
+.DateInput {
+  width: 92px;
+}
+
 .EditorInlineError {
   margin-top: 5px;
   font-size: 12px;
