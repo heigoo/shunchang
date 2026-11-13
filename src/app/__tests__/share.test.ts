@@ -124,12 +124,20 @@ describe('share urls', () => {
     setFollowUrlForTest(null);
   });
 
-  it('falls back to the current web page with the follow flag', () => {
+  it('falls back to the current web page when no follow url is configured', () => {
+    setFollowUrlForTest('');
+
     expect(buildFollowUrl('abc')).toBe(
       'https://example.com/app?follow=1#d=abc',
     );
     expect(buildShortUrl('ABC-DEF')).toBe(
       'https://example.com/app?follow=1#s=ABC-DEF',
+    );
+  });
+
+  it('uses the deployed follow page by default', () => {
+    expect(buildFollowUrl('abc')).toBe(
+      'https://37jgbn03wc2xhkefws2.traesite.cn/?follow=1#d=abc',
     );
   });
 
