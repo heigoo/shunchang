@@ -29,10 +29,32 @@
   <style>
     html, body { margin: 0; height: 100%; background: #F2EDE1; overflow: hidden; }
     lynx-view { display: block; width: 100vw; height: 100vh; }
+    .ManualLink {
+      position: fixed;
+      top: 58px;
+      left: 24px;
+      z-index: 40;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border: 1px solid rgba(20, 18, 14, 0.22);
+      background: rgba(241, 238, 230, 0.92);
+      color: #1b1a17;
+      font: 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+    }
+    .ManualLink::after { content: "↗"; font-size: 11px; }
+    .ManualLink:hover { background: #1b1a17; color: #f1eee6; }
+    @media (max-width: 720px) {
+      .ManualLink { top: 52px; left: 12px; font-size: 11px; padding: 6px 8px; }
+    }
   </style>
 </head>
 <body>
   <lynx-view id="site" url="/main.web.bundle"></lynx-view>
+  <a class="ManualLink" href="https://37jgejb7nyniuhch9uk.traesite.cn/manual.html" target="_blank" rel="noopener">使用说明书</a>
   <script>
     (function () {
       if ('serviceWorker' in navigator) {

@@ -1277,6 +1277,23 @@
   padding: 10px 22px 20px 22px;
 }
 
+.PanelManualBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  margin-top: -10px;
+  padding-left: 8px;
+  padding-right: 12px;
+}
+
+.PanelManualText {
+  font-size: 13px;
+  color: var(--ink-2);
+  text-decoration: underline;
+}
+
 /* ---------- 可读性校正 ---------- */
 
 .ListBrandSeal {

@@ -17,6 +17,10 @@ fs.copyFileSync(
 );
 fs.copyFileSync(path.join(root, 'public/app.html'), path.join(outDir, 'index.html'));
 fs.copyFileSync(path.join(root, 'public/app.html'), path.join(outDir, 'app.html'));
+fs.copyFileSync(
+  path.join(root, '../顺场-使用说明书/顺场-使用说明书.html'),
+  path.join(outDir, 'manual.html'),
+);
 fs.copyFileSync(path.join(root, 'public/favicon.png'), path.join(outDir, 'favicon.png'));
 fs.cpSync(
   path.join(root, 'node_modules/@lynx-js/web-rsbuild-server-middleware/www/static'),

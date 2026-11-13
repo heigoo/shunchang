@@ -47,6 +47,25 @@
       }
       syncWidth();
       window.addEventListener('resize', syncWidth);
+
+      // Web 工作台里的「查看完整使用说明书」直接在宿主页打开，避免异步桥接丢失用户手势。
+      var MANUAL_URL = 'https://37jgejb7nyniuhch9uk.traesite.cn/manual.html';
+      document.addEventListener(
+        'click',
+        function (event) {
+          var path = event.composedPath ? event.composedPath() : [];
+          for (var i = 0; i < path.length; i += 1) {
+            var el = path[i];
+            if (el && el.classList && el.classList.contains('PanelManualBtn')) {
+              event.preventDefault();
+              event.stopPropagation();
+              window.open(MANUAL_URL, '_blank', 'noopener');
+              return;
+            }
+          }
+        },
+        true,
+      );
     })();
   </script>
 </body>

@@ -52,6 +52,19 @@ test('renders saved sheet names', async () => {
   expect(await findByText('年会流程')).toBeInTheDocument();
 });
 
+test('offers the online manual from the guide panel', async () => {
+  const { findByText } = render(
+    <ListScreen
+      onOpenSheet={() => {}}
+      onOpenFollow={() => {}}
+      onImported={() => {}}
+    />,
+  );
+
+  fireEvent.tap(await findByText('说明'));
+  expect(await findByText('使用说明书')).toBeInTheDocument();
+});
+
 test('shows the empty state when no sheets exist', async () => {
   const { findByText } = render(
     <ListScreen

@@ -6,6 +6,7 @@ import { filterSheets } from './listFilter';
 import type { StatusFilter } from './listFilter';
 import { registerBackHandler } from './backBus';
 import { ImportPanel } from './ImportPanel';
+import { MANUAL_URL, openManual } from './manual';
 import { ThemePanel } from './ThemePanel';
 import type { CustomTemplate } from '../domain/customTemplates';
 import {
@@ -386,6 +387,20 @@ export function ListScreen(props: ListScreenProps) {
       setToast(null);
       toastTimer.current = null;
     }, 2000);
+  };
+
+  const handleOpenManual = () => {
+    void openManual().then((result) => {
+      if (result === 'opened') {
+        showToast(tText('已打开使用说明书'));
+        return;
+      }
+      if (result === 'copied') {
+        showToast(tText('说明书链接已复制，请在浏览器打开'));
+        return;
+      }
+      showToast(tText('打开失败，请访问 {url}', { url: MANUAL_URL }));
+    });
   };
 
   const exportAllBackup = () => {
@@ -924,6 +939,9 @@ export function ListScreen(props: ListScreenProps) {
                 <text className="PanelSubtitle">
                   {tText('现场调度 · 快速说明')}
                 </text>
+              </view>
+              <view className="PanelManualBtn" bindtap={handleOpenManual}>
+                <text className="PanelManualText">{tText('使用说明书')}</text>
               </view>
               <view
                 className="PanelClose"

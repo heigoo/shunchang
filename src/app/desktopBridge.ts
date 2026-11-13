@@ -18,6 +18,11 @@ export interface DesktopOpenPrintResult {
   error?: string;
 }
 
+export interface DesktopOpenExternalResult {
+  ok?: boolean;
+  error?: string;
+}
+
 interface BridgeCaller {
   call(
     method: string,
@@ -124,6 +129,16 @@ export async function desktopOpenPrintHtml(
   const result = await callDesktopBridge<DesktopOpenPrintResult>(
     'shunchang.openPrintHtml',
     { filename, html },
+    15000,
+  );
+  return !!result && result.ok === true;
+}
+
+/** 用系统默认浏览器打开外部链接（说明书、官网等）。 */
+export async function desktopOpenExternal(url: string): Promise<boolean> {
+  const result = await callDesktopBridge<DesktopOpenExternalResult>(
+    'shunchang.openExternal',
+    { url },
     15000,
   );
   return !!result && result.ok === true;
