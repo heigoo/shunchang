@@ -28,7 +28,9 @@
   background-color: #ffffff;
   border-width: 1px;
   border-style: solid;
-  border-color: #dcd6c6;
+  border-color: #d6ccb6;
+  border-top-width: 3px;
+  border-top-color: #14120b;
 }
 
 /* ---------- 页眉 ---------- */
@@ -47,20 +49,28 @@
   align-items: flex-start;
 }
 
+.PrintKicker {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: #756f5c;
+}
+
 .PrintTitle {
+  margin-top: 6px;
   font-family: var(--serif);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #15140f;
+  letter-spacing: 0.04em;
+  color: #14120b;
 }
 
 .PrintDate {
-  margin-top: 4px;
+  margin-top: 5px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.08em;
-  color: #4b4941;
+  color: #47433a;
 }
 
 .PrintHeadAside {
@@ -106,18 +116,18 @@
 .PrintMetaRow {
   display: flex;
   flex-direction: row;
-  margin-top: 12px;
-  padding-bottom: 8px;
-  border-bottom-width: 1px;
+  margin-top: 14px;
+  padding-bottom: 9px;
+  border-bottom-width: 2px;
   border-bottom-style: solid;
-  border-bottom-color: #15140f;
+  border-bottom-color: #14120b;
 }
 
 .PrintMetaText {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.04em;
-  color: #4b4941;
+  color: #47433a;
 }
 
 /* ---------- 表格 ---------- */
@@ -131,34 +141,35 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  background-color: #f2ede1;
   border-bottom-width: 1px;
   border-bottom-style: solid;
-  border-bottom-color: #15140f;
+  border-bottom-color: #14120b;
 }
 
 .PrintTh {
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: #4b4941;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #47433a;
 }
 
 .PrintRow {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  min-height: 30px;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  min-height: 32px;
+  padding-top: 6px;
+  padding-bottom: 6px;
   border-bottom-width: 1px;
   border-bottom-style: solid;
-  border-bottom-color: #dcd6c6;
+  border-bottom-color: #d6ccb6;
 }
 
 .PrintRow--alt {
-  background-color: #f7f4ec;
+  background-color: #f7f3e8;
 }
 
 .PrintColNo {

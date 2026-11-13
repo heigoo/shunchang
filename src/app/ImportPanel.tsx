@@ -128,7 +128,10 @@ export function ImportPanel(props: ImportPanelProps) {
             ) : null}
 
             <view className="ImportSection">
-              <text className="ImportLabel">{t('分享链接 / 备份内容')}</text>
+              <view className="ImportSectionHead">
+                <text className="ImportStepNo">01</text>
+                <text className="ImportLabel">{t('分享链接 / 备份内容')}</text>
+              </view>
               <textarea
                 className="ImportTextarea"
                 placeholder={t('粘贴分享链接或备份内容')}
@@ -148,7 +151,10 @@ export function ImportPanel(props: ImportPanelProps) {
             </view>
 
             <view className="ImportSection">
-              <text className="ImportLabel">{t('六位短码')}</text>
+              <view className="ImportSectionHead">
+                <text className="ImportStepNo">02</text>
+                <text className="ImportLabel">{t('六位短码')}</text>
+              </view>
               <input
                 className="ImportInput"
                 placeholder={t('输入六位短码')}
@@ -170,7 +176,10 @@ export function ImportPanel(props: ImportPanelProps) {
 
             {canPickFile ? (
               <view className="ImportSection">
-                <text className="ImportLabel">{t('文件')}</text>
+                <view className="ImportSectionHead">
+                  <text className="ImportStepNo">03</text>
+                  <text className="ImportLabel">{t('文件')}</text>
+                </view>
                 <view className="ImportAction">
                   <Button
                     label={t('选择文件')}

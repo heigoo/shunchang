@@ -41,6 +41,10 @@ export function PublishPanel(props: PublishPanelProps) {
         catchtap={() => {}}
       >
         <view className="PublishHead">
+          <view className="PublishHeadTop">
+            <text className="PublishKicker">发布凭证 · PUBLISHED</text>
+            <text className="PublishVersion">{`V${sheet.version}`}</text>
+          </view>
           <text className="PublishTitle">
             {t('已发布 · 第 {n} 版', { n: sheet.version })}
           </text>

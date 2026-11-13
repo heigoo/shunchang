@@ -126,6 +126,7 @@ export function PrintScreen(props: PrintScreenProps) {
     >
       <view className="PrintHead">
         <view className="PrintHeadMain">
+          <text className="PrintKicker">顺场 · 现场执行表</text>
           <text className="PrintTitle">{summary.title}</text>
           <text className="PrintDate">{summary.date}</text>
         </view>

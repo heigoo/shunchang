@@ -233,7 +233,10 @@ export function FollowScreen(props: FollowScreenProps) {
     >
       <view className="FollowSync">
         <view className="FollowSyncRow">
-          <text className="FollowSyncText">{syncText}</text>
+          <view className="FollowSyncMain">
+            <text className="FollowSyncKicker">FOLLOW · 现场跟随</text>
+            <text className="FollowSyncText">{syncText}</text>
+          </view>
           <view className="FollowSyncAction" bindtap={openImport}>
             <text className="FollowSyncActionText">{t('更新')}</text>
           </view>
@@ -269,7 +272,16 @@ export function FollowScreen(props: FollowScreenProps) {
       </view>
 
       <view className="FollowCurrent" key={`current-${currentIndex}`}>
-        <text className="FollowSeg">{segLabel}</text>
+        <view className="FollowCurrentHead">
+          <text className="FollowSeg">{segLabel}</text>
+          <text className="FollowCurrentState">
+            {ended
+              ? t('已全部结束')
+              : currentIndex >= 0
+                ? t('当前环节')
+                : t('尚未开始')}
+          </text>
+        </view>
 
         {currentItem && currentRow ? (
           <view className="FollowCurrentBody">
@@ -293,6 +305,23 @@ export function FollowScreen(props: FollowScreenProps) {
             {ended ? t('已全部结束') : t('尚未开始')}
           </text>
         )}
+
+        <view className="FollowProgress">
+          <view className="FollowProgressMeta">
+            <text className="FollowProgressLabel">{t('总进度')}</text>
+            <text className="FollowProgressCount">
+              {`${pad3(Math.max(currentIndex, 0))} / ${pad3(total)}`}
+            </text>
+          </view>
+          <view className="FollowProgressTrack">
+            <view
+              className="FollowProgressFill"
+              style={{
+                width: `${total > 0 ? Math.round((Math.max(currentIndex, 0) / total) * 100) : 0}%`,
+              }}
+            />
+          </view>
+        </view>
       </view>
 
       <scroll-view className="FollowOwners" scroll-orientation="horizontal">
@@ -356,6 +385,7 @@ export function FollowScreen(props: FollowScreenProps) {
               className={classes.join(' ')}
               style={{ animationDelay: `${Math.min(entry.index, 10) * 22}ms` }}
             >
+              <view className={`FollowRowDot FollowRowDot--${entry.state}`} />
               <text className="FollowRowNo">{pad3(entry.index + 1)}</text>
               <text className="FollowRowTime">
                 {formatClockDisplay(entry.row.displayStart)}
