@@ -33,6 +33,12 @@ export interface ShiftPreview {
   /** nextOffset - baseOffset */
   deltaMin: number;
   startMin: number;
+  /** 下一环节在无偏移下的计划开始；没有下一环节时为 null。 */
+  nextPlanStart: number | null;
+  /** 当前环节按现有偏移的展示结束；没有当前环节时为 null。 */
+  currentEndMin: number | null;
+  /** 所选开始时间早于下一环节计划开始的分钟数；0 表示不提前。 */
+  planEarlyMin: number;
   rows: ShiftPreviewRow[];
   locks: ShiftPreviewLock[];
   hasConflict: boolean;
@@ -46,6 +52,46 @@ function itemName(sheet: Sheet, itemId: string): string {
   return item && item.name.length > 0 ? item.name : t('未命名环节');
 }
 
+function planStartOf(sheet: Sheet, index: number): number | null {
+  if (index < 0 || index >= sheet.items.length) {
+    return null;
+  }
+  const row = computeTimeline(sheet, 0).rows[index];
+  return row ? row.planStart : null;
+}
+
+/** 下一环节的计划开始；没有下一环节时返回 null。 */
+export function nextPlanStartOf(sheet: Sheet, runtime: RuntimeState): number | null {
+  const execSheet = buildExecutionSheet(sheet, runtime);
+  return planStartOf(execSheet, runtime.currentIndex + 1);
+}
+
+/**
+ * 顺延面板的默认开始时间：已过计划时刻用当前时刻，尚未到计划时刻用计划时刻。
+ */
+export function defaultShiftStart(
+  nowMin: number,
+  nextPlanStart: number | null,
+): number {
+  if (nextPlanStart !== null && nowMin < nextPlanStart) {
+    return nextPlanStart;
+  }
+  return nowMin;
+}
+
+/**
+ * 延长当前环节：把下一环节开始时间设为 max(当前时刻, 当前环节展示结束) + 分钟数。
+ */
+export function extendStartMin(
+  nowMin: number,
+  currentEndMin: number | null,
+  minutes: number,
+): number {
+  const base =
+    currentEndMin !== null && currentEndMin > nowMin ? currentEndMin : nowMin;
+  return base + minutes;
+}
+
 export function buildShiftPreview(
   sheet: Sheet,
   runtime: RuntimeState,
@@ -56,6 +102,15 @@ export function buildShiftPreview(
   const nextIndex = runtime.currentIndex + 1;
   const baseOffsetMin = runtime.offsetMin;
   const earlierThanNow = startMin < nowMin;
+  const nextPlanStart = planStartOf(execSheet, nextIndex);
+  const planEarlyMin =
+    nextPlanStart !== null ? Math.max(0, nextPlanStart - startMin) : 0;
+  const currentIndex = runtime.currentIndex;
+  const currentEndMin =
+    currentIndex >= 0 && currentIndex < execSheet.items.length
+      ? computeTimeline(execSheet, runtime.offsetMin).rows[currentIndex]
+          ?.displayEnd ?? null
+      : null;
 
   if (nextIndex < 0 || nextIndex >= execSheet.items.length) {
     return {
@@ -67,6 +122,9 @@ export function buildShiftPreview(
       nextOffsetMin: baseOffsetMin,
       deltaMin: 0,
       startMin,
+      nextPlanStart,
+      currentEndMin,
+      planEarlyMin,
       rows: [],
       locks: [],
       hasConflict: false,
@@ -87,6 +145,9 @@ export function buildShiftPreview(
       nextOffsetMin: baseOffsetMin,
       deltaMin: 0,
       startMin,
+      nextPlanStart,
+      currentEndMin,
+      planEarlyMin,
       rows: [],
       locks: [],
       hasConflict: false,
@@ -105,6 +166,9 @@ export function buildShiftPreview(
       nextOffsetMin: baseOffsetMin,
       deltaMin: 0,
       startMin,
+      nextPlanStart,
+      currentEndMin,
+      planEarlyMin,
       rows: [],
       locks: [],
       hasConflict: false,
@@ -146,6 +210,9 @@ export function buildShiftPreview(
     nextOffsetMin,
     deltaMin: nextOffsetMin - baseOffsetMin,
     startMin,
+    nextPlanStart,
+    currentEndMin,
+    planEarlyMin,
     rows,
     locks,
     hasConflict: locks.some((lock) => lock.state === 'conflict'),

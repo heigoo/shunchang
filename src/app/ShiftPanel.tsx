@@ -6,10 +6,17 @@ import { formatClockDisplay } from '../domain/timeline';
 import type { RuntimeState, Sheet } from '../domain/types';
 import { useT } from '../i18n';
 import { Badge, Button } from '../ui';
-import { buildShiftPreview } from './shiftPreview';
+import {
+  buildShiftPreview,
+  defaultShiftStart,
+  nextPlanStartOf,
+} from './shiftPreview';
 import type { ShiftPreview } from './shiftPreview';
 
 const MINUS = '\u2212';
+const QUICK_MINUTES = [5, 10, 15, 30, 60];
+const EXTEND_MINUTES = [5, 10, 15];
+const MAX_DELAY_MIN = 600;
 
 export interface ShiftPanelProps {
   sheet: Sheet;
@@ -18,6 +25,8 @@ export interface ShiftPanelProps {
   closing?: boolean;
   onCancel(): void;
   onConfirm(startMin: number): void;
+  onClearManual?(): void;
+  onExtend?(minutes: number): void;
 }
 
 function signedText(value: number): string {
@@ -25,6 +34,24 @@ function signedText(value: number): string {
     return '0';
   }
   return `${value > 0 ? '+' : MINUS}${Math.abs(value)}`;
+}
+
+function inputValue(event: any): string {
+  const detail = event && event.detail ? event.detail : null;
+  return detail && typeof detail.value === 'string' ? detail.value : '';
+}
+
+/** 解析“延后 N 分钟”的输入；只接受 1–600 的整数分钟。 */
+export function parseDelayMinutes(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d{1,3}$/.test(trimmed)) {
+    return null;
+  }
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value <= 0 || value > MAX_DELAY_MIN) {
+    return null;
+  }
+  return value;
 }
 
 function LockBlock(props: { preview: ShiftPreview }) {
@@ -81,11 +108,26 @@ function LockBlock(props: { preview: ShiftPreview }) {
 }
 
 export function ShiftPanel(props: ShiftPanelProps) {
-  const { sheet, runtime, nowMin, closing = false, onCancel, onConfirm } = props;
+  const {
+    sheet,
+    runtime,
+    nowMin,
+    closing = false,
+    onCancel,
+    onConfirm,
+    onClearManual,
+    onExtend,
+  } = props;
   const t = useT();
-  const [startMin, setStartMin] = useState(() => nowMin);
+  // 尚未到下一环节计划时刻时默认按计划时刻，避免一打开就提前。
+  const [startMin, setStartMin] = useState(() =>
+    defaultShiftStart(nowMin, nextPlanStartOf(sheet, runtime)),
+  );
+  const [delayText, setDelayText] = useState('');
 
   const preview = buildShiftPreview(sheet, runtime, startMin, nowMin);
+  const delayMin = parseDelayMinutes(delayText);
+  const extendEnabled = preview.ok && onExtend !== undefined;
 
   const classes = closing ? 'ShiftGlass GlassOut' : 'ShiftGlass';
 
@@ -129,6 +171,44 @@ export function ShiftPanel(props: ShiftPanelProps) {
               </view>
             </view>
 
+            <view className="ShiftQuick">
+              {QUICK_MINUTES.map((minutes) => (
+                <view
+                  className="ShiftQuickBtn"
+                  key={`quick-${minutes}`}
+                  bindtap={() => {
+                    setStartMin((value) => value + minutes);
+                  }}
+                >
+                  <text className="ShiftQuickLabel">{`+${minutes}`}</text>
+                </view>
+              ))}
+            </view>
+
+            <view className="ShiftDelay">
+              <input
+                className="ShiftDelayInput"
+                placeholder={t('延后 N 分钟')}
+                maxlength={3}
+                bindinput={(event) => {
+                  setDelayText(inputValue(event));
+                }}
+              />
+              <view
+                className={
+                  delayMin === null ? 'ShiftDelayBtn ShiftDelayBtn--off' : 'ShiftDelayBtn'
+                }
+                bindtap={() => {
+                  if (delayMin === null) {
+                    return;
+                  }
+                  setStartMin((value) => value + delayMin);
+                }}
+              >
+                <text className="ShiftDelayLabel">{t('延后')}</text>
+              </view>
+            </view>
+
             <view
               className="ShiftNow"
               bindtap={() => {
@@ -162,8 +242,53 @@ export function ShiftPanel(props: ShiftPanelProps) {
               <LockBlock preview={preview} />
             </scroll-view>
 
+            <view className="ShiftExtend">
+              <text className="ShiftExtendLabel">{t('延长当前环节')}</text>
+              <view className="ShiftExtendRow">
+                {EXTEND_MINUTES.map((minutes) => (
+                  <view
+                    className={
+                      extendEnabled
+                        ? 'ShiftExtendBtn'
+                        : 'ShiftExtendBtn ShiftExtendBtn--off'
+                    }
+                    key={`extend-${minutes}`}
+                    bindtap={() => {
+                      if (!extendEnabled || !onExtend) {
+                        return;
+                      }
+                      onExtend(minutes);
+                    }}
+                  >
+                    <text className="ShiftExtendLabelText">{`延长 +${minutes}`}</text>
+                  </view>
+                ))}
+              </view>
+              {preview.reason === 'locked' ? (
+                <text className="ShiftNote">{t('下一环节为锁定时刻，无法延长')}</text>
+              ) : null}
+              {preview.reason === 'last' ? (
+                <text className="ShiftNote">{t('已是最后一个环节，无法延长')}</text>
+              ) : null}
+            </view>
+
+            {runtime.manualOffsetMin !== 0 && onClearManual ? (
+              <view className="ShiftManual" bindtap={onClearManual}>
+                <text className="ShiftManualText">
+                  {t('清除手动顺延（{n} 分钟）', {
+                    n: signedText(runtime.manualOffsetMin),
+                  })}
+                </text>
+              </view>
+            ) : null}
+
             {preview.earlierThanNow ? (
               <text className="ShiftNote">{t('该时间早于当前时刻')}</text>
+            ) : null}
+            {preview.planEarlyMin > 0 ? (
+              <text className="ShiftWarn">
+                {t('将提前 {n} 分钟', { n: preview.planEarlyMin })}
+              </text>
             ) : null}
             {preview.reason === 'last' ? (
               <text className="ShiftNote">{t('已是最后一个环节')}</text>

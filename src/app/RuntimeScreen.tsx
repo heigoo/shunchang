@@ -21,11 +21,13 @@ import { registerBackHandler } from './backBus';
 import {
   applyShift,
   buildRuntimeView,
+  clearManualShift,
   completeCurrent,
   createRuntime,
   skipCurrent,
 } from './runtimeOps';
 import { listSnapshots, pushSnapshot, restoreSnapshot } from './runtimeHistory';
+import { extendStartMin } from './shiftPreview';
 import {
   canUseAndroidHost,
   exportSheetFile,
@@ -502,6 +504,42 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       setShiftToast(null);
       shiftToastTimer.current = null;
     }, 2400);
+  };
+
+  /** 清除手动顺延，回到只由完成环节推导的自动偏移。 */
+  const clearManual = () => {
+    const next = clearManualShift(runtime);
+    if (next === runtime) {
+      return;
+    }
+    const label = tText('清除手动顺延');
+    recordSnapshot(label);
+    saveRuntime(next);
+    setRuntime(next);
+    setShiftOpen(false);
+    showUndo(label);
+    showShiftToast(tText('已清除手动顺延，后续环节已重排'));
+  };
+
+  /** 延长当前环节：把下一环节开始时间后移，复用顺延的偏移机制。 */
+  const extendCurrent = (minutes: number) => {
+    const nowMin = minuteOfDay(Date.now());
+    const currentEndMin = view.currentRow ? view.currentRow.displayEnd : null;
+    const next = applyShift(
+      sheet,
+      runtime,
+      extendStartMin(nowMin, currentEndMin, minutes),
+    );
+    if (next === runtime) {
+      return;
+    }
+    const label = tText('延长当前环节 +{n} 分钟', { n: minutes });
+    recordSnapshot(label);
+    saveRuntime(next);
+    setRuntime(next);
+    setShiftOpen(false);
+    showUndo(label);
+    showShiftToast(tText('已延长 {n} 分钟，后续环节已重排', { n: minutes }));
   };
 
   const toggleKeepAwake = () => {
@@ -1129,6 +1167,8 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             onCancel={() => {
               setShiftOpen(false);
             }}
+            onClearManual={clearManual}
+            onExtend={extendCurrent}
             onConfirm={(startMin) => {
               const next = applyShift(sheet, runtime, startMin);
               if (next === runtime) {

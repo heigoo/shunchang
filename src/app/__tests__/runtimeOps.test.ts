@@ -10,6 +10,7 @@ import {
   createRuntime,
   skipCurrent,
 } from '../runtimeOps';
+import { extendStartMin } from '../shiftPreview';
 
 function makeItem(
   id: string,
@@ -215,5 +216,53 @@ describe('偏移拆分', () => {
     expect(next.offsetMin).toBe(10);
     expect(next.execVersion).toBe(runtime.execVersion + 1);
     expect(clearManualShift(next)).toBe(next);
+  });
+
+  it('先顺延再完成时手动偏移仍保留', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime = createRuntime(sheet, 480);
+
+    // 顺延下一环节到 09:30：手动偏移 30。
+    const shifted = applyShift(sheet, runtime, 570);
+    expect(shifted.manualOffsetMin).toBe(30);
+    expect(shifted.offsetMin).toBe(30);
+
+    // 当前环节实际 09:10 结束：自动偏移 10，手动 30 不被覆盖。
+    const next = completeCurrent(sheet, shifted, 550);
+
+    expect(next.autoOffsetMin).toBe(10);
+    expect(next.manualOffsetMin).toBe(30);
+    expect(next.offsetMin).toBe(40);
+    expect(next.currentIndex).toBe(1);
+  });
+});
+
+describe('延长当前环节', () => {
+  it('顺延下一环节并同步延长当前环节倒计时', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30)]);
+    const runtime = createRuntime(sheet, 480);
+    const before = buildRuntimeView(sheet, runtime);
+
+    const target = extendStartMin(480, before.currentRow?.displayEnd ?? null, 10);
+    expect(target).toBe(550);
+
+    const next = applyShift(sheet, runtime, target);
+    const after = buildRuntimeView(sheet, next);
+
+    expect(next.manualOffsetMin).toBe(10);
+    expect(next.offsetMin).toBe(10);
+    expect(next.currentIndex).toBe(0);
+    expect(after.countdownTargetMin).toBe(550);
+    expect(before.countdownTargetMin).toBe(540);
+  });
+
+  it('下一环节锁定时延长不可用', () => {
+    const sheet = makeSheet([makeItem('a', 60), makeItem('b', 30, 600)]);
+    const runtime = createRuntime(sheet, 480);
+    const before = buildRuntimeView(sheet, runtime);
+
+    const target = extendStartMin(480, before.currentRow?.displayEnd ?? null, 10);
+
+    expect(applyShift(sheet, runtime, target)).toBe(runtime);
   });
 });

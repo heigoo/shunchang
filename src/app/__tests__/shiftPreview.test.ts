@@ -1,7 +1,12 @@
 import { describe, expect, it } from '@rstest/core';
 
 import type { Item, RuntimeState, Sheet } from '../../domain/types';
-import { buildShiftPreview } from '../shiftPreview';
+import {
+  buildShiftPreview,
+  defaultShiftStart,
+  extendStartMin,
+  nextPlanStartOf,
+} from '../shiftPreview';
 
 function makeItem(
   id: string,
@@ -202,5 +207,81 @@ describe('buildShiftPreview', () => {
     expect(preview.nextOffsetMin).toBe(-40);
     expect(preview.deltaMin).toBe(-40);
     expect(preview.rows[0].time).toBe('08\u223620');
+  });
+
+  it('暴露下一环节计划开始与当前环节展示结束', () => {
+    const sheet = makeSheet([
+      makeItem('a', '开场', 60),
+      makeItem('b', '致辞', 30),
+    ]);
+    const runtime = makeRuntime(sheet, 0);
+
+    const preview = buildShiftPreview(sheet, runtime, 560, 530);
+
+    expect(preview.nextPlanStart).toBe(540);
+    expect(preview.currentEndMin).toBe(540);
+    expect(preview.planEarlyMin).toBe(0);
+    expect(nextPlanStartOf(sheet, runtime)).toBe(540);
+  });
+
+  it('所选时间早于下一环节计划时给出提前分钟数', () => {
+    const sheet = makeSheet([
+      makeItem('a', '开场', 60),
+      makeItem('b', '致辞', 30),
+    ]);
+    const preview = buildShiftPreview(
+      sheet,
+      makeRuntime(sheet, 0),
+      520,
+      530,
+    );
+
+    expect(preview.nextPlanStart).toBe(540);
+    expect(preview.planEarlyMin).toBe(20);
+    expect(preview.earlierThanNow).toBe(true);
+  });
+
+  it('锁定预览仍给出下一环节计划开始与当前结束', () => {
+    const sheet = makeSheet([
+      makeItem('a', '开场', 60),
+      makeItem('b', '仪式', 30, 600),
+    ]);
+    const runtime = makeRuntime(sheet, 0);
+
+    const preview = buildShiftPreview(sheet, runtime, 600, 560);
+
+    expect(preview.ok).toBe(false);
+    expect(preview.reason).toBe('locked');
+    expect(preview.nextPlanStart).toBe(600);
+    expect(preview.currentEndMin).toBe(540);
+    expect(nextPlanStartOf(sheet, runtime)).toBe(600);
+  });
+
+  it('最后一个环节没有下一环节计划开始', () => {
+    const sheet = makeSheet([makeItem('a', '开场', 60)]);
+    const runtime = makeRuntime(sheet, 0);
+
+    const preview = buildShiftPreview(sheet, runtime, 560, 530);
+
+    expect(preview.nextPlanStart).toBeNull();
+    expect(preview.currentEndMin).toBe(540);
+    expect(nextPlanStartOf(sheet, runtime)).toBeNull();
+  });
+});
+
+describe('defaultShiftStart', () => {
+  it('未到计划时刻用计划时刻，已过计划时刻用当前时刻', () => {
+    expect(defaultShiftStart(800, 840)).toBe(840);
+    expect(defaultShiftStart(840, 840)).toBe(840);
+    expect(defaultShiftStart(850, 840)).toBe(850);
+    expect(defaultShiftStart(800, null)).toBe(800);
+  });
+});
+
+describe('extendStartMin', () => {
+  it('取当前时刻与当前环节展示结束的较大值再加分钟数', () => {
+    expect(extendStartMin(500, 540, 10)).toBe(550);
+    expect(extendStartMin(560, 540, 10)).toBe(570);
+    expect(extendStartMin(500, null, 5)).toBe(505);
   });
 });
