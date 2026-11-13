@@ -2,12 +2,34 @@ import './ReportScreen.css';
 
 import { useState } from '@lynx-js/react';
 
-import { buildExecutionSheet } from '../domain/execution';
-import { computeTimeline, formatDuration } from '../domain/timeline';
-import type { RuntimeState, SheetStatus } from '../domain/types';
+import { formatDuration } from '../domain/timeline';
+import type { SheetStatus } from '../domain/types';
 import { useT } from '../i18n';
+import { isDesktopRuntime } from '../platform/desktop';
 import { getRuntime, getSheet, saveSheet } from '../store/repository';
 import { Badge, Button } from '../ui';
+import { desktopOpenPrintHtml } from './desktopBridge';
+import { buildReportHtml } from './reportHtml';
+import {
+  buildReport,
+  buildReportText,
+  clockRange,
+  offsetText,
+  reportFileName,
+  reportLockText,
+  reportResultLabel,
+  signedDurationText,
+} from './reportOps';
+import type { ReportItemRow } from './reportOps';
+import {
+  canUseAndroidHost,
+  copyText,
+  isWeb,
+  printHtmlNative,
+  shareFollowLink,
+  shareHtmlFile,
+} from './share';
+import { webPrint } from './webBridge';
 
 export interface ReportScreenProps {
   sheetId: string;
@@ -25,7 +47,14 @@ const STATUS_LABEL: Record<SheetStatus, string> = {
   done: '已完成',
 };
 
-const MINUS = '\u2212';
+const REPORT_PRINT_CSS = `@page { size: A4 landscape; margin: 8mm; }
+@media print {
+  html, body { background: #fff !important; }
+  .ReportHeader, .ReportActions, .ReportExportActions, .ReportToast { display: none !important; }
+  .Report { height: auto !important; background: #fff !important; }
+  .ReportScroll { display: block !important; overflow: visible !important; }
+  .ReportBody { max-width: none !important; padding: 0 !important; }
+}`;
 
 function pad3(value: number): string {
   if (value < 10) return `00${value}`;
@@ -33,27 +62,11 @@ function pad3(value: number): string {
   return String(value);
 }
 
-function actualDurationMin(
-  actual: { start?: number; end?: number } | undefined,
-): number {
-  if (!actual || actual.start === undefined || actual.end === undefined) {
-    return 0;
+function actualText(row: ReportItemRow): string {
+  if (row.actualStart === null || row.actualEnd === null) {
+    return '—';
   }
-  let duration = actual.end - actual.start;
-  if (duration < 0) {
-    duration += 1440;
-  }
-  return duration;
-}
-
-function diffText(value: number): string {
-  if (value > 0) {
-    return `+${formatDuration(value)}`;
-  }
-  if (value < 0) {
-    return `${MINUS}${formatDuration(-value)}`;
-  }
-  return formatDuration(0);
+  return clockRange(row.actualStart, row.actualEnd);
 }
 
 export function ReportScreen(props: ReportScreenProps) {
@@ -62,6 +75,8 @@ export function ReportScreen(props: ReportScreenProps) {
 
   const [sheet] = useState(() => getSheet(sheetId));
   const [runtime] = useState(() => getRuntime(sheetId));
+  const [printedAt] = useState(() => Date.now());
+  const [status, setStatus] = useState('');
 
   if (!sheet) {
     return (
@@ -83,36 +98,10 @@ export function ReportScreen(props: ReportScreenProps) {
     );
   }
 
-  const execSheet = runtime ? buildExecutionSheet(sheet, runtime) : sheet;
-  const timeline = computeTimeline(execSheet, runtime ? runtime.offsetMin : 0);
-
-  let doneCount = 0;
-  let skippedCount = 0;
-  let actualTotalMin = 0;
-
-  for (const item of execSheet.items) {
-    const actual: RuntimeState['actuals'][string] | undefined = runtime
-      ? runtime.actuals[item.id]
-      : undefined;
-    if (!actual || (actual.result !== 'done' && actual.result !== 'skipped')) {
-      continue;
-    }
-    if (actual.result === 'skipped') {
-      skippedCount += 1;
-      continue;
-    }
-    doneCount += 1;
-    actualTotalMin += actualDurationMin(actual);
-  }
-
-  const pendingCount = execSheet.items.length - doneCount - skippedCount;
-  const allTerminal = pendingCount === 0;
-  const pendingItems = execSheet.items.filter((item) => {
-    const actual = runtime ? runtime.actuals[item.id] : undefined;
-    return !actual || (actual.result !== 'done' && actual.result !== 'skipped');
-  });
-  const planTotalMin = timeline.totalPlanMin;
-  const diffMin = actualTotalMin - planTotalMin;
+  const report = buildReport(sheet, runtime);
+  const { summary, rows, audit } = report;
+  const allTerminal = summary.allTerminal;
+  const pendingRows = rows.filter((row) => row.result === 'pending');
 
   const handleContinue = () => {
     if (sheet.status !== 'running') {
@@ -130,6 +119,117 @@ export function ReportScreen(props: ReportScreenProps) {
       return;
     }
     onBack();
+  };
+
+  const handlePrint = () => {
+    const html = buildReportHtml(sheet, runtime, printedAt);
+    const name = reportFileName(sheet);
+
+    if (canUseAndroidHost()) {
+      if (printHtmlNative(html, name)) {
+        setStatus(tText('已打开打印预览'));
+        return;
+      }
+      const shared = shareHtmlFile(`${name}.html`, html);
+      setStatus(
+        shared
+          ? tText('已导出，请在系统面板中选择保存或发送')
+          : tText('导出失败，请重试'),
+      );
+      return;
+    }
+
+    if (isDesktopRuntime()) {
+      void desktopOpenPrintHtml(`${name}.html`, html).then((ok) => {
+        setStatus(
+          ok
+            ? tText('已生成打印页，请在浏览器中打印')
+            : tText('打印文件导出失败'),
+        );
+      });
+      return;
+    }
+
+    if (isWeb()) {
+      void webPrint(REPORT_PRINT_CSS).then((ok) => {
+        setStatus(ok ? tText('已打开打印预览') : tText('打印失败，请重试'));
+      });
+      return;
+    }
+
+    setStatus(tText('当前环境不支持打印，请用浏览器打开'));
+  };
+
+  const handleCopy = () => {
+    const text = buildReportText(report);
+    void copyText(text).then(async (copied) => {
+      if (copied) {
+        setStatus(tText('已复制文字摘要'));
+        return;
+      }
+      const outcome = await shareFollowLink(text);
+      setStatus(
+        outcome === 'failed'
+          ? tText('复制失败，请重试')
+          : tText('已打开系统分享'),
+      );
+    });
+  };
+
+  const renderRow = (row: ReportItemRow) => {
+    const tags: string[] = [];
+    if (row.compressedLostMin > 0) {
+      tags.push(
+        tText('压缩 {duration}', {
+          duration: formatDuration(row.compressedLostMin),
+        }),
+      );
+    }
+    if (row.inserted) {
+      tags.push(tText('现场插入'));
+    }
+    const lock = reportLockText(row);
+    if (lock.length > 0) {
+      tags.push(lock);
+    }
+
+    return (
+      <view className="ReportRow" key={row.itemId}>
+        <view className="ReportRowHead">
+          <text className="ReportRowNo">{row.no}</text>
+          <text className="ReportRowName">{row.name}</text>
+          {row.owner.length > 0 ? (
+            <text className="ReportRowOwner">{row.owner}</text>
+          ) : null}
+          <Badge
+            kind={row.result === 'skipped' ? 'amber' : 'outline'}
+            label={reportResultLabel(row.result)}
+          />
+        </view>
+        <text className="ReportRowLine">
+          {`${tText('计划')} ${clockRange(row.planStart, row.planEnd)} · ${tText(
+            '展示',
+          )} ${clockRange(row.displayStart, row.displayEnd)}`}
+        </text>
+        <text className="ReportRowLine">
+          {`${tText('实际')} ${actualText(row)} · ${tText('偏差')} ${signedDurationText(
+            row.deviationMin,
+          )}`}
+        </text>
+        {tags.length > 0 ? (
+          <view className="ReportRowTags">
+            {tags.map((tag) => (
+              <text className="ReportRowTag" key={tag}>
+                {tag}
+              </text>
+            ))}
+          </view>
+        ) : null}
+        {row.note.trim().length > 0 ? (
+          <text className="ReportRowNote">{`${tText('备注')} · ${row.note}`}</text>
+        ) : null}
+      </view>
+    );
   };
 
   return (
@@ -164,7 +264,7 @@ export function ReportScreen(props: ReportScreenProps) {
               ) : null}
             </view>
             <text className="ReportDate">
-              {`${sheet.date} · ${pad3(execSheet.items.length)} ${tText('环节')}`}
+              {`${sheet.date} · ${pad3(rows.length)} ${tText('环节')}`}
             </text>
           </view>
 
@@ -174,19 +274,19 @@ export function ReportScreen(props: ReportScreenProps) {
               <view className="ReportStat">
                 <text className="ReportStatLabel">{tText('计划总时长')}</text>
                 <text className="ReportStatValue">
-                  {formatDuration(planTotalMin)}
+                  {formatDuration(summary.planTotalMin)}
                 </text>
               </view>
               <view className="ReportStat">
                 <text className="ReportStatLabel">{tText('实际总时长')}</text>
                 <text className="ReportStatValue">
-                  {formatDuration(actualTotalMin)}
+                  {formatDuration(summary.actualTotalMin)}
                 </text>
               </view>
               <view className="ReportStat ReportStat--last">
                 <text className="ReportStatLabel">{tText('差值')}</text>
                 <text className="ReportStatValue ReportStatValue--accent">
-                  {diffText(diffMin)}
+                  {signedDurationText(summary.diffMin)}
                 </text>
               </view>
             </view>
@@ -197,37 +297,72 @@ export function ReportScreen(props: ReportScreenProps) {
             <view className="ReportStatRow">
               <view className="ReportStat">
                 <text className="ReportStatLabel">{tText('完成')}</text>
-                <text className="ReportStatValue">{pad3(doneCount)}</text>
+                <text className="ReportStatValue">{pad3(summary.doneCount)}</text>
               </view>
               <view className="ReportStat">
                 <text className="ReportStatLabel">{tText('跳过')}</text>
-                <text className="ReportStatValue">{pad3(skippedCount)}</text>
+                <text className="ReportStatValue">{pad3(summary.skippedCount)}</text>
               </view>
               <view className="ReportStat ReportStat--last">
                 <text className="ReportStatLabel">{tText('未执行')}</text>
-                <text className="ReportStatValue">{pad3(pendingCount)}</text>
+                <text className="ReportStatValue">{pad3(summary.pendingCount)}</text>
               </view>
             </view>
           </view>
 
-          {pendingItems.length > 0 ? (
+          <view className="ReportSection">
+            <text className="ReportSectionLabel">{tText('执行汇总')}</text>
+            <view className="ReportStatRow">
+              <view className="ReportStat">
+                <text className="ReportStatLabel">{tText('完成率')}</text>
+                <text className="ReportStatValue">{`${summary.completionRate}%`}</text>
+              </view>
+              <view className="ReportStat ReportStat--last">
+                <text className="ReportStatLabel">{tText('有效偏移')}</text>
+                <text className="ReportStatValue">
+                  {offsetText(summary.effectiveOffsetMin)}
+                </text>
+              </view>
+            </view>
+          </view>
+
+          {pendingRows.length > 0 ? (
             <view className="ReportSection">
               <text className="ReportSectionLabel">{tText('未执行清单')}</text>
               <view className="ReportPendingList">
-                {pendingItems.map((item, index) => (
-                  <view className="ReportPendingRow" key={item.id}>
-                    <text className="ReportPendingNo">{pad3(index + 1)}</text>
-                    <text className="ReportPendingName">
-                      {item.name.length > 0 ? item.name : tText('未命名环节')}
-                    </text>
+                {pendingRows.map((row) => (
+                  <view className="ReportPendingRow" key={row.itemId}>
+                    <text className="ReportPendingNo">{row.no}</text>
+                    <text className="ReportPendingName">{row.name}</text>
                     <text className="ReportPendingMeta">
-                      {formatDuration(item.durationMin)}
+                      {formatDuration(row.planEnd - row.planStart)}
                     </text>
                   </view>
                 ))}
               </view>
             </view>
           ) : null}
+
+          <view className="ReportSection">
+            <text className="ReportSectionLabel">{tText('逐项复盘')}</text>
+            <view className="ReportTable">{rows.map(renderRow)}</view>
+          </view>
+
+          <view className="ReportSection">
+            <text className="ReportSectionLabel">{tText('现场记录')}</text>
+            {audit.length > 0 ? (
+              <view className="ReportAuditList">
+                {audit.map((entry) => (
+                  <view className="ReportAuditRow" key={entry.id}>
+                    <text className="ReportAuditTime">{entry.atText}</text>
+                    <text className="ReportAuditLabel">{entry.label}</text>
+                  </view>
+                ))}
+              </view>
+            ) : (
+              <text className="ReportEmpty">{tText('无现场变更记录')}</text>
+            )}
+          </view>
 
           <view className="ReportActions">
             {!allTerminal ? (
@@ -259,6 +394,29 @@ export function ReportScreen(props: ReportScreenProps) {
               </view>
             ) : null}
           </view>
+
+          <view className="ReportExportActions">
+            <view className="ReportAction">
+              <Button
+                label={tText('导出 / 打印')}
+                kind="secondary"
+                block
+                onTap={handlePrint}
+              />
+            </view>
+            <view className="ReportAction ReportActionPrimary">
+              <Button
+                label={tText('复制文字摘要')}
+                kind="tertiary"
+                block
+                onTap={handleCopy}
+              />
+            </view>
+          </view>
+
+          {status.length > 0 ? (
+            <text className="ReportToast">{status}</text>
+          ) : null}
         </view>
       </scroll-view>
     </view>

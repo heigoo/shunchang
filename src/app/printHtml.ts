@@ -3,7 +3,7 @@ import { getLang, t } from '../i18n';
 import { buildPrintRows, paginateRows, printSummary } from './printOps';
 import type { PrintPage } from './printOps';
 
-const PRINT_STYLES = `@page { size: A4 landscape; margin: 8mm; }
+export const PRINT_STYLES = `@page { size: A4 landscape; margin: 8mm; }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: #f3f0e8; color: #15140f; }
 body {

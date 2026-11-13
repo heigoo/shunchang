@@ -163,7 +163,7 @@ test('lists unfinished items and archives the report as done', async () => {
   );
 
   const archived: string[] = [];
-  const { findByText } = render(
+  const { findByText, findAllByText } = render(
     <ReportScreen
       sheetId={SHEET_ID}
       onBack={() => {}}
@@ -175,10 +175,117 @@ test('lists unfinished items and archives the report as done', async () => {
   );
 
   expect(await findByText('未执行清单')).toBeInTheDocument();
-  expect(await findByText('仪式开始')).toBeInTheDocument();
+  expect((await findAllByText('仪式开始')).length).toBeGreaterThan(0);
 
   fireEvent.tap(await findByText('归档'));
 
   expect(archived).toEqual([SHEET_ID]);
   expect(getSheet(SHEET_ID)?.status).toBe('done');
+});
+
+test('renders per-item rows, live inserts, audit records and export actions', async () => {
+  saveSheet(makeSheet());
+  saveRuntime({
+    ...makeRuntime(
+      {
+        'item-a': { start: 480, end: 550, result: 'done' },
+      },
+      1,
+    ),
+    insertedItems: [
+      {
+        id: 'ins-1',
+        afterId: 'item-a',
+        createdAt: 1000,
+        item: {
+          id: 'item-x',
+          name: '长辈致辞',
+          durationMin: 10,
+          owner: '主持',
+          note: '',
+          lockAt: null,
+        },
+      },
+    ],
+    audit: [
+      {
+        id: 'audit-1',
+        at: 1000,
+        type: 'insert',
+        label: '插入「长辈致辞」',
+      },
+    ],
+  });
+
+  const { findByText } = render(
+    <ReportScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onContinue={() => {}}
+    />,
+  );
+
+  expect(await findByText('逐项复盘')).toBeInTheDocument();
+  expect(await findByText('现场记录')).toBeInTheDocument();
+  expect(await findByText('现场插入')).toBeInTheDocument();
+  expect(await findByText('插入「长辈致辞」')).toBeInTheDocument();
+  expect(await findByText('33%')).toBeInTheDocument();
+  expect(await findByText('导出 / 打印')).toBeInTheDocument();
+  expect(await findByText('复制文字摘要')).toBeInTheDocument();
+});
+
+test('shows lock compression and skipped results in the item rows', async () => {
+  saveSheet({
+    ...makeSheet(),
+    items: [
+      {
+        id: 'item-a',
+        name: '签到',
+        durationMin: 60,
+        owner: '督导',
+        note: '',
+        lockAt: null,
+      },
+      {
+        id: 'item-b',
+        name: '仪式',
+        durationMin: 30,
+        owner: '主持',
+        note: '',
+        lockAt: 600,
+        locked: true,
+      },
+      {
+        id: 'item-c',
+        name: '敬酒',
+        durationMin: 40,
+        owner: '',
+        note: '',
+        lockAt: null,
+      },
+    ],
+  });
+  saveRuntime({
+    ...makeRuntime(
+      {
+        'item-a': { start: 480, end: 550, result: 'done' },
+        'item-b': { start: 600, end: 600, result: 'skipped' },
+      },
+      2,
+    ),
+    offsetMin: 70,
+    manualOffsetMin: 70,
+  });
+
+  const { findByText } = render(
+    <ReportScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onContinue={() => {}}
+    />,
+  );
+
+  expect(await findByText('压缩 10 分钟')).toBeInTheDocument();
+  expect(await findByText('无现场变更记录')).toBeInTheDocument();
+  expect(await findByText('−1 小时 00 分钟')).toBeInTheDocument();
 });
