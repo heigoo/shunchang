@@ -150,3 +150,35 @@ test('hides continue when every item reached a terminal state', async () => {
   expect(queryByText('继续执行')).toBeNull();
   expect(queryByText('未全部完成')).toBeNull();
 });
+
+test('lists unfinished items and archives the report as done', async () => {
+  saveSheet(makeSheet('running'));
+  saveRuntime(
+    makeRuntime(
+      {
+        'item-a': { start: 480, end: 550, result: 'done' },
+      },
+      1,
+    ),
+  );
+
+  const archived: string[] = [];
+  const { findByText } = render(
+    <ReportScreen
+      sheetId={SHEET_ID}
+      onBack={() => {}}
+      onContinue={() => {}}
+      onArchive={(id) => {
+        archived.push(id);
+      }}
+    />,
+  );
+
+  expect(await findByText('未执行清单')).toBeInTheDocument();
+  expect(await findByText('仪式开始')).toBeInTheDocument();
+
+  fireEvent.tap(await findByText('归档'));
+
+  expect(archived).toEqual([SHEET_ID]);
+  expect(getSheet(SHEET_ID)?.status).toBe('done');
+});

@@ -4,6 +4,7 @@ import type {
   InsertedItem,
   RuntimeState,
   Sheet,
+  SheetStatus,
 } from '../domain/types';
 import { formatDateKey, isValidDateKey } from '../domain/types';
 import { t } from '../i18n';
@@ -12,6 +13,7 @@ import { storage } from './storage';
 
 const SHEETS_KEY = 'shunchang.sheets.v1';
 const ROLE_KEY = 'shunchang.role';
+export const MAX_RUNTIME_SNAPSHOTS = 10;
 const LAST_VIEW_KEY = 'shunchang.lastView';
 const THEME_KEY = 'shunchang.theme';
 const CORRUPT_MESSAGE = '本地数据损坏，已忽略';
@@ -36,6 +38,7 @@ const VIEWS: AppView[] = [
 
 let lastError: string | null = null;
 const runtimeKeys = new Set<string>();
+const snapshotKeys = new Set<string>();
 
 function setCorruptError(): void {
   lastError = CORRUPT_MESSAGE;
@@ -47,6 +50,10 @@ function createId(): string {
 
 function runtimeKey(sheetId: string): string {
   return `shunchang.runtime.${sheetId}`;
+}
+
+function snapshotsKey(sheetId: string): string {
+  return `shunchang.runtimeSnapshots.${sheetId}`;
 }
 
 function isSheet(value: unknown): value is Sheet {
@@ -151,6 +158,7 @@ export function deleteSheet(id: string): { ok: boolean; reason?: string } {
   sheets.splice(index, 1);
   writeSheets(sheets);
   removeRuntime(id);
+  removeRuntimeSnapshots(id);
   return { ok: true };
 }
 
@@ -303,6 +311,114 @@ export function removeRuntime(sheetId: string): void {
   }
 }
 
+/** 执行写操作前的运行时快照，用于撤销与回退。 */
+export interface RuntimeSnapshot {
+  at: number;
+  label: string;
+  runtime: RuntimeState;
+  sheetStatus: SheetStatus;
+}
+
+function isSheetStatus(value: unknown): value is SheetStatus {
+  return (
+    value === 'draft' ||
+    value === 'published' ||
+    value === 'running' ||
+    value === 'done'
+  );
+}
+
+function normalizeSnapshot(value: unknown): RuntimeSnapshot | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const entry = value as Partial<RuntimeSnapshot>;
+  if (
+    typeof entry.at !== 'number' ||
+    typeof entry.label !== 'string' ||
+    !isSheetStatus(entry.sheetStatus)
+  ) {
+    return null;
+  }
+  const runtime = entry.runtime;
+  if (
+    !runtime ||
+    typeof runtime !== 'object' ||
+    typeof runtime.sheetId !== 'string' ||
+    typeof runtime.currentIndex !== 'number'
+  ) {
+    return null;
+  }
+  return {
+    at: entry.at,
+    label: entry.label,
+    sheetStatus: entry.sheetStatus,
+    runtime: normalizeRuntime(runtime),
+  };
+}
+
+export function getRuntimeSnapshots(sheetId: string): RuntimeSnapshot[] {
+  let raw: string | null = null;
+  try {
+    raw = storage.get(snapshotsKey(sheetId));
+  } catch {
+    return [];
+  }
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as { v?: unknown; snapshots?: unknown };
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.snapshots)) {
+      setCorruptError();
+      return [];
+    }
+    const snapshots: RuntimeSnapshot[] = [];
+    parsed.snapshots.forEach((entry) => {
+      const snapshot = normalizeSnapshot(entry);
+      if (snapshot) {
+        snapshots.push(snapshot);
+      }
+    });
+    return snapshots.slice(-MAX_RUNTIME_SNAPSHOTS);
+  } catch {
+    setCorruptError();
+    return [];
+  }
+}
+
+export function saveRuntimeSnapshots(
+  sheetId: string,
+  snapshots: RuntimeSnapshot[],
+): void {
+  snapshotKeys.add(sheetId);
+  try {
+    if (snapshots.length === 0) {
+      storage.remove(snapshotsKey(sheetId));
+      return;
+    }
+    storage.set(
+      snapshotsKey(sheetId),
+      JSON.stringify({
+        v: 1,
+        snapshots: snapshots.slice(-MAX_RUNTIME_SNAPSHOTS),
+      }),
+    );
+  } catch {
+    // Ignore persistence failures.
+  }
+}
+
+export function removeRuntimeSnapshots(sheetId: string): void {
+  snapshotKeys.delete(sheetId);
+  try {
+    storage.remove(snapshotsKey(sheetId));
+  } catch {
+    // Ignore.
+  }
+}
+
 export function getRole(): 'owner' | 'follower' {
   try {
     const raw = storage.get(ROLE_KEY);
@@ -403,7 +519,9 @@ export async function hydrateStorage(): Promise<void> {
 
   const sheetIds = readSheets().map((sheet) => sheet.id);
   if (sheetIds.length > 0) {
-    await storage.hydrate(sheetIds.map(runtimeKey));
+    await storage.hydrate(
+      sheetIds.flatMap((sheetId) => [runtimeKey(sheetId), snapshotsKey(sheetId)]),
+    );
   }
 }
 
@@ -412,15 +530,20 @@ export function clearAllForTest(): void {
   for (const sheet of readSheets()) {
     sheetIds.add(sheet.id);
   }
+  snapshotKeys.forEach((sheetId) => {
+    sheetIds.add(sheetId);
+  });
 
   sheetIds.forEach((sheetId) => {
     try {
       storage.remove(runtimeKey(sheetId));
+      storage.remove(snapshotsKey(sheetId));
     } catch {
       // Ignore.
     }
   });
   runtimeKeys.clear();
+  snapshotKeys.clear();
 
   [SHEETS_KEY, ROLE_KEY, LAST_VIEW_KEY, THEME_KEY].forEach((key) => {
     try {

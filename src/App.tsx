@@ -428,6 +428,9 @@ export function App() {
               navigate('list');
             }}
             onPrint={openPrint}
+            onOpenReport={(id) => {
+              navigate('report', id);
+            }}
           />
         ) : (
           <PlaceholderScreen
@@ -447,6 +450,9 @@ export function App() {
             followOnly={followOnly}
             onBack={() => {
               navigate('list');
+            }}
+            onTakeOver={(id) => {
+              navigate('runtime', id);
             }}
           />
         );
@@ -483,6 +489,9 @@ export function App() {
             onBack={back}
             onContinue={(id) => {
               navigate('runtime', id);
+            }}
+            onArchive={() => {
+              navigate('list');
             }}
           />
         ) : (

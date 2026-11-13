@@ -15,6 +15,7 @@ import {
   saveRuntime,
   saveSheet,
 } from '../store/repository';
+import type { RuntimeSnapshot } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
 import {
@@ -24,6 +25,7 @@ import {
   createRuntime,
   skipCurrent,
 } from './runtimeOps';
+import { listSnapshots, pushSnapshot, restoreSnapshot } from './runtimeHistory';
 import {
   canUseAndroidHost,
   exportSheetFile,
@@ -38,12 +40,14 @@ export interface RuntimeScreenProps {
   sheetId: string;
   onBack(): void;
   onPrint?(sheetId: string): void;
+  onOpenReport?(sheetId: string): void;
   safeTop?: number;
   safeBottom?: number;
 }
 
 const MINUS = '\u2212';
 const DONE_GUARD_MS = 300;
+const UNDO_WINDOW_MS = 5000;
 const NARROW_ACTIONS_WIDTH = 700;
 
 let viewportWidthListener: ((width: number) => void) | null = null;
@@ -91,6 +95,11 @@ function pad3(value: number): string {
 function minuteOfDay(ms: number): number {
   const date = new Date(ms);
   return date.getHours() * 60 + date.getMinutes();
+}
+
+function clockOf(ms: number): string {
+  const date = new Date(ms);
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
 }
 
 function offsetLabel(offsetMin: number): string {
@@ -162,7 +171,7 @@ function diffText(value: number): string {
 }
 
 export function RuntimeScreen(props: RuntimeScreenProps) {
-  const { sheetId, onBack, onPrint, safeTop = 0, safeBottom = 0 } = props;
+  const { sheetId, onBack, onPrint, onOpenReport, safeTop = 0, safeBottom = 0 } = props;
   const tText = useT();
 
   const [sheet, setSheet] = useState<Sheet | null>(() => getSheet(sheetId));
@@ -179,6 +188,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [syncOpen, setSyncOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [skipOpen, setSkipOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [restoreIndex, setRestoreIndex] = useState<number | null>(null);
+  const [snapshots, setSnapshots] = useState<RuntimeSnapshot[]>(() =>
+    listSnapshots(sheetId),
+  );
+  const [undoLabel, setUndoLabel] = useState<string | null>(null);
   const [shiftToast, setShiftToast] = useState<string | null>(null);
   const isWideActions = useIsWide(NARROW_ACTIONS_WIDTH);
   const [mainWidth, setMainWidth] = useState<number | null>(null);
@@ -193,12 +208,29 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const syncPresence = usePresence(syncOpen);
   const endPresence = usePresence(endOpen);
   const skipPresence = usePresence(skipOpen);
+  const historyPresence = usePresence(historyOpen);
+  const restorePresence = usePresence(restoreIndex !== null);
 
   useEffect(() => {
-    if (!shiftOpen && !syncOpen && !endOpen && !skipOpen) {
+    if (
+      !shiftOpen &&
+      !syncOpen &&
+      !endOpen &&
+      !skipOpen &&
+      !historyOpen &&
+      restoreIndex === null
+    ) {
       return;
     }
     return registerBackHandler(() => {
+      if (restoreIndex !== null) {
+        setRestoreIndex(null);
+        return true;
+      }
+      if (historyOpen) {
+        setHistoryOpen(false);
+        return true;
+      }
       if (skipOpen) {
         setSkipOpen(false);
         return true;
@@ -217,7 +249,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       }
       return false;
     });
-  }, [shiftOpen, syncOpen, endOpen, skipOpen]);
+  }, [shiftOpen, syncOpen, endOpen, skipOpen, historyOpen, restoreIndex]);
 
   useEffect(() => {
     viewportWidthListener = (width: number) => {
@@ -289,12 +321,16 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     : 'Runtime theme-dark';
 
   const shiftToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDoneAt = useRef(0);
 
   useEffect(() => {
     return () => {
       if (shiftToastTimer.current !== null) {
         clearTimeout(shiftToastTimer.current);
+      }
+      if (undoTimer.current !== null) {
+        clearTimeout(undoTimer.current);
       }
     };
   }, []);
@@ -343,7 +379,14 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const finished = view.finished;
   const timeline = computeTimeline(execSheet, runtime.offsetMin);
   const total = execSheet.items.length;
-  const doneCount = Math.min(Math.max(runtime.currentIndex, 0), total);
+  const completedCount = execSheet.items.filter(
+    (item) => runtime.actuals[item.id]?.result === 'done',
+  ).length;
+  const skippedCount = execSheet.items.filter(
+    (item) => runtime.actuals[item.id]?.result === 'skipped',
+  ).length;
+  const terminalCount = completedCount + skippedCount;
+  const pendingCount = Math.max(total - terminalCount, 0);
 
   const commit = (next: RuntimeState) => {
     saveRuntime(next);
@@ -353,23 +396,101 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     }
   };
 
+  const recordSnapshot = (label: string) => {
+    setSnapshots(pushSnapshot(sheet.id, label, runtime, sheet.status));
+  };
+
+  const showUndo = (label: string) => {
+    setUndoLabel(label);
+    if (undoTimer.current !== null) {
+      clearTimeout(undoTimer.current);
+    }
+    undoTimer.current = setTimeout(() => {
+      setUndoLabel(null);
+      undoTimer.current = null;
+    }, UNDO_WINDOW_MS);
+  };
+
+  const applySnapshot = (snapshot: RuntimeSnapshot) => {
+    saveRuntime(snapshot.runtime);
+    setRuntime(snapshot.runtime);
+    const loaded = getSheet(sheet.id);
+    if (loaded) {
+      setSheet(saveSheet({ ...loaded, status: snapshot.sheetStatus }));
+    }
+    setSnapshots(listSnapshots(sheet.id));
+    setUndoLabel(null);
+    if (undoTimer.current !== null) {
+      clearTimeout(undoTimer.current);
+      undoTimer.current = null;
+    }
+  };
+
+  const undoLast = () => {
+    const current = listSnapshots(sheet.id);
+    if (current.length === 0) {
+      return;
+    }
+    const snapshot = restoreSnapshot(sheet.id, current.length - 1);
+    if (snapshot) {
+      applySnapshot(snapshot);
+    }
+  };
+
+  const confirmRestore = () => {
+    if (restoreIndex === null) {
+      return;
+    }
+    const snapshot = restoreSnapshot(sheet.id, restoreIndex);
+    setRestoreIndex(null);
+    setHistoryOpen(false);
+    if (snapshot) {
+      applySnapshot(snapshot);
+    }
+  };
+
   const doDone = () => {
     const stamp = Date.now();
     if (stamp - lastDoneAt.current < DONE_GUARD_MS) {
       return;
     }
     lastDoneAt.current = stamp;
-    commit(completeCurrent(sheet, runtime, minuteOfDay(stamp)));
+    const next = completeCurrent(sheet, runtime, minuteOfDay(stamp));
+    if (next === runtime) {
+      return;
+    }
+    const name = view.currentItem?.name ?? '';
+    const label = tText('完成「{name}」', {
+      name: name.length > 0 ? name : tText('未命名环节'),
+    });
+    recordSnapshot(label);
+    commit(next);
+    showUndo(label);
   };
 
   const doSkip = () => {
-    commit(skipCurrent(sheet, runtime, minuteOfDay(Date.now())));
+    const next = skipCurrent(sheet, runtime, minuteOfDay(Date.now()));
+    if (next === runtime) {
+      return;
+    }
+    const name = view.currentItem?.name ?? '';
+    const label = tText('跳过「{name}」', {
+      name: name.length > 0 ? name : tText('未命名环节'),
+    });
+    recordSnapshot(label);
+    commit(next);
+    showUndo(label);
   };
 
   const endExecution = () => {
-    saveSheet({ ...sheet, status: 'done' });
+    recordSnapshot(tText('结束执行'));
+    setSheet(saveSheet({ ...sheet, status: 'done' }));
     setEndOpen(false);
-    onBack();
+    if (onOpenReport) {
+      onOpenReport(sheet.id);
+    } else {
+      onBack();
+    }
   };
 
   const showShiftToast = (text: string) => {
@@ -399,14 +520,19 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const syncCodeText =
     syncCode.length === 6 ? `${syncCode.slice(0, 3)}-${syncCode.slice(3)}` : syncCode;
 
-  if (finished) {
-    const completedCount = execSheet.items.filter(
-      (item) => runtime.actuals[item.id]?.result === 'done',
-    ).length;
-    const skippedCount = execSheet.items.filter(
-      (item) => runtime.actuals[item.id]?.result === 'skipped',
-    ).length;
+  const undoBar = undoLabel ? (
+    <view className="RuntimeUndo">
+      <text className="RuntimeUndoText">{undoLabel}</text>
+      <view className="RuntimeUndoBtn" bindtap={undoLast}>
+        <text className="RuntimeUndoBtnText">{tText('撤销')}</text>
+      </view>
+    </view>
+  ) : null;
 
+  const pendingSnapshot =
+    restoreIndex !== null ? snapshots[restoreIndex] ?? null : null;
+
+  if (finished) {
     return (
       <view className="RuntimeViewport">
         <view
@@ -470,6 +596,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               </view>
             ) : null}
           </view>
+          {undoBar}
         </view>
       </view>
     );
@@ -538,6 +665,14 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 <text className="RuntimeToolText">{tText('导出/打印')}</text>
               </view>
             ) : null}
+            <view
+              className="RuntimeToolBtn"
+              bindtap={() => {
+                setHistoryOpen(true);
+              }}
+            >
+              <text className="RuntimeToolText">{tText('记录')}</text>
+            </view>
             <view
               className="RuntimeEndBtn"
               bindtap={() => {
@@ -625,7 +760,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <view className="RuntimeRailHead">
               <text className="RuntimeRailLabel">{tText('环节轨道')}</text>
               <text className="RuntimeRailCount">
-                {`${pad3(doneCount)} / ${pad3(total)}`}
+                {`${pad3(terminalCount)} / ${pad3(total)}`}
               </text>
             </view>
             <scroll-view
@@ -634,12 +769,15 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             >
               {timeline.rows.map((row, index) => {
                 const item = execSheet.items[row.index];
+                const result = runtime.actuals[item.id]?.result;
                 const state =
-                  index < runtime.currentIndex
+                  result === 'done'
                     ? 'done'
-                    : index === runtime.currentIndex
-                      ? 'active'
-                      : 'next';
+                    : result === 'skipped'
+                      ? 'skipped'
+                      : index === runtime.currentIndex
+                        ? 'active'
+                        : 'next';
                 const owner = item.owner.trim();
                 return (
                   <view
@@ -664,9 +802,11 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                     <text className="RailState">
                       {state === 'done'
                         ? tText('已完成')
-                        : state === 'active'
-                          ? tText('进行中')
-                          : tText('待执行')}
+                        : state === 'skipped'
+                          ? tText('已跳过')
+                          : state === 'active'
+                            ? tText('进行中')
+                            : tText('待执行')}
                     </text>
                   </view>
                 );
@@ -680,6 +820,8 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <text className="RuntimeShiftToastText">{shiftToast}</text>
           </view>
         ) : null}
+
+        {undoBar}
 
         {shiftOpen ? null : (
           <view className="RuntimeSyncBar">
@@ -786,7 +928,11 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               </view>
               <view className="PanelBody">
                 <text className="PanelBodyText">
-                  {tText('结束后本场流程将标记为已完成，可在手册列表中查看或删除。')}
+                  {pendingCount > 0
+                    ? tText('还有 {n} 个环节未到终态，结束后可在报告中继续执行或归档。', {
+                        n: pendingCount,
+                      })
+                    : tText('结束后本场流程将标记为已完成，可在手册列表中查看或删除。')}
                 </text>
               </view>
               <view className="PanelActions">
@@ -804,6 +950,121 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                     label={tText('结束执行')}
                     kind="secondary"
                     onTap={endExecution}
+                  />
+                </view>
+              </view>
+            </view>
+          </view>
+        ) : null}
+
+        {historyPresence.mounted ? (
+          <view
+            className={historyPresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+            bindtap={() => {
+              setHistoryOpen(false);
+            }}
+          >
+            <view
+              className={
+                historyPresence.closing
+                  ? 'Panel Panel--confirm PanelOut theme-light'
+                  : 'Panel Panel--confirm theme-light'
+              }
+              catchtap={() => {}}
+            >
+              <view className="PanelHeader">
+                <text className="PanelTitle">{tText('操作记录')}</text>
+                <view
+                  className="PanelClose"
+                  bindtap={() => {
+                    setHistoryOpen(false);
+                  }}
+                >
+                  <text className="PanelCloseText">{tText('关闭')}</text>
+                </view>
+              </view>
+              <scroll-view
+                className="RuntimeHistoryScroll"
+                scroll-orientation="vertical"
+              >
+                {snapshots.length === 0 ? (
+                  <text className="RuntimeHistoryEmpty">
+                    {tText('暂无操作记录')}
+                  </text>
+                ) : (
+                  snapshots
+                    .map((snapshot, index) => ({ snapshot, index }))
+                    .reverse()
+                    .map(({ snapshot, index }) => (
+                      <view className="RuntimeHistoryRow" key={`snap-${index}`}>
+                        <view className="RuntimeHistoryMeta">
+                          <text className="RuntimeHistoryTime">
+                            {clockOf(snapshot.at)}
+                          </text>
+                          <text className="RuntimeHistoryLabel">
+                            {snapshot.label}
+                          </text>
+                        </view>
+                        <view
+                          className="RuntimeHistoryBack"
+                          bindtap={() => {
+                            setRestoreIndex(index);
+                          }}
+                        >
+                          <text className="RuntimeHistoryBackText">
+                            {tText('回退到此步')}
+                          </text>
+                        </view>
+                      </view>
+                    ))
+                )}
+              </scroll-view>
+            </view>
+          </view>
+        ) : null}
+
+        {restorePresence.mounted ? (
+          <view
+            className={restorePresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+            bindtap={() => {
+              setRestoreIndex(null);
+            }}
+          >
+            <view
+              className={
+                restorePresence.closing
+                  ? 'Panel Panel--confirm PanelOut theme-light'
+                  : 'Panel Panel--confirm theme-light'
+              }
+              catchtap={() => {}}
+            >
+              <view className="PanelHeader">
+                <text className="PanelTitle">{tText('回退到此步？')}</text>
+              </view>
+              <view className="PanelBody">
+                <text className="PanelBodyText">
+                  {pendingSnapshot
+                    ? tText('将恢复到「{label}」之前的状态，之后的操作记录会被丢弃。', {
+                        label: pendingSnapshot.label,
+                      })
+                    : tText('之后的操作记录会被丢弃。')}
+                </text>
+              </view>
+              <view className="PanelActions">
+                <view className="PanelAction">
+                  <Button
+                    label={tText('取消')}
+                    kind="tertiary"
+                    onTap={() => {
+                      setRestoreIndex(null);
+                    }}
+                  />
+                </view>
+                <view className="PanelAction">
+                  <Button
+                    label={tText('确认回退')}
+                    kind="secondary"
+                    onTap={confirmRestore}
                   />
                 </view>
               </view>
@@ -874,9 +1135,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 return;
               }
               const delta = next.offsetMin - runtime.offsetMin;
+              const label = tText('顺延下一环节');
+              recordSnapshot(label);
               saveRuntime(next);
               setRuntime(next);
               setShiftOpen(false);
+              showUndo(label);
               if (delta !== 0) {
                 showShiftToast(
                   tText('已顺延 {n} 分钟，后续环节已重排', {

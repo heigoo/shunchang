@@ -13,6 +13,7 @@ export interface ReportScreenProps {
   sheetId: string;
   onBack(): void;
   onContinue?(sheetId: string): void;
+  onArchive?(sheetId: string): void;
   safeTop?: number;
   safeBottom?: number;
 }
@@ -56,7 +57,7 @@ function diffText(value: number): string {
 }
 
 export function ReportScreen(props: ReportScreenProps) {
-  const { sheetId, onBack, onContinue, safeTop = 0, safeBottom = 0 } = props;
+  const { sheetId, onBack, onContinue, onArchive, safeTop = 0, safeBottom = 0 } = props;
   const tText = useT();
 
   const [sheet] = useState(() => getSheet(sheetId));
@@ -106,6 +107,10 @@ export function ReportScreen(props: ReportScreenProps) {
 
   const pendingCount = execSheet.items.length - doneCount - skippedCount;
   const allTerminal = pendingCount === 0;
+  const pendingItems = execSheet.items.filter((item) => {
+    const actual = runtime ? runtime.actuals[item.id] : undefined;
+    return !actual || (actual.result !== 'done' && actual.result !== 'skipped');
+  });
   const planTotalMin = timeline.totalPlanMin;
   const diffMin = actualTotalMin - planTotalMin;
 
@@ -114,6 +119,17 @@ export function ReportScreen(props: ReportScreenProps) {
       saveSheet({ ...sheet, status: 'running' });
     }
     onContinue?.(sheet.id);
+  };
+
+  const handleArchive = () => {
+    if (sheet.status !== 'done') {
+      saveSheet({ ...sheet, status: 'done' });
+    }
+    if (onArchive) {
+      onArchive(sheet.id);
+      return;
+    }
+    onBack();
   };
 
   return (
@@ -194,15 +210,45 @@ export function ReportScreen(props: ReportScreenProps) {
             </view>
           </view>
 
-          <view className="ReportActions">
-            <view className="ReportAction">
-              <Button
-                label={tText('返回手册列表')}
-                kind="tertiary"
-                block
-                onTap={onBack}
-              />
+          {pendingItems.length > 0 ? (
+            <view className="ReportSection">
+              <text className="ReportSectionLabel">{tText('未执行清单')}</text>
+              <view className="ReportPendingList">
+                {pendingItems.map((item, index) => (
+                  <view className="ReportPendingRow" key={item.id}>
+                    <text className="ReportPendingNo">{pad3(index + 1)}</text>
+                    <text className="ReportPendingName">
+                      {item.name.length > 0 ? item.name : tText('未命名环节')}
+                    </text>
+                    <text className="ReportPendingMeta">
+                      {formatDuration(item.durationMin)}
+                    </text>
+                  </view>
+                ))}
+              </view>
             </view>
+          ) : null}
+
+          <view className="ReportActions">
+            {!allTerminal ? (
+              <view className="ReportAction">
+                <Button
+                  label={tText('归档')}
+                  kind="secondary"
+                  block
+                  onTap={handleArchive}
+                />
+              </view>
+            ) : (
+              <view className="ReportAction">
+                <Button
+                  label={tText('返回手册列表')}
+                  kind="tertiary"
+                  block
+                  onTap={onBack}
+                />
+              </view>
+            )}
             {!allTerminal && onContinue ? (
               <view className="ReportAction ReportActionPrimary">
                 <Button
