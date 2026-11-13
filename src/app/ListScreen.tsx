@@ -114,6 +114,7 @@ export function ListScreen(props: ListScreenProps) {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [moreSheet, setMoreSheet] = useState<Sheet | null>(null);
   const [renameText, setRenameText] = useState('');
@@ -311,7 +312,7 @@ export function ListScreen(props: ListScreenProps) {
   const renderStatus = (sheet: Sheet) => {
     const kind =
       sheet.status === 'running'
-        ? 'reverse'
+        ? 'amber'
         : sheet.status === 'draft'
           ? 'stamp'
           : 'outline';
@@ -524,6 +525,14 @@ export function ListScreen(props: ListScreenProps) {
             </text>
           ) : null}
           <view
+            className="ListGuide"
+            bindtap={() => {
+              setGuideOpen(true);
+            }}
+          >
+            <text className="ListGuideText">{tText('说明')}</text>
+          </view>
+          <view
             className="ListLoad"
             bindtap={() => {
               setImportOpen(true);
@@ -657,6 +666,74 @@ export function ListScreen(props: ListScreenProps) {
       {toast ? (
         <view className="ListToastLayer">
           <text className="ListToast">{toast}</text>
+        </view>
+      ) : null}
+
+      {guideOpen ? (
+        <view
+          className="Overlay"
+          bindtap={() => {
+            setGuideOpen(false);
+          }}
+        >
+          <view className="Panel GuidePanel" catchtap={() => {}}>
+            <view className="PanelHeader">
+              <view className="PanelHeaderText">
+                <text className="PanelTitle">{tText('三步用顺场')}</text>
+                <text className="PanelSubtitle">
+                  {tText('现场调度 · 快速说明')}
+                </text>
+              </view>
+              <view
+                className="PanelClose"
+                bindtap={() => {
+                  setGuideOpen(false);
+                }}
+              >
+                <text className="PanelCloseText">{tText('关闭')}</text>
+              </view>
+            </view>
+
+            <view className="GuideBody">
+              <view className="GuideStep">
+                <text className="GuideNo">01</text>
+                <view className="GuideText">
+                  <text className="GuideStepTitle">{tText('编排')}</text>
+                  <text className="GuideStepBody">
+                    {tText('把环节按时间排好；锁定表示不早于该时刻开始。')}
+                  </text>
+                </view>
+              </view>
+              <view className="GuideStep">
+                <text className="GuideNo">02</text>
+                <view className="GuideText">
+                  <text className="GuideStepTitle">{tText('执行')}</text>
+                  <text className="GuideStepBody">
+                    {tText('只看当前环节，完成后自动推进；晚点就顺延。')}
+                  </text>
+                </view>
+              </view>
+              <view className="GuideStep GuideStep--last">
+                <text className="GuideNo">03</text>
+                <view className="GuideText">
+                  <text className="GuideStepTitle">{tText('跟随')}</text>
+                  <text className="GuideStepBody">
+                    {tText('把同步码给现场，所有人看到同一版。')}
+                  </text>
+                </view>
+              </view>
+            </view>
+
+            <view className="GuideFooter">
+              <Button
+                label={tText('知道了')}
+                block
+                onTap={() => {
+                  setGuideOpen(false);
+                }}
+              />
+            </view>
+          </view>
         </view>
       ) : null}
 

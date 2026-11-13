@@ -357,6 +357,15 @@
   color: var(--ink-3);
 }
 
+.EditorLegend {
+  margin-top: 7px;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
 .EditorTable {
   display: flex;
   flex-direction: column;
@@ -992,4 +1001,65 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--amber-light);
+}
+
+/* ---------- 可读性与触控校正 ---------- */
+
+.EditorBackText,
+.MetaValue,
+.EditorHintText,
+.ErrorBarTitle,
+.ErrorBarCount,
+.EditorSectionLabel,
+.EditorSectionCount,
+.Th,
+.CardNo,
+.FieldUnit,
+.EditorAddHint,
+.EditorUndoBtnText {
+  font-size: 10.5px;
+}
+
+.MetaLabel,
+.BodyLabel,
+.FieldLabel,
+.LockBtnText {
+  font-size: 10.5px;
+}
+
+.CardSub,
+.RowError,
+.CardError {
+  font-size: 12px;
+}
+
+.LockBtn {
+  height: 44px;
+  min-width: 60px;
+}
+
+.ActBtn {
+  width: 44px;
+  height: 44px;
+}
+
+.ColAct {
+  width: 142px;
+}
+
+.EditorTable--medium .ColAct {
+  width: 134px;
+}
+
+.CardAction {
+  height: 44px;
+  min-width: 56px;
+}
+
+.Btn.EditorSmallBtn {
+  height: 40px;
+}
+
+.LockOff {
+  height: 44px;
 }

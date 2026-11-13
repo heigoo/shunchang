@@ -1101,3 +1101,137 @@
 .PanelOption--danger .PanelOptionName {
   color: var(--vermilion);
 }
+
+/* ---------- 使用说明 ---------- */
+
+.ListGuide {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding-left: 10px;
+  padding-right: 10px;
+  flex-shrink: 0;
+}
+
+.ListGuideText {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.GuidePanel {
+  max-width: 470px;
+}
+
+.GuideBody {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 22px 0 22px;
+}
+
+.GuideStep {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--rule);
+}
+
+.GuideStep--last {
+  border-bottom-width: 0;
+}
+
+.GuideNo {
+  width: 34px;
+  flex-shrink: 0;
+  padding-top: 3px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+
+.GuideText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.GuideStepTitle {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.GuideStepBody {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-2);
+}
+
+.GuideFooter {
+  padding: 10px 22px 20px 22px;
+}
+
+/* ---------- 可读性校正 ---------- */
+
+.ListBrandSeal {
+  font-size: 10px;
+}
+
+.NarrowNo,
+.EmptyStamp {
+  font-size: 10.5px;
+}
+
+.NarrowMeta {
+  font-size: 11px;
+}
+
+.ListMeta,
+.ListKicker,
+.ListCountLabel,
+.EmptyCode,
+.EmptyFieldLabel,
+.ListFooterText,
+.SheetRenameLabel,
+.PanelSubtitle {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+}
+
+.ListThemeText {
+  font-size: 11px;
+}
+
+.ListScreen--narrow .ListThemeText {
+  font-size: 10.5px;
+}
+
+.Th {
+  font-size: 10.5px;
+}
+
+.PanelOptionMetaText {
+  font-size: 11px;
+}
+
+.PanelOptionTagline {
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.ListTheme {
+  height: 40px;
+}
+
+.NarrowMore {
+  height: 44px;
+}

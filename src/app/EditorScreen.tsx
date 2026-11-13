@@ -164,8 +164,8 @@ function durationText(item: Item): string {
 
 function lockText(item: Item): string {
   return item.lockAt === null
-    ? t('锁定 待填')
-    : t('锁定 {time}', { time: formatClock(item.lockAt) });
+    ? t('待填')
+    : t('不早于 {time}', { time: formatClock(item.lockAt) });
 }
 
 export function EditorScreen(props: EditorScreenProps) {
@@ -804,7 +804,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
             {sheet.dirty ? (
               <view className="MetaBadge">
-                <Badge kind="reverse" label={tText('有未发布的修改')} />
+                <Badge kind="amber" label={tText('有未发布的修改')} />
               </view>
             ) : null}
             {conflicts.length > 0 ? (
@@ -895,6 +895,9 @@ export function EditorScreen(props: EditorScreenProps) {
             )}`}
           </text>
         </view>
+        <text className="EditorLegend">
+          {tText('锁定 = 不早于该时刻开始')}
+        </text>
         {isWide ? (
           <view className={isDesktop ? 'EditorTable' : 'EditorTable EditorTable--medium'}>
             <view className="TableHead">

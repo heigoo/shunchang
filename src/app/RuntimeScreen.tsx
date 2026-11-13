@@ -35,7 +35,6 @@ export interface RuntimeScreenProps {
 }
 
 const MINUS = '\u2212';
-const HOLD_DONE_MS = 3000;
 const DONE_GUARD_MS = 300;
 const NARROW_ACTIONS_WIDTH = 700;
 
@@ -86,11 +85,13 @@ function minuteOfDay(ms: number): number {
   return date.getHours() * 60 + date.getMinutes();
 }
 
-function offsetText(offsetMin: number): string {
+function offsetLabel(offsetMin: number): string {
   if (offsetMin === 0) {
-    return '0';
+    return t('准点');
   }
-  return `${offsetMin > 0 ? '+' : MINUS}${Math.abs(offsetMin)}`;
+  return offsetMin > 0
+    ? t('晚 {n} 分', { n: offsetMin })
+    : t('早 {n} 分', { n: Math.abs(offsetMin) });
 }
 
 export function secondsUntil(targetMin: number, nowMs: number): number {
@@ -156,20 +157,25 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [shiftOpen, setShiftOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
+  const [skipOpen, setSkipOpen] = useState(false);
   const [shiftToast, setShiftToast] = useState<string | null>(null);
-  const [holdProgress, setHoldProgress] = useState(0);
   const isWideActions = useIsWide(NARROW_ACTIONS_WIDTH);
   const [mainWidth, setMainWidth] = useState<number | null>(null);
 
   const shiftPresence = usePresence(shiftOpen);
   const syncPresence = usePresence(syncOpen);
   const endPresence = usePresence(endOpen);
+  const skipPresence = usePresence(skipOpen);
 
   useEffect(() => {
-    if (!shiftOpen && !syncOpen && !endOpen) {
+    if (!shiftOpen && !syncOpen && !endOpen && !skipOpen) {
       return;
     }
     return registerBackHandler(() => {
+      if (skipOpen) {
+        setSkipOpen(false);
+        return true;
+      }
       if (endOpen) {
         setEndOpen(false);
         return true;
@@ -184,7 +190,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       }
       return false;
     });
-  }, [shiftOpen, syncOpen, endOpen]);
+  }, [shiftOpen, syncOpen, endOpen, skipOpen]);
 
   useEffect(() => {
     viewportWidthListener = (width: number) => {
@@ -214,7 +220,6 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     ? 'Runtime Runtime--wide theme-dark'
     : 'Runtime theme-dark';
 
-  const holdTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const shiftToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDoneAt = useRef(0);
 
@@ -242,10 +247,6 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     }, 1000);
     return () => {
       clearInterval(timer);
-      if (holdTimer.current !== null) {
-        clearInterval(holdTimer.current);
-        holdTimer.current = null;
-      }
     };
   }, []);
 
@@ -316,31 +317,6 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const syncCode = encodeShortCode(sheet.id, runtime);
   const syncCodeText =
     syncCode.length === 6 ? `${syncCode.slice(0, 3)}-${syncCode.slice(3)}` : syncCode;
-
-  const stopHold = () => {
-    if (holdTimer.current !== null) {
-      clearInterval(holdTimer.current);
-      holdTimer.current = null;
-    }
-    setHoldProgress(0);
-  };
-
-  const startHold = () => {
-    if (holdTimer.current !== null) {
-      return;
-    }
-    const startedAt = Date.now();
-    setHoldProgress(0.001);
-    holdTimer.current = setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed >= HOLD_DONE_MS) {
-        stopHold();
-        doSkip();
-        return;
-      }
-      setHoldProgress(elapsed / HOLD_DONE_MS);
-    }, 100);
-  };
 
   if (finished) {
     const completedCount = sheet.items.filter(
@@ -464,14 +440,12 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <view className="RuntimeTopBadges">
             {view.hasConflict ? (
               <view className="RuntimeTopBadge">
-                <Badge kind="reverse" label={tText('无法吸收')} />
+                <Badge kind="reverse" label={tText('时间不足')} />
               </view>
             ) : null}
             <Badge
-              kind="outline"
-              label={tText('偏移 {value}', {
-                value: offsetText(runtime.offsetMin),
-              })}
+              kind="amber"
+              label={offsetLabel(runtime.offsetMin)}
             />
             <view
               className="RuntimeEndBtn"
@@ -502,7 +476,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
             <view className="RuntimeLockRow">
               <Badge
                 kind="stamp"
-                label={tText('锁定 {time}', {
+                label={tText('不早于 {time}', {
                   time: formatClockDisplay(currentRow.lockAt),
                 })}
               />
@@ -652,18 +626,14 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                 </view>
 
                 <view
-                  className="RuntimeHold"
-                  bindtouchstart={startHold}
-                  bindtouchend={stopHold}
-                  bindtouchcancel={stopHold}
+                  className="RuntimeSkip"
+                  bindtap={() => {
+                    setSkipOpen(true);
+                  }}
                 >
-                  <text className="RuntimeHoldText">{tText('长按 3 秒 · 跳过')}</text>
-                  <view className="RuntimeHoldTrack">
-                    <view
-                      className="RuntimeHoldFill"
-                      style={{ width: `${Math.round(holdProgress * 100)}%` }}
-                    />
-                  </view>
+                  <text className="RuntimeSkipText">
+                    {tText('跳过本环节')}
+                  </text>
                 </view>
               </view>
             )}
@@ -708,6 +678,54 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                     label={tText('结束执行')}
                     kind="secondary"
                     onTap={endExecution}
+                  />
+                </view>
+              </view>
+            </view>
+          </view>
+        ) : null}
+
+        {skipPresence.mounted ? (
+          <view
+            className={skipPresence.closing ? 'Overlay OverlayOut' : 'Overlay'}
+            bindtap={() => {
+              setSkipOpen(false);
+            }}
+          >
+            <view
+              className={
+                skipPresence.closing
+                  ? 'Panel Panel--confirm PanelOut theme-light'
+                  : 'Panel Panel--confirm theme-light'
+              }
+              catchtap={() => {}}
+            >
+              <view className="PanelHeader">
+                <text className="PanelTitle">{tText('确认跳过？')}</text>
+              </view>
+              <view className="PanelBody">
+                <text className="PanelBodyText">
+                  {tText('跳过后不会推进偏移，记录会标注为跳过。')}
+                </text>
+              </view>
+              <view className="PanelActions">
+                <view className="PanelAction">
+                  <Button
+                    label={tText('取消')}
+                    kind="tertiary"
+                    onTap={() => {
+                      setSkipOpen(false);
+                    }}
+                  />
+                </view>
+                <view className="PanelAction">
+                  <Button
+                    label={tText('确认跳过')}
+                    kind="secondary"
+                    onTap={() => {
+                      setSkipOpen(false);
+                      doSkip();
+                    }}
                   />
                 </view>
               </view>

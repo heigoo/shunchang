@@ -38,7 +38,7 @@ function LockBlock(props: { preview: ShiftPreview }) {
     <view className="ShiftLocks">
       {preview.hasConflict ? (
         <view className="ShiftLockBadge">
-          <Badge kind="reverse" label={t('无法吸收')} />
+          <Badge kind="reverse" label={t('时间不足')} />
         </view>
       ) : null}
       {preview.locks.map((lock) => (
@@ -139,7 +139,7 @@ export function ShiftPanel(props: ShiftPanelProps) {
             </view>
 
             <text className="ShiftOffset">
-              {t('整体偏移 {from} → {to}', {
+              {t('整体顺延 {from} → {to} 分钟', {
                 from: signedText(preview.baseOffsetMin),
                 to: signedText(preview.nextOffsetMin),
               })}

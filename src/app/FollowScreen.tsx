@@ -9,7 +9,7 @@ import {
 } from '../domain/timeline';
 import type { Item, RuntimeState, Sheet } from '../domain/types';
 import { getRuntime, getSheet, setRole } from '../store/repository';
-import { useT } from '../i18n';
+import { t, useT } from '../i18n';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
 import { buildSyncTrail, itemState, ownerOptions } from './followOps';
@@ -40,11 +40,13 @@ function pad3(value: number): string {
   return String(value);
 }
 
-function offsetText(offsetMin: number): string {
+function offsetLabel(offsetMin: number): string {
   if (offsetMin === 0) {
-    return '0';
+    return t('准点');
   }
-  return `${offsetMin > 0 ? '+' : MINUS}${Math.abs(offsetMin)}`;
+  return offsetMin > 0
+    ? t('晚 {n} 分', { n: offsetMin })
+    : t('早 {n} 分', { n: Math.abs(offsetMin) });
 }
 
 function rowSubText(item: Item): string {
@@ -261,7 +263,7 @@ export function FollowScreen(props: FollowScreenProps) {
         </view>
         <view className="FollowHeadBadges">
           <view className="FollowHeadBadge">
-            <Badge kind="outline" label={offsetText(offsetMin)} />
+            <Badge kind="amber" label={offsetLabel(offsetMin)} />
           </view>
           {timeline.hasConflict ? (
             <view className="FollowHeadBadge">
@@ -293,7 +295,7 @@ export function FollowScreen(props: FollowScreenProps) {
               <view className="FollowCurrentLock">
                 <Badge
                   kind="stamp"
-                  label={t('锁定 {time}', {
+                  label={t('不早于 {time}', {
                     time: formatClockDisplay(currentItem.lockAt),
                   })}
                 />
@@ -308,7 +310,7 @@ export function FollowScreen(props: FollowScreenProps) {
 
         <view className="FollowProgress">
           <view className="FollowProgressMeta">
-            <text className="FollowProgressLabel">{t('总进度')}</text>
+            <text className="FollowProgressLabel">{t('完成度')}</text>
             <text className="FollowProgressCount">
               {`${pad3(Math.max(currentIndex, 0))} / ${pad3(total)}`}
             </text>
@@ -399,7 +401,7 @@ export function FollowScreen(props: FollowScreenProps) {
                   </text>
                   {entry.item.lockAt !== null ? (
                     <text className="FollowRowLock">
-                      {t('[锁定 {time}]', {
+                      {t('不早于 {time}', {
                         time: formatClockDisplay(entry.item.lockAt),
                       })}
                     </text>

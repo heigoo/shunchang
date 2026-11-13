@@ -553,3 +553,48 @@
   font-size: 13px;
   color: var(--dim);
 }
+
+/* ---------- 可读性与触控校正 ---------- */
+
+.FollowSyncKicker,
+.FollowSeg,
+.FollowCurrentState,
+.FollowProgressLabel,
+.FollowProgressCount,
+.FollowPassLabel,
+.FollowPassNo {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+}
+
+.FollowSyncText {
+  font-size: 12px;
+}
+
+.FollowSheetMeta,
+.FollowOwnerNo {
+  font-size: 11px;
+}
+
+.FollowCurrentMeta,
+.FollowRowSub,
+.FollowRowStatus,
+.FollowFooterNote,
+.FollowPassNote {
+  font-size: 12px;
+}
+
+.FollowRowNo,
+.FollowRowLock,
+.FollowStepNo {
+  font-size: 10.5px;
+}
+
+.FollowOwners,
+.FollowChip {
+  height: 44px;
+}
+
+.FollowChipText {
+  font-size: 13px;
+}
