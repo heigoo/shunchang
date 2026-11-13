@@ -52,7 +52,7 @@ export const EN: Record<string, string> = {
   // 列表
   手册列表: 'Run sheets',
   调度手册: 'Run sheets',
-  调度: 'Flow',
+  调度: 'Overview',
   新建手册: 'New sheet',
   搜索手册名称: 'Search sheets',
   输入手册名称: 'Enter sheet name',
