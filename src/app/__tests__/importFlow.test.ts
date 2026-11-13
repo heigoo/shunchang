@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from '@rstest/core';
 
 import type { RuntimeState, Sheet } from '../../domain/types';
-import { encodePayload, encodeShortCode } from '../../domain/codec';
+import {
+  decodeFile,
+  encodeFile,
+  encodePayload,
+  encodeShortCode,
+  sheetFingerprint,
+} from '../../domain/codec';
 import {
   clearAllForTest,
   getRole,
@@ -13,9 +19,13 @@ import {
 } from '../../store/repository';
 import {
   applyLaunchHash,
+  clearOwnerNotice,
+  getDeviceId,
   importErrorMessage,
   importPayloadText,
   importShortCodeText,
+  readOwnerNotice,
+  takeOverOwner,
 } from '../importFlow';
 
 const NOW = 1762700000000;
@@ -76,7 +86,22 @@ function makeRuntime(
 
 beforeEach(() => {
   clearAllForTest();
+  clearOwnerNotice('sheet-import-1');
 });
+
+function findFingerprintCollision(): [string, string] {
+  const seen = new Map<number, string>();
+  for (let i = 0; i < 20000; i += 1) {
+    const id = `sheet-import-collide-${i}`;
+    const fingerprint = sheetFingerprint(id);
+    const previous = seen.get(fingerprint);
+    if (previous !== undefined) {
+      return [previous, id];
+    }
+    seen.set(fingerprint, id);
+  }
+  throw new Error('no collision found');
+}
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location');
 
@@ -180,12 +205,13 @@ describe('import sheet without runtime', () => {
 });
 
 describe('import short code', () => {
-  it('applies a short code to a known sheet', () => {
+  it('applies a short code and records the short sync mode', () => {
     const sheet = saveSheet(makeSheet({ status: 'published', version: 1 }));
     const runtime = makeRuntime(sheet, {
       execVersion: 3,
       currentIndex: 1,
       offsetMin: 7,
+      ownerEpoch: 2,
     });
 
     const result = importShortCodeText(encodeShortCode(sheet.id, runtime), NOW);
@@ -198,6 +224,10 @@ describe('import short code', () => {
     expect(stored?.execVersion).toBe(3);
     expect(stored?.currentIndex).toBe(1);
     expect(stored?.offsetMin).toBe(7);
+    expect(stored?.autoOffsetMin).toBe(7);
+    expect(stored?.manualOffsetMin).toBe(0);
+    expect(stored?.ownerEpoch).toBe(2);
+    expect(stored?.lastSyncMode).toBe('short');
     expect(stored?.lastSyncAt).toBe(NOW);
     expect(getSheet(sheet.id)?.status).toBe('running');
   });
@@ -211,9 +241,32 @@ describe('import short code', () => {
     });
   });
 
+  it('rejects the retired six-character code', () => {
+    expect(importShortCodeText('ABCDEF', NOW)).toEqual({
+      ok: false,
+      error: 'legacy-code',
+    });
+  });
+
+  it('rejects a code whose fingerprint matches several local sheets', () => {
+    const [idA, idB] = findFingerprintCollision();
+    saveSheet(makeSheet({ id: idA, name: '同名手册 A' }));
+    saveSheet(makeSheet({ id: idB, name: '同名手册 B' }));
+
+    const code = encodeShortCode(
+      idA,
+      makeRuntime(makeSheet({ id: idA }), { execVersion: 3, currentIndex: 1 }),
+    );
+
+    expect(importShortCodeText(code, NOW)).toEqual({
+      ok: false,
+      error: 'ambiguous-sheet',
+    });
+  });
+
   it('rejects a short code that is not newer than local state', () => {
     const sheet = saveSheet(makeSheet());
-    saveRuntime(makeRuntime(sheet, { execVersion: 5 }));
+    saveRuntime(makeRuntime(sheet, { execVersion: 5, ownerEpoch: 0 }));
 
     const code = encodeShortCode(sheet.id, makeRuntime(sheet, { execVersion: 2 }));
 
@@ -223,11 +276,84 @@ describe('import short code', () => {
     });
   });
 
+  it('rejects a short code carrying an older owner epoch', () => {
+    const sheet = saveSheet(makeSheet());
+    saveRuntime(makeRuntime(sheet, { execVersion: 2, ownerEpoch: 2 }));
+
+    const code = encodeShortCode(
+      sheet.id,
+      makeRuntime(sheet, { execVersion: 3, ownerEpoch: 1 }),
+    );
+
+    expect(importShortCodeText(code, NOW)).toEqual({
+      ok: false,
+      error: 'stale-state',
+    });
+  });
+
   it('rejects an illegal short code', () => {
-    expect(importShortCodeText('0O0O0O', NOW)).toEqual({
+    expect(importShortCodeText('0O0O0O0O0', NOW)).toEqual({
       ok: false,
       error: 'bad-format',
     });
+  });
+});
+
+describe('owner epoch', () => {
+  it('degrades to follower and keeps local data when the incoming epoch is higher', () => {
+    const local = saveSheet(makeSheet());
+    saveRuntime(
+      makeRuntime(local, { execVersion: 3, currentIndex: 1, ownerEpoch: 0 }),
+    );
+    setRole('owner');
+
+    const incoming = makeRuntime(local, {
+      execVersion: 3,
+      currentIndex: 2,
+      ownerEpoch: 1,
+    });
+    const result = importPayloadText(encodePayload(local, incoming), NOW);
+
+    expect(result.ok).toBe(true);
+    expect(getRole()).toBe('follower');
+    expect(readOwnerNotice(local.id)).toBe(true);
+
+    const stored = getRuntime(local.id);
+    expect(stored?.currentIndex).toBe(1);
+    expect(stored?.execVersion).toBe(3);
+  });
+
+  it('takes over ownership with epoch + 1 and a local device id', () => {
+    const local = saveSheet(makeSheet({ status: 'running' }));
+    saveRuntime(makeRuntime(local, { execVersion: 3, ownerEpoch: 0 }));
+
+    const incoming = makeRuntime(local, { execVersion: 3, ownerEpoch: 1 });
+    importPayloadText(encodePayload(local, incoming), NOW);
+    expect(readOwnerNotice(local.id)).toBe(true);
+
+    const next = takeOverOwner(local.id, NOW + 1000);
+
+    expect(next.ownerEpoch).toBe(2);
+    expect(next.ownerDeviceId).toMatch(/^D-[2-9A-HJ-NP-Z]{4}$/);
+    expect(getRuntime(local.id)?.ownerEpoch).toBe(2);
+    expect(getRuntime(local.id)?.ownerDeviceId).toBe(next.ownerDeviceId);
+    expect(getDeviceId()).toBe(next.ownerDeviceId);
+    expect(getRole()).toBe('owner');
+    expect(readOwnerNotice(local.id)).toBe(false);
+  });
+
+  it('carries the owner epoch through exported files', () => {
+    const local = saveSheet(makeSheet({ status: 'running' }));
+    saveRuntime(makeRuntime(local, { execVersion: 3, ownerEpoch: 1 }));
+
+    const incoming = makeRuntime(local, { execVersion: 3, ownerEpoch: 2 });
+    const text = encodeFile(local, incoming);
+
+    const decoded = decodeFile(text);
+    expect(decoded.ok).toBe(true);
+    if (decoded.ok) {
+      expect(decoded.payload.runtime?.ownerEpoch).toBe(2);
+    }
   });
 });
 
@@ -239,6 +365,10 @@ describe('import error messages', () => {
     expect(importErrorMessage('older-sheet')).toBe('该手册已有更新版本');
     expect(importErrorMessage('stale-state')).toBe('已是最新状态');
     expect(importErrorMessage('no-sheet')).toBe('本机没有这份手册，请先扫码或导入文件');
+    expect(importErrorMessage('legacy-code')).toBe('旧版短码已停用，请重新扫码');
+    expect(importErrorMessage('ambiguous-sheet')).toBe(
+      '无法唯一匹配手册，请改用链接或文件',
+    );
   });
 });
 

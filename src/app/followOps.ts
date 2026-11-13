@@ -12,7 +12,7 @@ export interface SyncTrail {
   versionLabel: string;
 }
 
-export type ItemState = 'done' | 'active' | 'pending' | 'skipped';
+export type ItemState = 'done' | 'doneApprox' | 'active' | 'pending' | 'skipped';
 
 const STALE_MS = 15 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
@@ -77,6 +77,14 @@ export function itemState(
   }
   if (runtime !== null && runtime.currentIndex === index) {
     return 'active';
+  }
+  // 短码不携带逐项结果：当前序号之前的环节按“已完成（约）”显示。
+  if (
+    runtime !== null &&
+    runtime.lastSyncMode === 'short' &&
+    runtime.currentIndex > index
+  ) {
+    return 'doneApprox';
   }
   return 'pending';
 }

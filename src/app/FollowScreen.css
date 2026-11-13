@@ -85,6 +85,10 @@
   color: var(--dim);
 }
 
+.FollowSyncHint--owner .FollowSyncHintText {
+  color: var(--bright);
+}
+
 /* ---------- 手册头 ---------- */
 
 .FollowHead {
@@ -323,6 +327,10 @@
   background-color: var(--dim);
 }
 
+.FollowRowDot--doneApprox {
+  background-color: var(--dim);
+}
+
 .FollowRowDot--skipped {
   background-color: var(--screen-line-strong);
 }
@@ -422,9 +430,71 @@
   padding-right: 12px;
 }
 
+.FollowFooterActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 .FollowFooterActionText {
   font-size: 13px;
   color: var(--bright);
+}
+
+/* ---------- 接管主控确认 ---------- */
+
+.FollowConfirmOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.FollowConfirm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 360px;
+  padding: 20px;
+  background-color: var(--screen-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line-strong);
+}
+
+.FollowConfirmTitle {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--bright);
+}
+
+.FollowConfirmText {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dim);
+}
+
+.FollowConfirmActions {
+  display: flex;
+  flex-direction: row;
+  margin-top: 18px;
+}
+
+.FollowConfirmAction {
+  flex: 1;
+}
+
+.FollowConfirmAction--primary {
+  margin-left: 10px;
 }
 
 /* ---------- 载入引导 ---------- */

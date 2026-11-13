@@ -156,7 +156,7 @@ export function ImportPanel(props: ImportPanelProps) {
               <input
                 className="ImportInput"
                 placeholder={t('输入短码')}
-                maxlength={8}
+                maxlength={11}
                 bindinput={(event) => {
                   setCodeText(inputValue(event));
                 }}

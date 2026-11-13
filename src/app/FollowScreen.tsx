@@ -16,6 +16,7 @@ import { registerBackHandler } from './backBus';
 import { buildSyncTrail, itemState, ownerOptions } from './followOps';
 import type { ItemState } from './followOps';
 import { ImportPanel } from './ImportPanel';
+import { readOwnerNotice, takeOverOwner } from './importFlow';
 import { canUseNativeFiles } from './share';
 
 export interface FollowScreenProps {
@@ -25,6 +26,8 @@ export interface FollowScreenProps {
   safeBottom?: number;
   /** 免安装跟随页（?follow=1）：隐藏退出与返回手册列表入口。 */
   followOnly?: boolean;
+  /** 接管主控后回到主控执行台；未提供时退回列表。 */
+  onTakeOver?(sheetId: string): void;
 }
 
 const MINUS = '\u2212';
@@ -32,6 +35,7 @@ const CLOCK_TICK_MS = 30000;
 
 const STATUS_LABEL: Record<ItemState, string> = {
   done: '已完成',
+  doneApprox: '已完成（约）',
   active: '进行中',
   pending: '待执行',
   skipped: '已跳过',
@@ -68,6 +72,7 @@ export function FollowScreen(props: FollowScreenProps) {
     safeTop = 0,
     safeBottom = 0,
     followOnly = false,
+    onTakeOver,
   } = props;
   const t = useT();
 
@@ -81,6 +86,7 @@ export function FollowScreen(props: FollowScreenProps) {
   const [now, setNow] = useState<number>(() => Date.now());
   const [ownerFilter, setOwnerFilter] = useState('all');
   const [importOpen, setImportOpen] = useState(false);
+  const [takeoverOpen, setTakeoverOpen] = useState(false);
   const [tick, setTick] = useState(0);
 
   const importPresence = usePresence(importOpen);
@@ -129,6 +135,17 @@ export function FollowScreen(props: FollowScreenProps) {
 
   const exitFollow = () => {
     setRole('owner');
+    onBack();
+  };
+
+  const handleTakeOver = (id: string) => {
+    const next = takeOverOwner(id);
+    setRuntime(next);
+    setTakeoverOpen(false);
+    if (onTakeOver) {
+      onTakeOver(id);
+      return;
+    }
     onBack();
   };
 
@@ -197,6 +214,8 @@ export function FollowScreen(props: FollowScreenProps) {
   }
 
   const trail = buildSyncTrail(runtime, now);
+  const shortSync = runtime !== null && runtime.lastSyncMode === 'short';
+  const ownerNotice = readOwnerNotice(sheet.id);
   const offsetMin = runtime ? runtime.offsetMin : 0;
   const execSheet = runtime ? buildExecutionSheet(sheet, runtime) : sheet;
   const timeline = computeTimeline(execSheet, offsetMin);
@@ -265,6 +284,20 @@ export function FollowScreen(props: FollowScreenProps) {
           <view className="FollowSyncHint">
             <text className="FollowSyncHintText">
               {t('可能已过期，请向督导确认')}
+            </text>
+          </view>
+        ) : null}
+        {shortSync ? (
+          <view className="FollowSyncHint">
+            <text className="FollowSyncHintText">
+              {t('短码同步不含逐项结果，已完成为推断')}
+            </text>
+          </view>
+        ) : null}
+        {ownerNotice ? (
+          <view className="FollowSyncHint FollowSyncHint--owner">
+            <text className="FollowSyncHintText">
+              {t('主控已转移到另一台设备')}
             </text>
           </view>
         ) : null}
@@ -396,7 +429,11 @@ export function FollowScreen(props: FollowScreenProps) {
             classes.push('FollowRow--active');
           }
           const statusClasses = ['FollowRowStatus'];
-          if (entry.state === 'done' || entry.state === 'skipped') {
+          if (
+            entry.state === 'done' ||
+            entry.state === 'doneApprox' ||
+            entry.state === 'skipped'
+          ) {
             statusClasses.push('FollowRowStatus--dim');
           }
           return (
@@ -437,12 +474,64 @@ export function FollowScreen(props: FollowScreenProps) {
 
       <view className="FollowFooter">
         <text className="FollowFooterNote">{t('只读 · 不能推进环节')}</text>
-        {followOnly ? null : (
-          <view className="FollowFooterAction" bindtap={exitFollow}>
-            <text className="FollowFooterActionText">{t('退出跟随')}</text>
-          </view>
-        )}
+        <view className="FollowFooterActions">
+          {followOnly ? null : (
+            <view
+              className="FollowFooterAction"
+              bindtap={() => {
+                setTakeoverOpen(true);
+              }}
+            >
+              <text className="FollowFooterActionText">{t('接管主控')}</text>
+            </view>
+          )}
+          {followOnly ? null : (
+            <view className="FollowFooterAction" bindtap={exitFollow}>
+              <text className="FollowFooterActionText">{t('退出跟随')}</text>
+            </view>
+          )}
+        </view>
       </view>
+
+      {takeoverOpen ? (
+        <view
+          className="FollowConfirmOverlay"
+          bindtap={() => {
+            setTakeoverOpen(false);
+          }}
+        >
+          <view
+            className="FollowConfirm theme-dark"
+            catchtap={() => {}}
+          >
+            <text className="FollowConfirmTitle">{t('接管主控？')}</text>
+            <text className="FollowConfirmText">
+              {t('接管后本机可推进环节，原主控设备会在下次同步时转为只读。')}
+            </text>
+            <view className="FollowConfirmActions">
+              <view className="FollowConfirmAction">
+                <Button
+                  label={t('取消')}
+                  kind="tertiary"
+                  block
+                  onTap={() => {
+                    setTakeoverOpen(false);
+                  }}
+                />
+              </view>
+              <view className="FollowConfirmAction FollowConfirmAction--primary">
+                <Button
+                  label={t('确认接管')}
+                  block
+                  onTap={() => {
+                    handleTakeOver(sheet.id);
+                  }}
+                />
+              </view>
+            </view>
+          </view>
+        </view>
+      ) : null}
 
       {importPresence.mounted ? (
         <ImportPanel

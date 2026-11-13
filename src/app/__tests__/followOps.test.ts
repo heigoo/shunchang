@@ -104,6 +104,30 @@ test('itemState prefers actual results and then the current index', () => {
   expect(itemState(null, 0, 'item-0')).toBe('pending');
 });
 
+test('itemState infers earlier items as approximately done after a short sync', () => {
+  const runtime = makeRuntime({
+    currentIndex: 2,
+    actuals: { 'item-1': { result: 'skipped' } },
+    lastSyncMode: 'short',
+  });
+
+  expect(itemState(runtime, 0, 'item-0')).toBe('doneApprox');
+  expect(itemState(runtime, 1, 'item-1')).toBe('skipped');
+  expect(itemState(runtime, 2, 'item-2')).toBe('active');
+  expect(itemState(runtime, 3, 'item-3')).toBe('pending');
+});
+
+test('itemState keeps earlier items pending after a full sync', () => {
+  const runtime = makeRuntime({
+    currentIndex: 2,
+    actuals: {},
+    lastSyncMode: 'full',
+  });
+
+  expect(itemState(runtime, 0, 'item-0')).toBe('pending');
+  expect(itemState(runtime, 1, 'item-1')).toBe('pending');
+});
+
 test('ownerOptions removes blanks and duplicates while keeping order', () => {
   const sheet = makeSheet(['督导', '', '主持', '督导', ' 摄影 ']);
   expect(ownerOptions(sheet)).toEqual(['督导', '主持', '摄影']);

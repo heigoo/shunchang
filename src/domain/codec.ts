@@ -35,16 +35,41 @@ export type FileDecodeResult =
 
 export const SHORT_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
+/** 9 个 base32 字符承载 45 bit；展示时在消费端拼成 XXX-XXX-XXX。 */
+export const SHORT_CODE_LENGTH = 9;
+export const LEGACY_SHORT_CODE_LENGTH = 6;
+
+const SHORT_FINGERPRINT_BITS = 14;
+const SHORT_EXEC_VERSION_BITS = 10;
+const SHORT_INDEX_BITS = 7;
+const SHORT_OFFSET_BITS = 9;
+const SHORT_OWNER_EPOCH_BITS = 3;
+const SHORT_CHECKSUM_BITS = 2;
+const SHORT_TOTAL_BITS =
+  SHORT_FINGERPRINT_BITS +
+  SHORT_EXEC_VERSION_BITS +
+  SHORT_INDEX_BITS +
+  SHORT_OFFSET_BITS +
+  SHORT_OWNER_EPOCH_BITS +
+  SHORT_CHECKSUM_BITS;
+
+export const SHORT_EXEC_VERSION_MAX = (1 << SHORT_EXEC_VERSION_BITS) - 1;
+export const SHORT_INDEX_MAX = (1 << SHORT_INDEX_BITS) - 1;
+export const SHORT_OWNER_EPOCH_MAX = (1 << SHORT_OWNER_EPOCH_BITS) - 1;
+export const SHORT_OFFSET_MIN = -180;
+export const SHORT_OFFSET_MAX = 331;
+
 export interface ShortPayload {
   fingerprint: number;
   execVersion: number;
   currentIndex: number;
   offsetMin: number;
+  ownerEpoch: number;
 }
 
 export type ShortDecodeResult =
   | { ok: true; payload: ShortPayload }
-  | { ok: false; error: 'bad-format' | 'bad-checksum' };
+  | { ok: false; error: 'bad-format' | 'bad-checksum' | 'legacy-code' };
 
 const BASE64URL_ALPHABET =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -169,6 +194,8 @@ export function encodePayload(
       runtime.execVersion,
       runtime.lastSyncAt,
       runtime.actuals,
+      runtime.ownerEpoch,
+      runtime.lastSyncMode === 'short' ? 1 : 0,
     ];
   }
 
@@ -260,7 +287,15 @@ function parseCompactRuntime(
     return null;
   }
 
-  const [currentIndex, offsetMin, execVersion, lastSyncAt, actuals] = value;
+  const [
+    currentIndex,
+    offsetMin,
+    execVersion,
+    lastSyncAt,
+    actuals,
+    ownerEpoch,
+    syncMode,
+  ] = value;
   if (
     typeof currentIndex !== 'number' ||
     typeof offsetMin !== 'number' ||
@@ -282,9 +317,9 @@ function parseCompactRuntime(
     manualOffsetMin: 0,
     execVersion,
     lastSyncAt,
-    ownerEpoch: 0,
+    ownerEpoch: typeof ownerEpoch === 'number' ? ownerEpoch : 0,
     ownerDeviceId: '',
-    lastSyncMode: 'full',
+    lastSyncMode: syncMode === 1 ? 'short' : 'full',
     insertedItems: [],
     lockOverrides: {},
     audit: [],
@@ -445,6 +480,7 @@ export function decodeFile(text: string): FileDecodeResult {
   return { ok: true, payload };
 }
 
+/** `sheetId` 的 FNV-1a 低 14 位，用作短码指纹。 */
 export function sheetFingerprint(sheetId: string): number {
   const text = typeof sheetId === 'string' ? sheetId : '';
   let hash = 0x811c9dc5;
@@ -454,35 +490,59 @@ export function sheetFingerprint(sheetId: string): number {
     hash = Math.imul(hash, 0x01000193);
   }
 
-  hash ^= hash >>> 16;
-  return hash & 0xff;
+  return hash & 0x3fff;
 }
 
 function clampOffsetBits(offsetMin: number): number {
   const safe = Number.isFinite(offsetMin) ? Math.round(offsetMin) : 0;
-  return Math.max(-90, Math.min(165, safe)) + 90;
+  return (
+    Math.max(SHORT_OFFSET_MIN, Math.min(SHORT_OFFSET_MAX, safe)) -
+    SHORT_OFFSET_MIN
+  );
 }
 
+function toBitString(value: number, width: number): string {
+  let bits = '';
+  for (let shift = width - 1; shift >= 0; shift -= 1) {
+    bits += (value >>> shift) & 1 ? '1' : '0';
+  }
+  return bits;
+}
+
+function isInRange(value: number, max: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= max;
+}
+
+/** 版本、序号、代次超出短码位宽时返回空字符串，调用方应改用链接或二维码。 */
 export function encodeShortCode(sheetId: string, runtime: RuntimeState): string {
   const fingerprint = sheetFingerprint(sheetId);
-  const execVersion = ((Math.trunc(runtime.execVersion) % 64) + 64) % 64;
-  const currentIndex =
-    runtime.currentIndex < 0
-      ? 0
-      : Math.min(63, Math.trunc(runtime.currentIndex));
-  const offsetBits = clampOffsetBits(runtime.offsetMin);
-  const checksum = (fingerprint + execVersion + currentIndex + offsetBits) % 4;
+  const execVersion = Math.trunc(runtime.execVersion);
+  const currentIndex = Math.trunc(runtime.currentIndex);
+  const ownerEpoch = Math.trunc(runtime.ownerEpoch);
 
-  const packed =
-    (fingerprint << 22) |
-    (execVersion << 16) |
-    (currentIndex << 10) |
-    (offsetBits << 2) |
-    checksum;
+  if (
+    !isInRange(execVersion, SHORT_EXEC_VERSION_MAX) ||
+    !isInRange(currentIndex, SHORT_INDEX_MAX) ||
+    !isInRange(ownerEpoch, SHORT_OWNER_EPOCH_MAX)
+  ) {
+    return '';
+  }
+
+  const offsetBits = clampOffsetBits(runtime.offsetMin);
+  const checksum =
+    (fingerprint + execVersion + currentIndex + offsetBits + ownerEpoch) % 4;
+
+  const bits =
+    toBitString(fingerprint, SHORT_FINGERPRINT_BITS) +
+    toBitString(execVersion, SHORT_EXEC_VERSION_BITS) +
+    toBitString(currentIndex, SHORT_INDEX_BITS) +
+    toBitString(offsetBits, SHORT_OFFSET_BITS) +
+    toBitString(ownerEpoch, SHORT_OWNER_EPOCH_BITS) +
+    toBitString(checksum, SHORT_CHECKSUM_BITS);
 
   let code = '';
-  for (let shift = 25; shift >= 0; shift -= 5) {
-    code += SHORT_CODE_ALPHABET[(packed >>> shift) & 0x1f];
+  for (let i = 0; i < SHORT_TOTAL_BITS; i += 5) {
+    code += SHORT_CODE_ALPHABET[parseInt(bits.slice(i, i + 5), 2)];
   }
   return code;
 }
@@ -508,26 +568,41 @@ export function normalizeShortCode(text: string): string {
 
 export function decodeShortCode(text: string): ShortDecodeResult {
   const normalized = normalizeShortCode(text);
-  if (normalized.length !== 6) {
+  if (normalized.length === LEGACY_SHORT_CODE_LENGTH) {
+    // 旧六位短码已停用；UI 据此提示重新扫码。
+    return { ok: false, error: 'legacy-code' };
+  }
+  if (normalized.length !== SHORT_CODE_LENGTH) {
     return { ok: false, error: 'bad-format' };
   }
 
-  let packed = 0;
+  let bits = '';
   for (let i = 0; i < normalized.length; i += 1) {
     const value = SHORT_CODE_INDEX.get(normalized[i]);
     if (value === undefined) {
       return { ok: false, error: 'bad-format' };
     }
-    packed = (packed << 5) | value;
+    bits += toBitString(value, 5);
   }
 
-  const fingerprint = (packed >>> 22) & 0xff;
-  const execVersion = (packed >>> 16) & 0x3f;
-  const currentIndex = (packed >>> 10) & 0x3f;
-  const offsetBits = (packed >>> 2) & 0xff;
-  const checksum = packed & 0x03;
+  let cursor = 0;
+  const readField = (width: number): number => {
+    const field = parseInt(bits.slice(cursor, cursor + width), 2);
+    cursor += width;
+    return field;
+  };
 
-  if ((fingerprint + execVersion + currentIndex + offsetBits) % 4 !== checksum) {
+  const fingerprint = readField(SHORT_FINGERPRINT_BITS);
+  const execVersion = readField(SHORT_EXEC_VERSION_BITS);
+  const currentIndex = readField(SHORT_INDEX_BITS);
+  const offsetBits = readField(SHORT_OFFSET_BITS);
+  const ownerEpoch = readField(SHORT_OWNER_EPOCH_BITS);
+  const checksum = readField(SHORT_CHECKSUM_BITS);
+
+  if (
+    (fingerprint + execVersion + currentIndex + offsetBits + ownerEpoch) % 4 !==
+    checksum
+  ) {
     return { ok: false, error: 'bad-checksum' };
   }
 
@@ -537,7 +612,8 @@ export function decodeShortCode(text: string): ShortDecodeResult {
       fingerprint,
       execVersion,
       currentIndex,
-      offsetMin: offsetBits - 90,
+      offsetMin: offsetBits + SHORT_OFFSET_MIN,
+      ownerEpoch,
     },
   };
 }

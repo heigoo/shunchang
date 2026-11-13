@@ -68,23 +68,33 @@ function makeRuntime(sheet: Sheet): RuntimeState {
   };
 }
 
-function buildShortCode(
-  fingerprint: number,
-  execVersion: number,
-  currentIndex: number,
-  offsetBits: number,
-  checksum: number,
-): string {
-  const packed =
-    (fingerprint << 22) |
-    (execVersion << 16) |
-    (currentIndex << 10) |
-    (offsetBits << 2) |
-    checksum;
+function bitsOf(value: number, width: number): string {
+  let bits = '';
+  for (let shift = width - 1; shift >= 0; shift -= 1) {
+    bits += (value >>> shift) & 1 ? '1' : '0';
+  }
+  return bits;
+}
+
+function buildShortCode(fields: {
+  fingerprint: number;
+  execVersion: number;
+  currentIndex: number;
+  offsetBits: number;
+  ownerEpoch: number;
+  checksum: number;
+}): string {
+  const bits =
+    bitsOf(fields.fingerprint, 14) +
+    bitsOf(fields.execVersion, 10) +
+    bitsOf(fields.currentIndex, 7) +
+    bitsOf(fields.offsetBits, 9) +
+    bitsOf(fields.ownerEpoch, 3) +
+    bitsOf(fields.checksum, 2);
 
   let code = '';
-  for (let shift = 25; shift >= 0; shift -= 5) {
-    code += SHORT_CODE_ALPHABET[(packed >>> shift) & 0x1f];
+  for (let i = 0; i < bits.length; i += 5) {
+    code += SHORT_CODE_ALPHABET[parseInt(bits.slice(i, i + 5), 2)];
   }
   return code;
 }
@@ -200,30 +210,42 @@ describe('file codec', () => {
 });
 
 describe('short code', () => {
-  it('round-trips fingerprint, version, index and offset', () => {
+  it('round-trips 45 bits into nine base32 characters', () => {
     const sheet = makeSheet();
-    const runtime = makeRuntime(sheet);
+    const runtime = { ...makeRuntime(sheet), ownerEpoch: 5 };
     const code = encodeShortCode(sheet.id, runtime);
 
-    expect(code).toHaveLength(6);
+    expect(code).toHaveLength(9);
 
     const expected: ShortPayload = {
       fingerprint: sheetFingerprint(sheet.id),
       execVersion: 4,
       currentIndex: 10,
       offsetMin: 7,
+      ownerEpoch: 5,
     };
     expect(decodeShortCode(code)).toEqual({ ok: true, payload: expected });
   });
 
-  it('accepts lowercase input and hyphens', () => {
+  it('accepts lowercase input and XXX-XXX-XXX hyphens', () => {
     const sheet = makeSheet();
     const runtime = makeRuntime(sheet);
     const code = encodeShortCode(sheet.id, runtime);
-    const messy = `${code.slice(0, 3)}-${code.slice(3)}`.toLowerCase();
+    const messy = `${code.slice(0, 3)}-${code.slice(3, 6)}-${code.slice(6)}`.toLowerCase();
 
     expect(normalizeShortCode(messy)).toBe(code);
     expect(decodeShortCode(messy)).toEqual(decodeShortCode(code));
+  });
+
+  it('rejects the retired six-character code', () => {
+    expect(decodeShortCode('ABCDEF')).toEqual({
+      ok: false,
+      error: 'legacy-code',
+    });
+    expect(decodeShortCode('ABC-DEF')).toEqual({
+      ok: false,
+      error: 'legacy-code',
+    });
   });
 
   it('rejects codes with a bad length or illegal characters', () => {
@@ -235,11 +257,15 @@ describe('short code', () => {
       ok: false,
       error: 'bad-format',
     });
-    expect(decodeShortCode('0O0O0O')).toEqual({
+    expect(decodeShortCode('ABCDEFGH')).toEqual({
       ok: false,
       error: 'bad-format',
     });
-    expect(normalizeShortCode('0O0O0O')).toBe('');
+    expect(decodeShortCode('0O0O0O0O0')).toEqual({
+      ok: false,
+      error: 'bad-format',
+    });
+    expect(normalizeShortCode('0O0O0O0O0')).toBe('');
   });
 
   it('rejects a wrong checksum', () => {
@@ -247,18 +273,81 @@ describe('short code', () => {
     const execVersion = 2;
     const currentIndex = 3;
     const offsetBits = 4;
-    const wrongChecksum = ((fingerprint + execVersion + currentIndex + offsetBits) % 4 + 1) % 4;
-    const code = buildShortCode(
+    const ownerEpoch = 5;
+    const sum = fingerprint + execVersion + currentIndex + offsetBits + ownerEpoch;
+    const code = buildShortCode({
       fingerprint,
       execVersion,
       currentIndex,
       offsetBits,
-      wrongChecksum,
-    );
+      ownerEpoch,
+      checksum: (sum % 4 + 1) % 4,
+    });
 
     expect(decodeShortCode(code)).toEqual({
       ok: false,
       error: 'bad-checksum',
     });
+  });
+
+  it('keeps the fingerprint in 14 bits and detects collisions', () => {
+    expect(sheetFingerprint('any-sheet')).toBeLessThanOrEqual(0x3fff);
+
+    const seen = new Map<number, string>();
+    let collision: [string, string] | null = null;
+    for (let i = 0; i < 20000 && !collision; i += 1) {
+      const id = `sheet-collide-${i}`;
+      const fingerprint = sheetFingerprint(id);
+      const previous = seen.get(fingerprint);
+      if (previous !== undefined) {
+        collision = [previous, id];
+      } else {
+        seen.set(fingerprint, id);
+      }
+    }
+
+    expect(collision).not.toBeNull();
+    if (collision) {
+      expect(sheetFingerprint(collision[0])).toBe(
+        sheetFingerprint(collision[1]),
+      );
+    }
+  });
+
+  it('refuses to encode out-of-range version, index or owner epoch', () => {
+    const sheet = makeSheet();
+    const runtime = makeRuntime(sheet);
+
+    expect(
+      encodeShortCode(sheet.id, { ...runtime, execVersion: 1024 }),
+    ).toBe('');
+    expect(
+      encodeShortCode(sheet.id, { ...runtime, currentIndex: 128 }),
+    ).toBe('');
+    expect(
+      encodeShortCode(sheet.id, { ...runtime, currentIndex: -1 }),
+    ).toBe('');
+    expect(encodeShortCode(sheet.id, { ...runtime, ownerEpoch: 8 })).toBe('');
+  });
+
+  it('clamps the offset into -180..331 minutes', () => {
+    const sheet = makeSheet();
+    const runtime = makeRuntime(sheet);
+
+    const early = decodeShortCode(
+      encodeShortCode(sheet.id, { ...runtime, offsetMin: -500 }),
+    );
+    expect(early.ok).toBe(true);
+    if (early.ok) {
+      expect(early.payload.offsetMin).toBe(-180);
+    }
+
+    const late = decodeShortCode(
+      encodeShortCode(sheet.id, { ...runtime, offsetMin: 1000 }),
+    );
+    expect(late.ok).toBe(true);
+    if (late.ok) {
+      expect(late.payload.offsetMin).toBe(331);
+    }
   });
 });
