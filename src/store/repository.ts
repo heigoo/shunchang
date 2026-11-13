@@ -557,6 +557,7 @@ export async function hydrateStorage(): Promise<void> {
     THEME_KEY,
     TEMPLATES_KEY,
     'shunchang.lang',
+    'shunchang.deviceId',
   ]);
 
   const sheetIds = readSheets().map((sheet) => sheet.id);
