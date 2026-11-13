@@ -111,6 +111,7 @@ export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const touchStart = useRef({ x: 0, y: 0 });
   const wide = useIsWide(1000);
+  const navWide = useIsWide(1120);
   const railWide = useIsWide(1340);
   const tiny = !useIsWide(360);
   const c = COPY[lang];
@@ -253,6 +254,11 @@ export function App() {
                 </view>
                 <text className="PhoneLabel T">{c.hero.festive}</text>
               </view>
+            </view>
+
+            <view className="TinyStamp">
+              <text className="TinyStampText">顺场</text>
+              <text className="TinyStampSub">现场调度</text>
             </view>
           </view>
 
@@ -587,7 +593,7 @@ export function App() {
       </view>
 
       <view className="Deck">
-        <view className={wide ? 'DeckBar' : 'DeckBar DeckBarNarrow'}>
+        <view className={navWide ? 'DeckBar' : 'DeckBar DeckBarNarrow'}>
           <view className="Lockup" bindtap={() => goSlide(0)}>
             <Mark />
             <text className={lang === 'en' ? 'Wordmark WordmarkEn T' : 'Wordmark T'}>
@@ -596,7 +602,7 @@ export function App() {
             <text className="WordmarkAlt T">{lang === 'zh' ? 'SHUNCHANG' : '顺场'}</text>
           </view>
 
-          {wide ? (
+          {navWide ? (
             <view className="DeckTopNav">
               {c.deck.chapters.map((label, index) => (
                 <view
@@ -627,7 +633,7 @@ export function App() {
               }
             >
               <text className="DeckCtaText T">
-                {wide ? c.cta.button : lang === 'zh' ? '开始' : 'Start'}
+                {navWide ? c.cta.button : lang === 'zh' ? '开始' : 'Start'}
               </text>
               <text className="DeckCtaArrow T">→</text>
             </view>
