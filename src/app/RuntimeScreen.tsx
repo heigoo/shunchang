@@ -2,7 +2,7 @@ import './RuntimeScreen.css';
 
 import { runOnBackground, runOnMainThread, useEffect, useRef, useState } from '@lynx-js/react';
 
-import { buildExecutionSheet } from '../domain/execution';
+import { MAX_INSERTED_ITEMS, buildExecutionSheet } from '../domain/execution';
 import { computeTimeline, formatClockDisplay, formatDuration } from '../domain/timeline';
 import { encodeShortCode } from '../domain/codec';
 import type { RuntimeState, Sheet } from '../domain/types';
@@ -19,14 +19,18 @@ import type { RuntimeSnapshot } from '../store/repository';
 import { Badge, Button, usePresence } from '../ui';
 import { registerBackHandler } from './backBus';
 import {
+  applyLockOverride,
   applyShift,
   buildRuntimeView,
   clearManualShift,
   completeCurrent,
   createRuntime,
+  insertAfterCurrent,
   skipCurrent,
 } from './runtimeOps';
+import type { InsertDraft } from './runtimeOps';
 import { listSnapshots, pushSnapshot, restoreSnapshot } from './runtimeHistory';
+import { RuntimeAdjustPanel } from './RuntimeAdjustPanel';
 import { extendStartMin } from './shiftPreview';
 import {
   canUseAndroidHost,
@@ -190,6 +194,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const [syncOpen, setSyncOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [skipOpen, setSkipOpen] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [restoreIndex, setRestoreIndex] = useState<number | null>(null);
   const [snapshots, setSnapshots] = useState<RuntimeSnapshot[]>(() =>
@@ -210,6 +215,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
   const syncPresence = usePresence(syncOpen);
   const endPresence = usePresence(endOpen);
   const skipPresence = usePresence(skipOpen);
+  const adjustPresence = usePresence(adjustOpen);
   const historyPresence = usePresence(historyOpen);
   const restorePresence = usePresence(restoreIndex !== null);
 
@@ -219,6 +225,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       !syncOpen &&
       !endOpen &&
       !skipOpen &&
+      !adjustOpen &&
       !historyOpen &&
       restoreIndex === null
     ) {
@@ -237,6 +244,10 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
         setSkipOpen(false);
         return true;
       }
+      if (adjustOpen) {
+        setAdjustOpen(false);
+        return true;
+      }
       if (endOpen) {
         setEndOpen(false);
         return true;
@@ -251,7 +262,7 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
       }
       return false;
     });
-  }, [shiftOpen, syncOpen, endOpen, skipOpen, historyOpen, restoreIndex]);
+  }, [shiftOpen, syncOpen, endOpen, skipOpen, adjustOpen, historyOpen, restoreIndex]);
 
   useEffect(() => {
     viewportWidthListener = (width: number) => {
@@ -540,6 +551,47 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
     setShiftOpen(false);
     showUndo(label);
     showShiftToast(tText('已延长 {n} 分钟，后续环节已重排', { n: minutes }));
+  };
+
+  /** 现场插入：固定插到当前环节之后，当前环节不变。 */
+  const doInsert = (draft: InsertDraft) => {
+    if (runtime.insertedItems.length >= MAX_INSERTED_ITEMS) {
+      showShiftToast(tText('单场最多插入 20 个环节'));
+      return;
+    }
+    const next = insertAfterCurrent(sheet, runtime, draft);
+    if (next === runtime) {
+      return;
+    }
+    const entry = next.insertedItems[next.insertedItems.length - 1];
+    const name = entry && entry.item.name.length > 0 ? entry.item.name : draft.name;
+    const label = tText('插入「{name}」', { name });
+    recordSnapshot(label);
+    commit(next);
+    setAdjustOpen(false);
+    showUndo(label);
+    showShiftToast(tText('已插入「{name}」，后续环节已重排', { name }));
+  };
+
+  /** 调整未完成环节的锁定时刻；null 表示解除锁定。 */
+  const doLockChange = (itemId: string, lockAt: number | null) => {
+    const next = applyLockOverride(sheet, runtime, itemId, lockAt);
+    if (next === runtime) {
+      return;
+    }
+    const entry = next.audit[next.audit.length - 1];
+    const label = entry ? entry.label : tText('调整锁定');
+    recordSnapshot(label);
+    commit(next);
+    setAdjustOpen(false);
+    showUndo(label);
+    showShiftToast(
+      lockAt === null
+        ? tText('已解除锁定，后续环节已重排')
+        : tText('锁定已改为 {time}，后续环节已重排', {
+            time: formatClockDisplay(lockAt),
+          }),
+    );
   };
 
   const toggleKeepAwake = () => {
@@ -941,6 +993,17 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
                     {tText('跳过本环节')}
                   </text>
                 </view>
+
+                <view
+                  className="RuntimeAdjustEntry"
+                  bindtap={() => {
+                    setAdjustOpen(true);
+                  }}
+                >
+                  <text className="RuntimeAdjustEntryText">
+                    {tText('现场调整 · 插入 / 锁定')}
+                  </text>
+                </view>
               </view>
             )}
           </view>
@@ -1156,6 +1219,19 @@ export function RuntimeScreen(props: RuntimeScreenProps) {
               </view>
             </view>
           </view>
+        ) : null}
+
+        {adjustPresence.mounted ? (
+          <RuntimeAdjustPanel
+            sheet={sheet}
+            runtime={runtime}
+            closing={adjustPresence.closing}
+            onCancel={() => {
+              setAdjustOpen(false);
+            }}
+            onInsert={doInsert}
+            onLockChange={doLockChange}
+          />
         ) : null}
 
         {shiftPresence.mounted ? (

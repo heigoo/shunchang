@@ -726,6 +726,28 @@
   color: var(--dim);
 }
 
+/* 现场调整入口：保留完成/跳过/顺延，不占用顶栏的记录与结束 */
+.RuntimeAdjustEntry {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  margin-top: 2px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+}
+
+.RuntimeAdjustEntry:active {
+  opacity: 0.6;
+}
+
+.RuntimeAdjustEntryText {
+  font-size: 12.5px;
+  color: var(--fg-2);
+}
+
 .RuntimeReadonly {
   padding-top: 8px;
   padding-bottom: 8px;

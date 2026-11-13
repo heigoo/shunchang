@@ -1,0 +1,344 @@
+/* 现场调整浮层：暗场单页，插入与锁定共用一块可滚动区 */
+
+.AdjustOverlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: rgba(0, 0, 0, 0.46);
+  animation: scFadeIn 180ms ease-out both;
+}
+
+.AdjustStage {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-bottom: 16px;
+  transform: translateX(-50%);
+}
+
+.AdjustSheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  max-height: 78vh;
+  overflow: hidden;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: var(--screen-2);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line);
+  border-top-width: 3px;
+  border-top-color: var(--bright);
+  border-radius: 0;
+  animation: scRiseIn 180ms ease-out both;
+}
+
+.AdjustHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 8px 16px;
+}
+
+.AdjustTitle {
+  font-family: var(--sans);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+}
+
+.AdjustClose {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  min-width: 48px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.AdjustCloseText {
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.AdjustScroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 60vh;
+}
+
+.AdjustSection {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 16px 16px 16px;
+}
+
+.AdjustSection--lock {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+}
+
+.AdjustSectionLabel {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+}
+
+.AdjustSectionHint {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+.AdjustField {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.AdjustFieldLabel {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.AdjustInput {
+  height: 38px;
+  margin-top: 4px;
+  box-sizing: border-box;
+  padding-left: 10px;
+  padding-right: 10px;
+  background-color: transparent;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line);
+  border-radius: 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--bright);
+}
+
+.AdjustFieldError {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--amber);
+}
+
+.AdjustLimit {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--amber);
+}
+
+.AdjustInsertAction {
+  margin-top: 12px;
+}
+
+.AdjustNote {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+/* ---------- 锁定环节列表 ---------- */
+
+.AdjustLockList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+}
+
+.AdjustLockRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--screen-line);
+}
+
+.AdjustLockRow--active {
+  background-color: var(--screen);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: var(--amber);
+}
+
+.AdjustLockMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-right: 10px;
+  min-width: 0;
+}
+
+.AdjustLockName {
+  font-size: 13px;
+  color: var(--bright);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.AdjustLockOwner {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.AdjustLockValue {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+
+.AdjustLockRow--active .AdjustLockValue {
+  color: var(--amber);
+}
+
+/* ---------- 锁定编辑与预览 ---------- */
+
+.AdjustLockEditor {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top-width: 1px;
+  border-top-style: dashed;
+  border-top-color: var(--screen-line);
+}
+
+.AdjustSelectedName {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+}
+
+.AdjustPreview {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background-color: var(--screen);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--screen-line);
+}
+
+.AdjustPreviewGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.AdjustPreviewBadge {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 6px;
+}
+
+.AdjustPreviewText {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--fg-2);
+}
+
+.AdjustPreviewSub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 17px;
+  color: var(--dim);
+}
+
+.AdjustLockActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.AdjustLockAction {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.AdjustLockAction:last-child {
+  margin-right: 0;
+}
+
+/* ---------- 冲突二次确认 ---------- */
+
+.AdjustConfirm {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+  padding: 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--amber);
+}
+
+.AdjustConfirmText {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--bright);
+}
+
+.AdjustConfirmActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.AdjustConfirmAction {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.AdjustConfirmAction:last-child {
+  margin-right: 0;
+}
+
+/* ---------- 底部 ---------- */
+
+.AdjustFooter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 16px 16px 16px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--screen-line);
+}

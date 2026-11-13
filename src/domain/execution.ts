@@ -38,30 +38,51 @@ export function buildExecutionSheet(sheet: Sheet, runtime: RuntimeState): Sheet 
     return sheet;
   }
 
+  // afterId 既可能指向原环节，也可能指向先前的插入环节；
+  // 用递归链保证“插入到当前环节之后”在连续插入时仍然成立。
   const afterMap = new Map<string, Item[]>();
-  const trailing: Item[] = [];
   for (const entry of pending) {
-    if (originalIds.has(entry.afterId)) {
-      const list = afterMap.get(entry.afterId);
-      if (list) {
-        list.push(entry.item);
-      } else {
-        afterMap.set(entry.afterId, [entry.item]);
-      }
+    const list = afterMap.get(entry.afterId);
+    if (list) {
+      list.push(entry.item);
     } else {
-      trailing.push(entry.item);
+      afterMap.set(entry.afterId, [entry.item]);
     }
   }
 
   const merged: Item[] = [];
-  for (const item of originalItems) {
+  const placed = new Set<string>();
+  const visiting = new Set<string>();
+
+  const appendItem = (item: Item) => {
     merged.push(item);
+    if (visiting.has(item.id)) {
+      return;
+    }
+    visiting.add(item.id);
     const inserted = afterMap.get(item.id);
     if (inserted) {
-      merged.push(...inserted);
+      for (const child of inserted) {
+        if (placed.has(child.id)) {
+          continue;
+        }
+        placed.add(child.id);
+        appendItem(child);
+      }
+    }
+    visiting.delete(item.id);
+  };
+
+  for (const item of originalItems) {
+    appendItem(item);
+  }
+
+  // afterId 完全不存在的插入仍追加到末尾，避免丢失现场记录。
+  for (const entry of pending) {
+    if (!placed.has(entry.item.id)) {
+      merged.push(entry.item);
     }
   }
-  merged.push(...trailing);
 
   const items = merged.map((item) =>
     Object.prototype.hasOwnProperty.call(overrides, item.id)

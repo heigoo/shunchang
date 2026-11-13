@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render } from '@lynx-js/react/testing-library';
+import { act, fireEvent, render } from '@lynx-js/react/testing-library';
 import { afterEach, beforeEach, describe, expect, rstest, test } from '@rstest/core';
 
 import type { Sheet } from '../../domain/types';
@@ -43,6 +43,14 @@ function makeSheet(): Sheet {
     version: 1,
     updatedAt: Date.now(),
   };
+}
+
+function typeInto(element: Element, value: string): void {
+  const event = new Event('bindEvent:input', { bubbles: true });
+  (event as any).detail = { value };
+  act(() => {
+    element.dispatchEvent(event);
+  });
 }
 
 beforeEach(() => {
@@ -152,6 +160,33 @@ test('restores an earlier step from the operation history', async () => {
   fireEvent.tap(await findByText('确认回退'));
 
   expect(await findByText('环节 001 / 002')).toBeInTheDocument();
+  expect(getRuntime(SHEET_ID)?.currentIndex).toBe(0);
+});
+
+test('inserts a live item from the adjust panel and undoes it', async () => {
+  saveSheet(makeSheet());
+
+  const { container, findByText } = render(
+    <RuntimeScreen sheetId={SHEET_ID} onBack={() => {}} />,
+  );
+
+  fireEvent.tap(await findByText('现场调整 · 插入 / 锁定'));
+
+  const nameInput = container.querySelector('.AdjustName');
+  expect(nameInput).not.toBeNull();
+  typeInto(nameInput!, '长辈致辞');
+
+  fireEvent.tap(await findByText('确认插入'));
+
+  expect(await findByText('长辈致辞')).toBeInTheDocument();
+  expect(getRuntime(SHEET_ID)?.execVersion).toBe(2);
+  expect(getRuntime(SHEET_ID)?.insertedItems).toHaveLength(1);
+  expect(getRuntime(SHEET_ID)?.audit[0]?.type).toBe('insert');
+  expect(listSnapshots(SHEET_ID)).toHaveLength(1);
+
+  fireEvent.tap(await findByText('撤销'));
+
+  expect(getRuntime(SHEET_ID)?.insertedItems).toHaveLength(0);
   expect(getRuntime(SHEET_ID)?.currentIndex).toBe(0);
 });
 
