@@ -581,11 +581,15 @@ export function EditorScreen(props: EditorScreenProps) {
     const row = timeline.rows[index];
     const open = expanded === index;
     const error = rowError && rowError.id === item.id ? rowError.message : null;
+    const classes = ['Card', 'RowIn'];
+    if (index === nowIndex) classes.push('Card--now');
+
+    const owner = item.owner.trim();
 
     return (
       <view
         key={item.id}
-        className="Card RowIn"
+        className={classes.join(' ')}
         style={{ animationDelay: `${Math.min(index, 10) * 22}ms` }}
       >
         <view
@@ -595,15 +599,17 @@ export function EditorScreen(props: EditorScreenProps) {
           }}
         >
           <text className="CardNo">{pad3(index + 1)}</text>
-          <text className="CardName">
-            {item.name.length > 0 ? item.name : tText('未命名环节')}
-          </text>
-          <text className="CardMeta">
-            {tText('{n} 分钟 · {time}', {
-              n: item.durationMin,
-              time: formatClock(row.planStart),
-            })}
-          </text>
+          <view className="CardMain">
+            <text className="CardName">
+              {item.name.length > 0 ? item.name : tText('未命名环节')}
+            </text>
+            <text className="CardSub">
+              {`${formatClock(row.planStart)} — ${formatClock(
+                row.planStart + item.durationMin,
+              )} · ${owner.length > 0 ? owner : tText('未指派')}`}
+            </text>
+          </view>
+          <text className="CardMeta">{`${item.durationMin} ${tText('分钟')}`}</text>
           <text className="CardToggle">{open ? '∧' : '∨'}</text>
         </view>
 
@@ -746,15 +752,17 @@ export function EditorScreen(props: EditorScreenProps) {
             <view className="EditorBack" bindtap={onBack}>
               <text className="EditorBackText">{tText('← 手册')}</text>
             </view>
-            <DraftInput
-              className="EditorName"
-              maxlength={40}
-              placeholder={tText('未命名手册')}
-              value={sheet.name || ''}
-              onInput={(text) => {
-                handleName(text);
-              }}
-            />
+            <view className="EditorNameWrap">
+              <DraftInput
+                className="EditorName"
+                maxlength={40}
+                placeholder={tText('未命名手册')}
+                value={sheet.name || ''}
+                onInput={(text) => {
+                  handleName(text);
+                }}
+              />
+            </view>
             <view className="EditorPublish">
               <Button
                 label={tText('发布')}
@@ -764,7 +772,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
           </view>
 
-          <view className="EditorMeta">
+          <view className="EditorMetaStrip">
             <view className="MetaItem">
               <text className="MetaLabel">{tText('日期')}</text>
               <text className="MetaValue">{sheet.date}</text>
@@ -788,9 +796,8 @@ export function EditorScreen(props: EditorScreenProps) {
               <text className="MetaValue">{`${pad2(sheet.items.length)} / ${MAX_ITEMS}`}</text>
             </view>
             <view className="MetaItem">
-              <text className="MetaValue">
-                {tText('第 {n} 版', { n: sheet.version })}
-              </text>
+              <text className="MetaLabel">{tText('版本')}</text>
+              <text className="MetaValue">{`V${sheet.version}`}</text>
             </view>
             <view className="MetaBadge">
               <Badge kind="outline" label={tText(STATUS_LABEL[sheet.status])} />
@@ -846,6 +853,7 @@ export function EditorScreen(props: EditorScreenProps) {
             </view>
             {isWide ? (
               <view className="EditorToolHint">
+                <view className="EditorSaveDot" />
                 <text className="EditorHintText">{tText('自动保存')}</text>
               </view>
             ) : null}
@@ -854,6 +862,10 @@ export function EditorScreen(props: EditorScreenProps) {
           {errors && errors.length > 0 ? (
             <view className="ErrorBar">
               <view className="ErrorBarBody">
+                <view className="ErrorBarHead">
+                  <text className="ErrorBarTitle">{tText('校验未通过')}</text>
+                  <text className="ErrorBarCount">{`× ${errors.length}`}</text>
+                </view>
                 {errors.slice(0, 3).map((error, position) => (
                   <text className="ErrorLine" key={`${error.field}-${position}`}>
                     {errorLine(error)}
@@ -875,6 +887,14 @@ export function EditorScreen(props: EditorScreenProps) {
 
       <scroll-view className="EditorScroll" scroll-orientation="vertical">
       <view className={isWide ? 'EditorBody' : 'EditorBody EditorBody--narrow'}>
+        <view className="EditorSectionHead">
+          <text className="EditorSectionLabel">{tText('流程编排')}</text>
+          <text className="EditorSectionCount">
+            {`${pad2(sheet.items.length)} ${tText('环节')} · ${formatDuration(
+              timeline.totalPlanMin,
+            )}`}
+          </text>
+        </view>
         {isWide ? (
           <view className={isDesktop ? 'EditorTable' : 'EditorTable EditorTable--medium'}>
             <view className="TableHead">
