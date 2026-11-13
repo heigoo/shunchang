@@ -121,9 +121,9 @@ export function webLocation(): {
   }
 }
 
-/** 跟随页只读：配置地址是 follow.html 时补上 follow=1。 */
+/** 跟随链接只读：缺少 follow=1 时补上，并保留已有 query 与 hash。 */
 function ensureFollowFlag(base: string): string {
-  if (base.indexOf('follow=1') >= 0 || base.indexOf('follow.html') < 0) {
+  if (base.length === 0 || base.indexOf('follow=1') >= 0) {
     return base;
   }
   const hashIndex = base.indexOf('#');

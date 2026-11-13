@@ -123,8 +123,21 @@ describe('share urls', () => {
     setFollowUrlForTest(null);
   });
 
-  it('falls back to the current web page when no follow site is configured', () => {
-    expect(buildFollowUrl('abc')).toBe('https://example.com/app#d=abc');
+  it('falls back to the current web page with the follow flag', () => {
+    expect(buildFollowUrl('abc')).toBe(
+      'https://example.com/app?follow=1#d=abc',
+    );
+    expect(buildShortUrl('ABC-DEF')).toBe(
+      'https://example.com/app?follow=1#s=ABC-DEF',
+    );
+  });
+
+  it('keeps an existing query when adding the follow flag', () => {
+    setFollowUrlForTest('https://example.com/room?a=1');
+
+    expect(buildFollowUrl('abc')).toBe(
+      'https://example.com/room?a=1&follow=1#d=abc',
+    );
   });
 
   it('uses the configured follow page for links', () => {
