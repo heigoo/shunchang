@@ -10,6 +10,12 @@ const DEFAULT_FOLLOW_URL = 'https://37jgbn03wc2xhkefws2.traesite.cn/';
 const publicFollowUrl =
   (process.env.PUBLIC_FOLLOW_URL ?? '').trim() || DEFAULT_FOLLOW_URL;
 
+// 在线使用说明书地址。默认指向 Trae 部署；可用 PUBLIC_MANUAL_URL 覆盖。
+const DEFAULT_MANUAL_URL =
+  'https://37jgejb7nyniuhch9uk.traesite.cn/manual.html';
+const publicManualUrl =
+  (process.env.PUBLIC_MANUAL_URL ?? '').trim() || DEFAULT_MANUAL_URL;
+
 export default defineConfig({
   environments: {
     lynx: {},
@@ -18,6 +24,7 @@ export default defineConfig({
   source: {
     define: {
       'process.env.PUBLIC_FOLLOW_URL': JSON.stringify(publicFollowUrl),
+      'process.env.PUBLIC_MANUAL_URL': JSON.stringify(publicManualUrl),
     },
   },
   plugins: [

@@ -4,9 +4,11 @@ import { isDesktopRuntime } from '../platform/desktop';
 import { desktopOpenExternal } from './desktopBridge';
 import { copyText, isWeb } from './share';
 
+const BUILD_MANUAL_URL = (process.env.PUBLIC_MANUAL_URL ?? '').trim();
+
 /** 在线使用说明书：官网与产品内共用同一个地址。 */
 export const MANUAL_URL =
-  'https://37jgejb7nyniuhch9uk.traesite.cn/manual.html';
+  BUILD_MANUAL_URL || 'https://37jgejb7nyniuhch9uk.traesite.cn/manual.html';
 
 export type ManualOpenResult = 'opened' | 'copied' | 'failed';
 

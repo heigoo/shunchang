@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
 const outDir = process.argv[2] || fs.mkdtempSync(path.join(os.tmpdir(), 'cue-follow-'));
+// 静态资源基路径：根域名部署用 /，子路径部署（如 GitHub Pages）用 ./。
+const publicBase = process.env.PUBLIC_BASE || '/';
 
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
@@ -16,6 +18,8 @@ fs.copyFileSync(
   path.join(outDir, 'main.web.bundle'),
 );
 fs.copyFileSync(path.join(root, 'public/follow.html'), path.join(outDir, 'follow.html'));
+// 目录入口：静态托管访问 /follow/ 时默认返回 index.html。
+fs.copyFileSync(path.join(root, 'public/follow.html'), path.join(outDir, 'index.html'));
 fs.copyFileSync(path.join(root, 'public/favicon.png'), path.join(outDir, 'favicon.png'));
 fs.cpSync(
   path.join(root, 'node_modules/@lynx-js/web-rsbuild-server-middleware/www/static'),
@@ -43,7 +47,7 @@ for (const file of walk(path.join(outDir, 'static'))) {
   fs.writeFileSync(
     file,
     text
-      .replaceAll('http://lynx-web-core-mocked.localhost/', '/')
+      .replaceAll('http://lynx-web-core-mocked.localhost/', publicBase)
       .replaceAll('http://lynx-web-core-mocked.localhost', ''),
     'utf8',
   );

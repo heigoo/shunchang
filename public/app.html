@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F1EEE6">
   <meta name="description" content="顺场 · Web 工作台。编排、发布、执行与复盘，直接在浏览器使用。">
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/png" href="./favicon.png">
   <title>顺场 · Web 工作台</title>
   <script>
     // 部分静态托管会把 .wasm 返回成 application/octet-stream，
@@ -24,15 +24,15 @@
       };
     }
   </script>
-  <script defer src="/static/js/index.js"></script>
-  <link rel="stylesheet" href="/static/css/index.css">
+  <script defer src="./static/js/index.js"></script>
+  <link rel="stylesheet" href="./static/css/index.css">
   <style>
     html, body { margin: 0; height: 100%; background: #F1EEE6; overflow: hidden; }
     lynx-view { display: block; width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
-  <lynx-view id="app" url="/main.web.bundle"></lynx-view>
+  <lynx-view id="app" url="./main.web.bundle"></lynx-view>
   <script>
     (function () {
       if ('serviceWorker' in navigator) {
@@ -49,7 +49,7 @@
       window.addEventListener('resize', syncWidth);
 
       // Web 工作台里的「查看完整使用说明书」直接在宿主页打开，避免异步桥接丢失用户手势。
-      var MANUAL_URL = 'https://37jgejb7nyniuhch9uk.traesite.cn/manual.html';
+      var MANUAL_URL = './manual.html';
       document.addEventListener(
         'click',
         function (event) {

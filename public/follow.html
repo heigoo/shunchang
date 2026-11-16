@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#12100C">
   <meta name="description" content="顺场 · 现场跟随。免安装、只读查看现场进度。">
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/png" href="./favicon.png">
   <title>顺场 · 现场跟随</title>
   <script>
     // 部分静态托管会把 .wasm 返回成 application/octet-stream，
@@ -24,15 +24,15 @@
       };
     }
   </script>
-  <script defer src="/static/js/index.js"></script>
-  <link rel="stylesheet" href="/static/css/index.css">
+  <script defer src="./static/js/index.js"></script>
+  <link rel="stylesheet" href="./static/css/index.css">
   <style>
     html, body { margin: 0; height: 100%; background: #12100C; overflow: hidden; }
     lynx-view { display: block; width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
-  <lynx-view id="follow" url="/main.web.bundle"></lynx-view>
+  <lynx-view id="follow" url="./main.web.bundle"></lynx-view>
   <script>
     (function () {
       // 跟随页强制只读：缺少 follow=1 时补上，保留 #d= / #s= 载荷。

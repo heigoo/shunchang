@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
 const outDir = process.argv[2] || fs.mkdtempSync(path.join(os.tmpdir(), 'cue-app-'));
+// 静态资源基路径：根域名部署用 /，子路径部署（如 GitHub Pages）用 ./。
+const publicBase = process.env.PUBLIC_BASE || '/';
 
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
@@ -48,7 +50,7 @@ for (const file of walk(path.join(outDir, 'static'))) {
   fs.writeFileSync(
     file,
     text
-      .replaceAll('http://lynx-web-core-mocked.localhost/', '/')
+      .replaceAll('http://lynx-web-core-mocked.localhost/', publicBase)
       .replaceAll('http://lynx-web-core-mocked.localhost', ''),
     'utf8',
   );

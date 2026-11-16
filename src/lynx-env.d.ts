@@ -5,6 +5,7 @@
 declare const process: {
   env: {
     PUBLIC_FOLLOW_URL?: string;
+    PUBLIC_MANUAL_URL?: string;
   };
 };
 
