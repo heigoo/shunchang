@@ -32,3 +32,24 @@ npm run test   # 运行测试
 一套 ReactLynx 代码同时产出 Web 与 Lynx 原生 bundle。数据只保存在本设备，不依赖账号；跨设备跟随/同步需要打开在线跟随页或通过文件传递。Web 端支持文件导入导出与打印；原生端通过二维码与九位短码分发、对齐状态。
 
 预览说明：LynxExplorer 宿主未提供持久化存储模块，数据仅保留在当前进程内；接入真实宿主提供的 `lynx.getStorage` / `lynx.setStorage` 后即可跨重启保存。
+
+## 在线地址
+
+- 官网：https://heigoo.github.io/shunchang/
+- Web 工作台：https://heigoo.github.io/shunchang/app/
+- 跟随页：https://heigoo.github.io/shunchang/follow/
+- 使用说明书：https://heigoo.github.io/shunchang/app/manual.html
+
+## 部署到 GitHub Pages
+
+```bash
+PUBLIC_ASSET_PREFIX=/shunchang/ \
+PUBLIC_FOLLOW_URL=https://heigoo.github.io/shunchang/follow/ \
+PUBLIC_MANUAL_URL=https://heigoo.github.io/shunchang/app/manual.html \
+npm run build
+
+PUBLIC_ASSET_PREFIX=/shunchang/ npm run site:build
+
+node site/deploy/prepare-pages.mjs
+# 然后把 pages-dist/ 的内容提交到 gh-pages 分支并推送
+```
