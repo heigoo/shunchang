@@ -48,13 +48,14 @@
     .ManualLink::after { content: "↗"; font-size: 11px; }
     .ManualLink:hover { background: #1b1a17; color: #f1eee6; }
     @media (max-width: 720px) {
-      .ManualLink { top: 52px; left: 12px; font-size: 11px; padding: 6px 8px; }
+      /* 窄屏改用目录里的「使用说明书」入口，避免压住封面眉标 */
+      .ManualLink { display: none; }
     }
   </style>
 </head>
 <body>
   <lynx-view id="site" url="/main.web.bundle"></lynx-view>
-  <a class="ManualLink" href="https://37jgejb7nyniuhch9uk.traesite.cn/manual.html" target="_blank" rel="noopener">使用说明书</a>
+  <a class="ManualLink" href="https://37jgejb7nyniuhch9uk.traesite.cn/manual.html" target="_blank" rel="noopener">使用说明书 · Manual</a>
   <script>
     (function () {
       if ('serviceWorker' in navigator) {
@@ -72,6 +73,7 @@
 
       // 产品 Web 工作台入口：官网里的「开始编排」与主 CTA 直接打开可用的 Web 版。
       var WEB_APP_URL = 'https://37jgejb7nyniuhch9uk.traesite.cn/';
+      var MANUAL_URL = 'https://37jgejb7nyniuhch9uk.traesite.cn/manual.html';
       function isWebEntryTarget(event) {
         var path = event.composedPath ? event.composedPath() : [];
         for (var i = 0; i < path.length; i += 1) {
@@ -86,9 +88,24 @@
         }
         return false;
       }
+      function isManualTarget(event) {
+        var path = event.composedPath ? event.composedPath() : [];
+        for (var i = 0; i < path.length; i += 1) {
+          var el = path[i];
+          if (el && el.classList && el.classList.contains('DeckManualLink')) return true;
+        }
+        return false;
+      }
+
       document.addEventListener(
         'click',
         function (event) {
+          if (isManualTarget(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.open(MANUAL_URL, '_blank', 'noopener');
+            return;
+          }
           if (!isWebEntryTarget(event)) return;
           event.preventDefault();
           event.stopPropagation();

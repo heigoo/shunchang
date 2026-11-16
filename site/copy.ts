@@ -73,6 +73,7 @@ export interface Copy {
     menu: string;
     menuHint: string;
     skip: string;
+    manual: string;
     chapters: string[];
   };
 }
@@ -83,7 +84,7 @@ const ZH: Copy = {
     eyebrow: '婚礼现场执行 · 2026',
     title: ['让今天，', '按顺序发生。'],
     lead:
-      '婚礼不是没有计划，是计划从来不在同一个地方。顺场把一天写成一张表：改一处，所有人看到同一版。',
+      '婚礼不是没有计划，是计划从来不在同一个地方。顺场把一天写成一张表：改一处，发一版，所有人看到同一版。',
     primary: '开始编排',
     secondary: '看执行台',
     standard: '标准版',
@@ -127,12 +128,12 @@ const ZH: Copy = {
       {
         no: '01 编排台',
         title: '把一天排成一张表',
-        body: '时间、地点、负责人。拖一遍就排好，改一处全表同步。',
+        body: '时间、地点、负责人。拖一遍就排好，改一处，重发一版，全表同步。',
       },
       {
         no: '02 发布',
         title: '一个码，给所有人',
-        body: '扫码即看最新版。不用拉群，不用重发文件，版本自己更新。',
+        body: '扫码即看最新版。不用拉群，不用重发文件，重新扫码就是最新一版。',
       },
       {
         no: '03 执行台',
@@ -187,7 +188,7 @@ const ZH: Copy = {
   cta: {
     eyebrow: '06 · 开始',
     title: '把今天，排成一张表。',
-    body: '扫码或点开始编排，给现场所有人同一版。改一处，所有人的表跟着变。',
+    body: '扫码或点开始编排，给现场所有人同一版。改一处，重发一版，所有人的表对齐同一版。',
     button: '开始编排',
     note: '官网演示 · 内测中',
     done: '已记录 · 我们会联系你',
@@ -205,6 +206,7 @@ const ZH: Copy = {
     menu: '目录',
     menuHint: '点击直达任意章节 · 也可用 ← → 或数字键',
     skip: '跳过介绍 · 直接开始',
+    manual: '使用说明书',
     chapters: ['首页', '痛点', '功能', '现场示例', '品牌', '理念', '开始'],
   },
 };
@@ -215,7 +217,7 @@ const EN: Copy = {
     eyebrow: 'WEDDING DAY · LIVE',
     title: ['Let today happen', 'in order.'],
     lead:
-      'A wedding always has a plan. It just never lives in one place. Shunchang puts the day on one sheet — change one cell, and everyone sees the same version.',
+      'A wedding always has a plan. It just never lives in one place. Shunchang puts the day on one sheet — change one cell, publish once, and everyone re-syncs to the same version.',
     primary: 'Start the sheet',
     secondary: 'See the live board',
     standard: 'Standard',
@@ -259,12 +261,12 @@ const EN: Copy = {
       {
         no: '01 BUILDER',
         title: 'Turn the day into one sheet',
-        body: 'Time, place, owner. Drag once and it is set; change one cell and the whole sheet follows.',
+        body: 'Time, place, owner. Drag once and it is set; change one cell, publish once, and the whole sheet re-syncs.',
       },
       {
         no: '02 PUBLISH',
         title: 'One code for everyone',
-        body: 'Scan for the latest version. No group chats, no re-sending files. The version updates itself.',
+        body: 'Scan for the latest version. No group chats, no re-sending files. Re-scan and you have the newest one.',
       },
       {
         no: '03 LIVE BOARD',
@@ -319,7 +321,7 @@ const EN: Copy = {
   cta: {
     eyebrow: '06 · START',
     title: 'Put the day on one sheet.',
-    body: 'Scan or start the sheet. One version for everyone in the room. Change one cell, and every sheet follows.',
+    body: 'Scan or start the sheet. One version for everyone in the room. Change one cell, publish once, and every sheet re-syncs.',
     button: 'Start the sheet',
     note: 'Demo site · In private beta',
     done: 'You’re on the list. We’ll be in touch.',
@@ -337,6 +339,7 @@ const EN: Copy = {
     menu: 'INDEX',
     menuHint: 'JUMP TO ANY CHAPTER · USE ← → OR NUMBER KEYS',
     skip: 'SKIP INTRO · START NOW',
+    manual: 'MANUAL',
     chapters: ['Home', 'Pain points', 'Features', 'Live demo', 'Brand', 'Why Shunchang', 'Start'],
   },
 };

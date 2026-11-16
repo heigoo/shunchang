@@ -3535,6 +3535,28 @@ page {
   color: var(--ink);
 }
 
+.DeckMenuManual {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 6px;
+  margin-top: 4px;
+  border-bottom: 1px solid var(--rule2);
+}
+
+.DeckMenuManualText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+
+.DeckMenuManualArrow {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink2);
+}
+
 .DeckMenuSkip {
   display: flex;
   flex-direction: row;

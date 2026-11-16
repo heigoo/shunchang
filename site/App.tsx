@@ -754,6 +754,10 @@ export function App() {
                 </view>
               ))}
             </view>
+            <view className="DeckMenuManual DeckManualLink" bindtap={() => setMenuOpen(false)}>
+              <text className="DeckMenuManualText T">{c.deck.manual}</text>
+              <text className="DeckMenuManualArrow T">↗</text>
+            </view>
             <view className="DeckMenuSkip" bindtap={() => goSlide(SLIDE_COUNT - 1)}>
               <text className="DeckMenuSkipText T">{c.deck.skip}</text>
               <text className="DeckMenuSkipArrow T">→</text>
