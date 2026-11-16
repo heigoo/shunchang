@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12100C">
+  <meta name="description" content="顺场 · 现场跟随。免安装、只读查看现场进度。">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <title>顺场 · 现场跟随</title>
+  <script>
+    // 部分静态托管会把 .wasm 返回成 application/octet-stream，
+    // 导致 compileStreaming 因 MIME 校验失败。改为先取 ArrayBuffer 再编译。
+    if (typeof WebAssembly !== 'undefined' && WebAssembly.compileStreaming) {
+      WebAssembly.compileStreaming = function (source) {
+        return Promise.resolve(source)
+          .then(function (response) {
+            return response && typeof response.arrayBuffer === 'function'
+              ? response.arrayBuffer()
+              : response;
+          })
+          .then(function (buffer) {
+            return WebAssembly.compile(buffer);
+          });
+      };
+    }
+  </script>
+  <script defer src="./static/js/index.js"></script>
+  <link rel="stylesheet" href="./static/css/index.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #12100C; overflow: hidden; }
+    lynx-view { display: block; width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <lynx-view id="follow" url="./main.web.bundle"></lynx-view>
+  <script>
+    (function () {
+      // 跟随页强制只读：缺少 follow=1 时补上，保留 #d= / #s= 载荷。
+      try {
+        var params = new URLSearchParams(window.location.search || '');
+        if (params.get('follow') !== '1') {
+          params.set('follow', '1');
+          window.history.replaceState(
+            null,
+            '',
+            window.location.pathname + '?' + params.toString() + window.location.hash,
+          );
+        }
+      } catch (error) {
+        // 老浏览器不支持 URLSearchParams 时由页面代码的默认视图兜底。
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) { reg.unregister(); });
+        }).catch(function () {});
+      }
+
+      var view = document.getElementById('follow');
+      function syncWidth() {
+        view.setAttribute('global-props', JSON.stringify({ siteWidth: window.innerWidth }));
+      }
+      syncWidth();
+      window.addEventListener('resize', syncWidth);
+    })();
+  </script>
+</body>
+</html>

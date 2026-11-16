@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F2EDE1">
+  <meta name="description" content="顺场 Shunchang · 婚礼现场执行。一张表，一个码，一次顺延。让今天，按顺序发生。">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <title>顺场 Shunchang · 让今天，按顺序发生</title>
+  <script>
+    // 部分静态托管会把 .wasm 返回成 application/octet-stream，
+    // 导致 compileStreaming 因 MIME 校验失败。改为先取 ArrayBuffer 再编译。
+    if (typeof WebAssembly !== 'undefined' && WebAssembly.compileStreaming) {
+      WebAssembly.compileStreaming = function (source) {
+        return Promise.resolve(source)
+          .then(function (response) {
+            return response && typeof response.arrayBuffer === 'function'
+              ? response.arrayBuffer()
+              : response;
+          })
+          .then(function (buffer) {
+            return WebAssembly.compile(buffer);
+          });
+      };
+    }
+  </script>
+  <script defer src="./static/js/index.js"></script>
+  <link rel="stylesheet" href="./static/css/index.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #F2EDE1; overflow: hidden; }
+    lynx-view { display: block; width: 100vw; height: 100vh; }
+    .ManualLink {
+      position: fixed;
+      top: 58px;
+      left: 24px;
+      z-index: 40;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border: 1px solid rgba(20, 18, 14, 0.22);
+      background: rgba(241, 238, 230, 0.92);
+      color: #1b1a17;
+      font: 12px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+    }
+    .ManualLink::after { content: "↗"; font-size: 11px; }
+    .ManualLink:hover { background: #1b1a17; color: #f1eee6; }
+    @media (max-width: 720px) {
+      /* 窄屏改用目录里的「使用说明书」入口，避免压住封面眉标 */
+      .ManualLink { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <lynx-view id="site" url="./main.web.bundle"></lynx-view>
+  <a class="ManualLink" href="./app/manual.html" target="_blank" rel="noopener">使用说明书 · Manual</a>
+  <script>
+    (function () {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) { reg.unregister(); });
+        }).catch(function () {});
+      }
+
+      var view = document.getElementById('site');
+      function syncWidth() {
+        view.setAttribute('global-props', JSON.stringify({ siteWidth: window.innerWidth }));
+      }
+      syncWidth();
+      window.addEventListener('resize', syncWidth);
+
+      // 产品 Web 工作台入口：官网里的「开始编排」与主 CTA 直接打开可用的 Web 版。
+      var WEB_APP_URL = './app/';
+      var MANUAL_URL = './app/manual.html';
+      function isWebEntryTarget(event) {
+        var path = event.composedPath ? event.composedPath() : [];
+        for (var i = 0; i < path.length; i += 1) {
+          var el = path[i];
+          if (!el || !el.classList) continue;
+          if (
+            el.classList.contains('DeckCta') ||
+            (el.classList.contains('Btn') && el.classList.contains('BtnAmber'))
+          ) {
+            return true;
+          }
+        }
+        return false;
+      }
+      function isManualTarget(event) {
+        var path = event.composedPath ? event.composedPath() : [];
+        for (var i = 0; i < path.length; i += 1) {
+          var el = path[i];
+          if (el && el.classList && el.classList.contains('DeckManualLink')) return true;
+        }
+        return false;
+      }
+
+      document.addEventListener(
+        'click',
+        function (event) {
+          if (isManualTarget(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.open(MANUAL_URL, '_blank', 'noopener');
+            return;
+          }
+          if (!isWebEntryTarget(event)) return;
+          event.preventDefault();
+          event.stopPropagation();
+          window.open(WEB_APP_URL, '_blank', 'noopener');
+        },
+        true,
+      );
+
+      // 幻灯片导航：滚轮 / 键盘 → 点击 Lynx 视图内的翻页控件
+      var navLock = 0;
+      function deckNav(action, index) {
+        var root = view && view.shadowRoot;
+        if (!root) return;
+        if (action === 'close') {
+          var close = root.querySelector('.DeckMenuClose');
+          if (close) close.click();
+          return;
+        }
+        if (root.querySelector('.DeckMenu')) return;
+        if (action === 'next' || action === 'prev') {
+          var btns = root.querySelectorAll('.DeckBtn');
+          var btn = action === 'next' ? btns[btns.length - 1] : btns[0];
+          if (btn) btn.click();
+        } else if (action === 'index' && typeof index === 'number') {
+          var dots = root.querySelectorAll('.DeckDot');
+          if (dots[index]) dots[index].click();
+        }
+      }
+      window.addEventListener('wheel', function (event) {
+        var now = Date.now();
+        if (now < navLock) return;
+        var dy = event.deltaY || 0;
+        if (Math.abs(dy) < 24) return;
+        navLock = now + 700;
+        deckNav(dy > 0 ? 'next' : 'prev');
+      }, { passive: true });
+      window.addEventListener('keydown', function (event) {
+        var key = event.key;
+        if (key === 'ArrowRight' || key === 'ArrowDown' || key === 'PageDown' || key === ' ') {
+          event.preventDefault();
+          deckNav('next');
+        } else if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 'PageUp') {
+          event.preventDefault();
+          deckNav('prev');
+        } else if (key === 'Home') {
+          event.preventDefault();
+          deckNav('index', 0);
+        } else if (key === 'End') {
+          event.preventDefault();
+          deckNav('index', 6);
+        } else if (key === 'Escape') {
+          deckNav('close');
+        } else if (/^[1-7]$/.test(key)) {
+          deckNav('index', Number(key) - 1);
+        }
+      });
+
+      // 章节深链 + 曝光埋点
+      var CHAPTERS = ['cover', 'problem', 'product', 'board', 'brand', 'name', 'start'];
+      function deckRoot() {
+        return view && view.shadowRoot;
+      }
+      function clickDot(index) {
+        var root = deckRoot();
+        if (!root) return false;
+        var dots = root.querySelectorAll('.DeckDot');
+        if (dots[index]) {
+          dots[index].click();
+          return true;
+        }
+        return false;
+      }
+      function activeSlide() {
+        var root = deckRoot();
+        if (!root) return -1;
+        var dots = root.querySelectorAll('.DeckDot');
+        for (var i = 0; i < dots.length; i += 1) {
+          if (String(dots[i].className).indexOf('DeckDotOn') >= 0) return i;
+        }
+        return -1;
+      }
+      function applyHash() {
+        var name = (location.hash || '').replace('#', '');
+        var index = CHAPTERS.indexOf(name);
+        if (index >= 0) clickDot(index);
+      }
+      function track(event, data) {
+        var payload = { event: event };
+        if (data) {
+          for (var key in data) {
+            if (Object.prototype.hasOwnProperty.call(data, key)) payload[key] = data[key];
+          }
+        }
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(payload);
+        window.dispatchEvent(new CustomEvent('deck:track', { detail: payload }));
+      }
+      var hashWait = setInterval(function () {
+        var root = deckRoot();
+        if (root && root.querySelectorAll('.DeckDot').length) {
+          clearInterval(hashWait);
+          applyHash();
+        }
+      }, 300);
+      window.addEventListener('hashchange', applyHash);
+      var lastSlide = -1;
+      setInterval(function () {
+        var index = activeSlide();
+        if (index < 0 || index === lastSlide) return;
+        lastSlide = index;
+        if (CHAPTERS[index] && location.hash !== '#' + CHAPTERS[index]) {
+          history.replaceState(null, '', '#' + CHAPTERS[index]);
+        }
+        track('deck_slide_view', { slide: index + 1, chapter: CHAPTERS[index] });
+      }, 450);
+      var clickWait = setInterval(function () {
+        var root = deckRoot();
+        if (!root) return;
+        clearInterval(clickWait);
+        root.addEventListener('click', function (event) {
+          var target = event.target;
+          if (!target || !target.closest) return;
+          if (target.closest('.DeckCta')) track('deck_cta_click', { source: 'persistent' });
+          else if (target.closest('.CtaCopy .Btn')) track('deck_cta_click', { source: 'final' });
+        }, true);
+      }, 500);
+    })();
+  </script>
+</body>
+</html>
